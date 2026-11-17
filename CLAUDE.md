@@ -93,7 +93,9 @@ Do **not** follow from AGENTS.md:
 | Frontend tests | `npx vitest run` (or `npm test` for watch mode) |
 | Lint | `npm run lint` |
 | New migration | `npx supabase migration new dg_<name>` |
-| Regenerate DB types | `npx supabase gen types typescript --local > src/types/database.ts` |
+| Apply new migrations locally | `npx supabase migration up` |
+| DB tests (clean) | `npm run supabase:reset` then `npx supabase test db` |
+| Regenerate DB types | In **Git Bash**: `npx --yes supabase@2.117.0 gen types typescript --local > src/types/database.ts` |
 
 ### Test baseline and git hooks (2026-11-17, Windows)
 
@@ -111,6 +113,17 @@ Git hooks (Husky) run automatically and must pass. **Never bypass them with `--n
 - **pre-commit:** type-check of staged migrations, `oxlint`, Markdown lint, spellcheck (~1 min).
 - **pre-push:** `npm run build`, full coverage test run, Playwright E2E (~3–5 min). Keep the local
   stack up (`npm run supabase:up`) before pushing.
+
+**Type generation must use CLI v2.117.0.** Upstream's CI pins `supabase/setup-cli` to v2.117.0
+and diffs `src/types/database.ts` against its output, but `package.json` installs CLI 3.1.0, which
+formats the file completely differently. Always generate with `npx --yes supabase@2.117.0 …` from
+Git Bash (PowerShell redirection changes encoding/line endings). A correct regeneration only adds
+lines for our new objects.
+
+**Database tests need a clean database.** The Playwright E2E run (pre-push) leaves listed test
+campaigns behind, which makes upstream's public-directory pgTAP tests fail. Run
+`npm run supabase:reset` before `npx supabase test db`. Baseline after Phase 2a step 1: 1,002
+database tests pass.
 
 **Known flake:** under full parallel load, Vitest occasionally reports
 `EnvironmentTeardownError: Closing rpc while "onUserConsoleLog" was pending` from
