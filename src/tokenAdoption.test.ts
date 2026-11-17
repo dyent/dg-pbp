@@ -32,7 +32,7 @@ function listSourceFiles(): string[] {
 }
 
 function readSource(full: string): { rel: string; source: string } {
-  // DG-EXT: normalize Windows separators so `rel` matches the POSIX-style allowlist.
+  // FORK-EXT: normalize Windows separators so `rel` matches the POSIX-style allowlist.
   return { rel: full.slice(SRC_ROOT.length + 1).replaceAll('\\', '/'), source: readFileSync(full, 'utf8') }
 }
 

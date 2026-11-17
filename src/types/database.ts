@@ -687,292 +687,6 @@ export type Database = {
           },
         ]
       }
-      dg_agent_controllers: {
-        Row: {
-          channel_id: string
-          character_id: string
-          end_note: string | null
-          ended_at: string | null
-          id: string
-          started_at: string
-          user_id: string | null
-        }
-        Insert: {
-          channel_id: string
-          character_id: string
-          end_note?: string | null
-          ended_at?: string | null
-          id?: string
-          started_at?: string
-          user_id?: string | null
-        }
-        Update: {
-          channel_id?: string
-          character_id?: string
-          end_note?: string | null
-          ended_at?: string | null
-          id?: string
-          started_at?: string
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "dg_agent_controllers_channel_id_fkey"
-            columns: ["channel_id"]
-            isOneToOne: false
-            referencedRelation: "channels"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "dg_agent_controllers_character_id_fkey"
-            columns: ["character_id"]
-            isOneToOne: false
-            referencedRelation: "dg_characters"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "dg_agent_controllers_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      dg_character_events: {
-        Row: {
-          actor_id: string | null
-          channel_id: string
-          character_id: string
-          created_at: string
-          details: Json
-          event_type: string
-          id: string
-          note: string | null
-          visibility: string
-        }
-        Insert: {
-          actor_id?: string | null
-          channel_id: string
-          character_id: string
-          created_at?: string
-          details?: Json
-          event_type: string
-          id?: string
-          note?: string | null
-          visibility?: string
-        }
-        Update: {
-          actor_id?: string | null
-          channel_id?: string
-          character_id?: string
-          created_at?: string
-          details?: Json
-          event_type?: string
-          id?: string
-          note?: string | null
-          visibility?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "dg_character_events_actor_id_fkey"
-            columns: ["actor_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "dg_character_events_channel_id_fkey"
-            columns: ["channel_id"]
-            isOneToOne: false
-            referencedRelation: "channels"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "dg_character_events_character_id_fkey"
-            columns: ["character_id"]
-            isOneToOne: false
-            referencedRelation: "dg_characters"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      dg_character_fields: {
-        Row: {
-          body: string
-          channel_id: string
-          character_id: string
-          created_at: string
-          field_key: string | null
-          id: string
-          label: string
-          sort_order: number
-          updated_at: string
-          visibility: string
-        }
-        Insert: {
-          body?: string
-          channel_id: string
-          character_id: string
-          created_at?: string
-          field_key?: string | null
-          id?: string
-          label: string
-          sort_order?: number
-          updated_at?: string
-          visibility?: string
-        }
-        Update: {
-          body?: string
-          channel_id?: string
-          character_id?: string
-          created_at?: string
-          field_key?: string | null
-          id?: string
-          label?: string
-          sort_order?: number
-          updated_at?: string
-          visibility?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "dg_character_fields_channel_id_fkey"
-            columns: ["channel_id"]
-            isOneToOne: false
-            referencedRelation: "channels"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "dg_character_fields_character_id_fkey"
-            columns: ["character_id"]
-            isOneToOne: false
-            referencedRelation: "dg_characters"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      dg_characters: {
-        Row: {
-          aliases: string[]
-          channel_id: string
-          converted_to_npc_at: string | null
-          created_at: string
-          created_by: string | null
-          id: string
-          kind: string
-          name: string
-          npc_id: string | null
-          portrait_url: string | null
-          revealed: boolean
-          status: string
-          status_visible: boolean
-          updated_at: string
-        }
-        Insert: {
-          aliases?: string[]
-          channel_id: string
-          converted_to_npc_at?: string | null
-          created_at?: string
-          created_by?: string | null
-          id?: string
-          kind: string
-          name: string
-          npc_id?: string | null
-          portrait_url?: string | null
-          revealed?: boolean
-          status?: string
-          status_visible?: boolean
-          updated_at?: string
-        }
-        Update: {
-          aliases?: string[]
-          channel_id?: string
-          converted_to_npc_at?: string | null
-          created_at?: string
-          created_by?: string | null
-          id?: string
-          kind?: string
-          name?: string
-          npc_id?: string | null
-          portrait_url?: string | null
-          revealed?: boolean
-          status?: string
-          status_visible?: boolean
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "dg_characters_channel_id_fkey"
-            columns: ["channel_id"]
-            isOneToOne: false
-            referencedRelation: "channels"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "dg_characters_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "dg_characters_npc_id_fkey"
-            columns: ["npc_id"]
-            isOneToOne: false
-            referencedRelation: "channel_npcs"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      dg_posting_periods: {
-        Row: {
-          channel_id: string
-          character_id: string
-          ended_at: string | null
-          id: string
-          started_at: string
-          user_id: string | null
-        }
-        Insert: {
-          channel_id: string
-          character_id: string
-          ended_at?: string | null
-          id?: string
-          started_at: string
-          user_id?: string | null
-        }
-        Update: {
-          channel_id?: string
-          character_id?: string
-          ended_at?: string | null
-          id?: string
-          started_at?: string
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "dg_posting_periods_channel_id_fkey"
-            columns: ["channel_id"]
-            isOneToOne: false
-            referencedRelation: "channels"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "dg_posting_periods_character_id_fkey"
-            columns: ["character_id"]
-            isOneToOne: false
-            referencedRelation: "dg_characters"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "dg_posting_periods_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       dice_roll_favorites: {
         Row: {
           channel_id: string
@@ -1061,6 +775,292 @@ export type Database = {
           {
             foreignKeyName: "dice_rolls_roller_id_fkey"
             columns: ["roller_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ext_character_controllers: {
+        Row: {
+          channel_id: string
+          character_id: string
+          end_note: string | null
+          ended_at: string | null
+          id: string
+          started_at: string
+          user_id: string | null
+        }
+        Insert: {
+          channel_id: string
+          character_id: string
+          end_note?: string | null
+          ended_at?: string | null
+          id?: string
+          started_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          channel_id?: string
+          character_id?: string
+          end_note?: string | null
+          ended_at?: string | null
+          id?: string
+          started_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ext_character_controllers_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "channels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ext_character_controllers_character_id_fkey"
+            columns: ["character_id"]
+            isOneToOne: false
+            referencedRelation: "ext_characters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ext_character_controllers_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ext_character_events: {
+        Row: {
+          actor_id: string | null
+          channel_id: string
+          character_id: string
+          created_at: string
+          details: Json
+          event_type: string
+          id: string
+          note: string | null
+          visibility: string
+        }
+        Insert: {
+          actor_id?: string | null
+          channel_id: string
+          character_id: string
+          created_at?: string
+          details?: Json
+          event_type: string
+          id?: string
+          note?: string | null
+          visibility?: string
+        }
+        Update: {
+          actor_id?: string | null
+          channel_id?: string
+          character_id?: string
+          created_at?: string
+          details?: Json
+          event_type?: string
+          id?: string
+          note?: string | null
+          visibility?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ext_character_events_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ext_character_events_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "channels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ext_character_events_character_id_fkey"
+            columns: ["character_id"]
+            isOneToOne: false
+            referencedRelation: "ext_characters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ext_character_fields: {
+        Row: {
+          body: string
+          channel_id: string
+          character_id: string
+          created_at: string
+          field_key: string | null
+          id: string
+          label: string
+          sort_order: number
+          updated_at: string
+          visibility: string
+        }
+        Insert: {
+          body?: string
+          channel_id: string
+          character_id: string
+          created_at?: string
+          field_key?: string | null
+          id?: string
+          label: string
+          sort_order?: number
+          updated_at?: string
+          visibility?: string
+        }
+        Update: {
+          body?: string
+          channel_id?: string
+          character_id?: string
+          created_at?: string
+          field_key?: string | null
+          id?: string
+          label?: string
+          sort_order?: number
+          updated_at?: string
+          visibility?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ext_character_fields_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "channels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ext_character_fields_character_id_fkey"
+            columns: ["character_id"]
+            isOneToOne: false
+            referencedRelation: "ext_characters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ext_characters: {
+        Row: {
+          aliases: string[]
+          channel_id: string
+          converted_to_npc_at: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          kind: string
+          name: string
+          npc_id: string | null
+          portrait_url: string | null
+          revealed: boolean
+          status: string
+          status_visible: boolean
+          updated_at: string
+        }
+        Insert: {
+          aliases?: string[]
+          channel_id: string
+          converted_to_npc_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          kind: string
+          name: string
+          npc_id?: string | null
+          portrait_url?: string | null
+          revealed?: boolean
+          status?: string
+          status_visible?: boolean
+          updated_at?: string
+        }
+        Update: {
+          aliases?: string[]
+          channel_id?: string
+          converted_to_npc_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          kind?: string
+          name?: string
+          npc_id?: string | null
+          portrait_url?: string | null
+          revealed?: boolean
+          status?: string
+          status_visible?: boolean
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ext_characters_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "channels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ext_characters_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ext_characters_npc_id_fkey"
+            columns: ["npc_id"]
+            isOneToOne: false
+            referencedRelation: "channel_npcs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ext_posting_periods: {
+        Row: {
+          channel_id: string
+          character_id: string
+          ended_at: string | null
+          id: string
+          started_at: string
+          user_id: string | null
+        }
+        Insert: {
+          channel_id: string
+          character_id: string
+          ended_at?: string | null
+          id?: string
+          started_at: string
+          user_id?: string | null
+        }
+        Update: {
+          channel_id?: string
+          character_id?: string
+          ended_at?: string | null
+          id?: string
+          started_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ext_posting_periods_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "channels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ext_posting_periods_character_id_fkey"
+            columns: ["character_id"]
+            isOneToOne: false
+            referencedRelation: "ext_characters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ext_posting_periods_user_id_fkey"
+            columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -1979,7 +1979,8 @@ export type Database = {
         Args: { p_sub_channel_id: string }
         Returns: undefined
       }
-      dg__log_event: {
+      escape_markdown: { Args: { p_text: string }; Returns: string }
+      ext__log_event: {
         Args: {
           p_character_id: string
           p_details?: Json
@@ -1988,11 +1989,11 @@ export type Database = {
         }
         Returns: undefined
       }
-      dg__release_agent: {
+      ext__release_character: {
         Args: { p_character_id: string; p_note: string }
         Returns: string
       }
-      dg__set_posting: {
+      ext__set_posting: {
         Args: {
           p_channel_id: string
           p_character_id: string
@@ -2001,16 +2002,16 @@ export type Database = {
         }
         Returns: undefined
       }
-      dg_character_revealed: {
+      ext_character_revealed: {
         Args: { p_character_id: string }
         Returns: boolean
       }
-      dg_convert_to_npc: { Args: { p_character_id: string }; Returns: string }
-      dg_give_agent: {
+      ext_convert_to_npc: { Args: { p_character_id: string }; Returns: string }
+      ext_give_character: {
         Args: { p_character_id: string; p_user_id: string }
         Returns: string
       }
-      dg_list_revealed_characters: {
+      ext_list_revealed_characters: {
         Args: { p_channel_id: string }
         Returns: {
           id: string
@@ -2021,12 +2022,22 @@ export type Database = {
           updated_at: string
         }[]
       }
-      dg_post_as: { Args: { p_character_id: string }; Returns: undefined }
-      dg_take_agent: {
+      ext_post_as: { Args: { p_character_id: string }; Returns: undefined }
+      ext_posting_identities: {
+        Args: { p_channel_id: string }
+        Returns: {
+          character_id: string
+          ended_at: string
+          name: string
+          portrait_url: string
+          started_at: string
+          user_id: string
+        }[]
+      }
+      ext_take_character: {
         Args: { p_character_id: string; p_note?: string }
         Returns: undefined
       }
-      escape_markdown: { Args: { p_text: string }; Returns: string }
       get_admin_unread_count: { Args: { p_user_id: string }; Returns: number }
       get_admin_unread_totals: {
         Args: { p_user_ids: string[] }

@@ -11,7 +11,7 @@ function writeFile(path: string, body: string): void {
   writeFileSync(path, body, 'utf8')
 }
 
-// DG-EXT: skipped on Windows. The script needs a POSIX environment plus `jq`
+// FORK-EXT: skipped on Windows. The script needs a POSIX environment plus `jq`
 // (absent from Git for Windows), and these stubs build PATH with ':' separators.
 // The tool reports on upstream's hosted project; Linux CI still runs these tests.
 describe.skipIf(process.platform === 'win32')('scripts/usage-report/run.sh', () => {

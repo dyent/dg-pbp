@@ -18,6 +18,7 @@ import type { ChatMessage, Member } from './types'
 import { isNpcIconUrl } from './npcIcons'
 import { MAX_MESSAGE_LENGTH } from '../../constants'
 import { scrubSpoilers } from '../../lib/spoilerScrub'
+import { usePostAuthor } from '../ext/authorship/authorshipContext' // FORK-EXT: character post authorship
 
 type Message = ChatMessage
 
@@ -289,7 +290,12 @@ export const MessageItem = memo(function MessageItem({ message, currentUserId, i
     || (userId === currentUserId ? 'You' : 'Someone')
 
   const senderMember = members?.find(m => m.user_id === message.sender_id)
-  const senderName = message.npc_name || senderMember?.character_name || message.sender?.display_name
+  // FORK-EXT: label the post with the character its author was posting as at the
+  // time (fork, Phase 2a). Null outside any posting period, so the
+  // upstream name/portrait lookup below applies unchanged.
+  const postAuthor = usePostAuthor(message.type === 'npc' || message.type === 'system' ? null : message.sender_id, message.created_at)
+  const characterAvatarUrl = postAuthor ? postAuthor.portraitUrl : senderMember?.character_avatar_url
+  const senderName = message.npc_name || postAuthor?.name || senderMember?.character_name || message.sender?.display_name
   const replySenderName = message.reply?.sender_id ? members?.find(m => m.user_id === message.reply?.sender_id)?.character_name : undefined
 
   const systemAttributes = useMemo(() => getSystemAttributes(gameSystem), [gameSystem])
@@ -971,10 +977,10 @@ img: ({ node: _node, src, alt, ...props }: React.ComponentProps<'img'> & { node?
               {message.npc_name?.[0]?.toUpperCase() || '?'}
             </div>
           )
-        ) : senderMember?.character_avatar_url ? (
+        ) : characterAvatarUrl ? (
           // Per-channel character portrait (#743): it replaces the account
-          // picture for this channel only.
-          <Avatar className="h-10 w-10 rounded-full flex-shrink-0" src={senderMember.character_avatar_url} alt="" referrerPolicy="no-referrer" />
+          // picture for this channel only. FORK-EXT: the character's portrait when known.
+          <Avatar className={`h-10 w-10 rounded-full flex-shrink-0 ${isNpcIconUrl(characterAvatarUrl) ? 'dark:invert' : ''}`} src={characterAvatarUrl} alt="" referrerPolicy="no-referrer" />
         ) : message.sender?.avatar_url ? (
           <Avatar className="h-10 w-10 rounded-full flex-shrink-0" src={message.sender.avatar_url} alt="" referrerPolicy="no-referrer" />
         ) : (

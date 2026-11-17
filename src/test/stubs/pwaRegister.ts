@@ -1,4 +1,4 @@
-// DG-EXT: test-only stand-in for vite-plugin-pwa's `virtual:pwa-register`.
+// FORK-EXT: test-only stand-in for vite-plugin-pwa's `virtual:pwa-register`.
 // On Windows, Vitest resolves the plugin's virtual module id to an invalid
 // `file:///@vite-plugin-pwa/...` URL, so every suite that imports the app
 // shell fails to load. vite.config.ts aliases the id to this file on win32

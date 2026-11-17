@@ -1,6 +1,7 @@
 import { useParams, Navigate, Link, useNavigate } from 'react-router-dom'
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { useChannel } from './useChannel'
+import { PostAuthorshipProvider } from '../ext/authorship/PostAuthorshipProvider' // FORK-EXT: character post authorship
 import { ChannelSettings } from './ChannelSettings'
 import { ChannelStatusBar } from './ChannelStatusBar'
 import { MemberList } from './MemberList'
@@ -555,6 +556,8 @@ export function ChannelView() {
   const currentActiveIds = members.filter(m => m.is_active_player && !m.is_blocked).map(m => m.user_id)
 
   return (
+    // FORK-EXT: makes "which character wrote this?" available to chat and roll history.
+    <PostAuthorshipProvider channelId={channel.id}>
     <div className="fixed inset-0 flex overflow-hidden bg-white dark:bg-surface-800">
       {/* Main Chat Area */}
       <div className="flex-1 flex flex-col min-w-0 bg-surface-50 dark:bg-surface-900 border-r border-surface-200 dark:border-surface-700">
@@ -1204,5 +1207,6 @@ export function ChannelView() {
         />
       )}
     </div>
+    </PostAuthorshipProvider>
   )
 }

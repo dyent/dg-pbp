@@ -1,7 +1,16 @@
-# Phase 2a Plan: Agents, NPCs, Post Authorship, Activity Log
+# Phase 2a Plan: Characters, NPCs, Post Authorship, Activity Log
 
-*Drafted 2026-11-17, revised the same day after owner feedback. Status: **awaiting owner
-approval**.*
+*Drafted 2026-11-17, revised the same day after owner feedback, approved. Progress: steps 1–3
+done (database, stables and posting, authorship in chat and roll history); steps 4–6 to do.*
+
+> **Update 2026-11-17: generic terminology (DECISIONS.md #12–#16).** This plan was written with
+> Delta Green words. The character system is generic, so read **Handler → GM**, **agent → player
+> character (PC)**, **"What the agents know" → "Player-visible"**, **Handler-only → GM-only**.
+> Database names are now `ext_…` (e.g. `ext_characters`, `ext_character_controllers`,
+> `ext_posting_periods`, `ext_give_character`, `ext_post_as`); kind values `pc`/`npc`;
+> visibility values `players`/`gm`. Code lives in `src/features/ext/`; upstream hook points are
+> marked `FORK-EXT:`. The "Speak as this NPC" link is replaced by **inline NPC tags** in GM posts
+> (see step 6 and the note under Screens). The sections below keep the originally approved wording; table and function names have been updated.
 
 ## Goal
 
@@ -31,9 +40,9 @@ sheets in Phase 5), AI summaries of activity (Phase 4).
 
 A character has a small **core record** plus any number of **profile fields**:
 
-- **Core** (`dg_characters`): kind (agent/NPC), name, aliases, portrait, status, whether the
+- **Core** (`ext_characters`): kind (agent/NPC), name, aliases, portrait, status, whether the
   character is **revealed to the agents** at all, link to the NPC posting identity.
-- **Fields** (`dg_character_fields`): label + text + a visibility toggle (**Agent-visible** /
+- **Fields** (`ext_character_fields`): label + text + a visibility toggle (**Agent-visible** /
   **Handler-only**), in an order the Handler chooses. Standard fields are created automatically;
   the Handler can add custom ones (e.g. "Cover identity", "Known associates").
 
@@ -67,8 +76,8 @@ Two separate histories:
 
 | Table | Records | Example |
 |---|---|---|
-| `dg_agent_controllers` | Which player controls which agent, from when to when. **Max 3 at once per player** | Sam controls Reyes and Okafor |
-| `dg_posting_periods` | Which agent a player is **posting as**, from when to when. One at a time per player | Sam posts as Reyes until 3 Mar, then as Okafor |
+| `ext_character_controllers` | Which player controls which agent, from when to when. **Max 3 at once per player** | Sam controls Reyes and Okafor |
+| `ext_posting_periods` | Which agent a player is **posting as**, from when to when. One at a time per player | Sam posts as Reyes until 3 Mar, then as Okafor |
 
 Any post or dice roll is matched to the posting period that covers its timestamp, and shown under
 that agent's name and portrait:
@@ -93,10 +102,10 @@ Sam ── posting as Reyes   1 Dec → 3 Mar   (Reyes sidelined: "temporarily u
 
 | Function | Who | What it does |
 |---|---|---|
-| `dg_give_agent(agent, player)` | Handler | Adds the agent to the player's stable (max 3). If the player has no current agent, they start posting as this one. The first period starts when the player joined, so their earlier posts are attributed too |
-| `dg_take_agent(agent, note?)` | Handler | Removes the agent from the player's stable (e.g. died, retired). Ends their posting period if active |
-| `dg_post_as(agent)` | Player or Handler | Switches the player's posting identity to another active agent they control |
-| `dg_convert_to_npc(agent)` | Handler | Kind → NPC, removes from any stable, creates/links an NPC posting identity with the same name and portrait. All fields, history and past posts kept |
+| `ext_give_character(agent, player)` | Handler | Adds the agent to the player's stable (max 3). If the player has no current agent, they start posting as this one. The first period starts when the player joined, so their earlier posts are attributed too |
+| `ext_take_character(agent, note?)` | Handler | Removes the agent from the player's stable (e.g. died, retired). Ends their posting period if active |
+| `ext_post_as(agent)` | Player or Handler | Switches the player's posting identity to another active agent they control |
+| `ext_convert_to_npc(agent)` | Handler | Kind → NPC, removes from any stable, creates/links an NPC posting identity with the same name and portrait. All fields, history and past posts kept |
 
 Plain edits (status, fields, reveal) are ordinary updates. Triggers write the history entries
 automatically, so they can't be skipped.
@@ -131,13 +140,13 @@ summarise an NPC's activity from this same log.
 
 | Table | Players can read | Handler | Written by |
 |---|---|---|---|
-| `dg_characters` | Revealed characters | All | Handler |
-| `dg_character_fields` | Agent-visible fields of revealed characters | All | Handler |
-| `dg_agent_controllers` | Their campaign's rows | All | Functions only |
-| `dg_posting_periods` | Their campaign's rows | All | Functions only |
-| `dg_character_events` | Agent-visible events of revealed characters | All | Triggers, functions, and Handler notes |
+| `ext_characters` | Revealed characters | All | Handler |
+| `ext_character_fields` | Agent-visible fields of revealed characters | All | Handler |
+| `ext_character_controllers` | Their campaign's rows | All | Functions only |
+| `ext_posting_periods` | Their campaign's rows | All | Functions only |
+| `ext_character_events` | Agent-visible events of revealed characters | All | Triggers, functions, and Handler notes |
 
-Plus a read-only function `dg_character_activity(character, …)` that assembles the timeline,
+Plus a read-only function `ext_character_activity(character, …)` that assembles the timeline,
 running with the viewer's own permissions.
 
 ---
@@ -156,17 +165,24 @@ running with the viewer's own permissions.
 - **Portraits:** reuse upstream's game-icons portrait picker plus "paste an image URL".
 - Works on phone and desktop.
 
+**NPC voices in posts (owner feedback, DECISIONS.md #16):** PBP GMs often voice several NPCs in a
+single post, so a per-post "Speak as this NPC" mode isn't enough. Instead, GM posts will support
+**inline NPC tags**: a lightweight marker in the post text that renders that passage with the
+NPC's name and portrait and links it to the NPC's profile (so it also appears in that NPC's
+activity log). The exact syntax and composer helper (e.g. an NPC picker that inserts the tag) will
+be designed and agreed before building. Upstream's one-NPC-per-post mode remains available.
+
 ---
 
 ## Files
 
-**New (ours):** `supabase/migrations/<ts>_dg_characters.sql`,
-`supabase/migrations/<ts>_dg_agent_control.sql`, `supabase/migrations/<ts>_dg_character_activity.sql`,
-matching `supabase/tests/…` files, `src/features/dg/characters/…`,
-`src/features/dg/authorship/…`, `src/features/dg/activity/…`, docs and a short player/Handler
+**New (ours):** `supabase/migrations/<ts>_ext_characters.sql`,
+`supabase/migrations/<ts>_ext_character_control.sql`, `supabase/migrations/<ts>_ext_character_activity.sql`,
+matching `supabase/tests/…` files, `src/features/ext/characters/…`,
+`src/features/ext/authorship/…`, `src/features/ext/activity/…`, docs and a short player/Handler
 guide.
 
-**Upstream files touched (small, marked `DG-EXT:`):**
+**Upstream files touched (small, marked `FORK-EXT:`):**
 
 | File | Change |
 |---|---|
@@ -185,9 +201,10 @@ guide.
    of 3, switching only to active agents, conversion).
 3. **Authorship in chat & roll history:** provider + the two small hooks. *Check: switching agents
    leaves old posts and rolls with the old agent.*
-4. **Handler panel:** list, profile with toggles, status, stables, conversion.
+4. **GM panel:** list, profile with toggles, status, stables, conversion.
 5. **Player view & "Posting as" switcher:** checked with a second test account.
-6. **Activity log:** timeline function + UI + Handler log entries.
+6. **Activity log:** timeline function + UI + GM log entries. Inline NPC tags (design first)
+   either join this step or become their own step; decided when we get there.
 
 Each step ends with the full test suite, a click-through in the local app, and a commit. You can
 stop and review after any step.

@@ -1,7 +1,7 @@
 import { defineConfig } from 'vitest/config'
 import { loadEnv } from 'vite'
 import { readFileSync } from 'node:fs'
-import { fileURLToPath } from 'node:url' // DG-EXT: used by the win32 PWA test stub alias
+import { fileURLToPath } from 'node:url' // FORK-EXT: used by the win32 PWA test stub alias
 import type { Plugin } from 'rollup'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
@@ -86,7 +86,7 @@ export default defineConfig(({ command, mode }) => {
     alias: {
       'npm:zod@^4': 'zod',
       'npm:zod': 'zod',
-      // DG-EXT: Windows-only stub for the PWA virtual module (see the stub file).
+      // FORK-EXT: Windows-only stub for the PWA virtual module (see the stub file).
       ...(process.platform === 'win32'
         ? { 'virtual:pwa-register': fileURLToPath(new URL('./src/test/stubs/pwaRegister.ts', import.meta.url)) }
         : {}),

@@ -46,7 +46,7 @@ function assertThumbsOnDisk(sources: Array<string | null>) {
   for (const source of sources) {
     expect(source).toMatch(/^\/help-images\/thumbs\/.+\.webp$/)
     const thumbPath = resolve(process.cwd(), 'public', (source as string).slice(1))
-    // DG-EXT: derive from the URL, not the OS path, so it works with Windows separators.
+    // FORK-EXT: derive from the URL, not the OS path, so it works with Windows separators.
     const fullPath = resolve(
       process.cwd(),
       'public',
