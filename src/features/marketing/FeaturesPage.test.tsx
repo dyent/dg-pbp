@@ -46,7 +46,12 @@ function assertThumbsOnDisk(sources: Array<string | null>) {
   for (const source of sources) {
     expect(source).toMatch(/^\/help-images\/thumbs\/.+\.webp$/)
     const thumbPath = resolve(process.cwd(), 'public', (source as string).slice(1))
-    const fullPath = thumbPath.replace('/thumbs/', '/').replace(/\.webp$/, '.png')
+    // DG-EXT: derive from the URL, not the OS path, so it works with Windows separators.
+    const fullPath = resolve(
+      process.cwd(),
+      'public',
+      (source as string).slice(1).replace('/thumbs/', '/').replace(/\.webp$/, '.png'),
+    )
     expect(existsSync(thumbPath)).toBe(true)
     expect(statSync(thumbPath).size).toBeLessThan(statSync(fullPath).size)
   }

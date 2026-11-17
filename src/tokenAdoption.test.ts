@@ -32,7 +32,8 @@ function listSourceFiles(): string[] {
 }
 
 function readSource(full: string): { rel: string; source: string } {
-  return { rel: full.slice(SRC_ROOT.length + 1), source: readFileSync(full, 'utf8') }
+  // DG-EXT: normalize Windows separators so `rel` matches the POSIX-style allowlist.
+  return { rel: full.slice(SRC_ROOT.length + 1).replaceAll('\\', '/'), source: readFileSync(full, 'utf8') }
 }
 
 const RAW_TOKEN_RE = /\b(?:indigo|gray)-\d/

@@ -95,13 +95,26 @@ Do **not** follow from AGENTS.md:
 | New migration | `npx supabase migration new dg_<name>` |
 | Regenerate DB types | `npx supabase gen types typescript --local > src/types/database.ts` |
 
-### Test baseline (2026-11-17, unmodified upstream `f964baa`, Windows)
+### Test baseline and git hooks (2026-11-17, Windows)
 
-`npx vitest run`: 3200 passed, 12 failed, 4 suites failed to load. **All failures are
-Windows-specific problems in upstream's tests, not app bugs**: backslash path separators
-(`tokenAdoption`, `FeaturesPage`), POSIX shell script tests (`scripts/usage-report/run.test.ts`),
-and the `virtual:pwa-register` module path (`App*.test.tsx`, `NotFound`, `RouteErrorBoundary`).
-Upstream CI runs on Linux. Treat these as the known baseline. Any *new* failure is ours.
+Upstream's suite originally had 12 Windows-only failures. We fixed them with small cross-platform
+test edits (listed in `docs/delta-green/UPSTREAM-TOUCHPOINTS.md`). The baseline is now **fully
+green**:
+
+- `npm run test:coverage`: 3245 passed, 11 skipped (`scripts/usage-report/run.test.ts`, skipped on
+  Windows only), ~93% line coverage. Thresholds: 80% lines/functions/statements, 81% branches.
+- `npx supabase test db`: 958 database tests pass.
+- `npx playwright test`: 36 end-to-end tests pass (needs the local stack running).
+
+Git hooks (Husky) run automatically and must pass. **Never bypass them with `--no-verify`.**
+
+- **pre-commit:** type-check of staged migrations, `oxlint`, Markdown lint, spellcheck (~1 min).
+- **pre-push:** `npm run build`, full coverage test run, Playwright E2E (~3–5 min). Keep the local
+  stack up (`npm run supabase:up`) before pushing.
+
+`npm run build` needs `VITE_CONTROLLER_NAME`/`VITE_CONTROLLER_EMAIL`. Locally they come from a
+gitignored `.env` with placeholder values (`supabase:up` rewrites `.env.local`, so they can't live
+there).
 
 ## Merging upstream updates
 
