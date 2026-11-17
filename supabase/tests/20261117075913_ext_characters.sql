@@ -219,7 +219,8 @@ SELECT is(
    WHERE character_id = '00000000-0000-0000-0000-0000000d8002' AND event_type = 'field_visibility_changed'),
   jsonb_build_object(
     'field_id', (SELECT id FROM ext_character_fields WHERE character_id = '00000000-0000-0000-0000-0000000d8002' AND field_key = 'appearance'),
-    'label', 'Appearance', 'from', 'gm', 'to', 'players'),
+    'label', 'Appearance', 'from', 'gm', 'to', 'players',
+    'private_from', false, 'private_to', false),
   'changing a field''s visibility is logged with from/to'
 );
 

@@ -781,58 +781,6 @@ export type Database = {
           },
         ]
       }
-      ext_character_controllers: {
-        Row: {
-          channel_id: string
-          character_id: string
-          end_note: string | null
-          ended_at: string | null
-          id: string
-          started_at: string
-          user_id: string | null
-        }
-        Insert: {
-          channel_id: string
-          character_id: string
-          end_note?: string | null
-          ended_at?: string | null
-          id?: string
-          started_at?: string
-          user_id?: string | null
-        }
-        Update: {
-          channel_id?: string
-          character_id?: string
-          end_note?: string | null
-          ended_at?: string | null
-          id?: string
-          started_at?: string
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "ext_character_controllers_channel_id_fkey"
-            columns: ["channel_id"]
-            isOneToOne: false
-            referencedRelation: "channels"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "ext_character_controllers_character_id_fkey"
-            columns: ["character_id"]
-            isOneToOne: false
-            referencedRelation: "ext_characters"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "ext_character_controllers_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       ext_character_events: {
         Row: {
           actor_id: string | null
@@ -899,7 +847,9 @@ export type Database = {
           created_at: string
           field_key: string | null
           id: string
+          item_type: string
           label: string
+          private: boolean
           sort_order: number
           updated_at: string
           visibility: string
@@ -911,7 +861,9 @@ export type Database = {
           created_at?: string
           field_key?: string | null
           id?: string
+          item_type?: string
           label: string
+          private?: boolean
           sort_order?: number
           updated_at?: string
           visibility?: string
@@ -923,7 +875,9 @@ export type Database = {
           created_at?: string
           field_key?: string | null
           id?: string
+          item_type?: string
           label?: string
+          private?: boolean
           sort_order?: number
           updated_at?: string
           visibility?: string
@@ -945,6 +899,39 @@ export type Database = {
           },
         ]
       }
+      ext_character_tags: {
+        Row: {
+          character_id: string
+          created_at: string
+          tag_id: string
+        }
+        Insert: {
+          character_id: string
+          created_at?: string
+          tag_id: string
+        }
+        Update: {
+          character_id?: string
+          created_at?: string
+          tag_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ext_character_tags_character_id_fkey"
+            columns: ["character_id"]
+            isOneToOne: false
+            referencedRelation: "ext_characters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ext_character_tags_tag_id_fkey"
+            columns: ["tag_id"]
+            isOneToOne: false
+            referencedRelation: "ext_tags"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ext_characters: {
         Row: {
           aliases: string[]
@@ -953,9 +940,11 @@ export type Database = {
           created_at: string
           created_by: string | null
           id: string
+          in_play: boolean
           kind: string
           name: string
           npc_id: string | null
+          owner_id: string | null
           portrait_url: string | null
           revealed: boolean
           status: string
@@ -969,9 +958,11 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           id?: string
+          in_play?: boolean
           kind: string
           name: string
           npc_id?: string | null
+          owner_id?: string | null
           portrait_url?: string | null
           revealed?: boolean
           status?: string
@@ -985,9 +976,11 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           id?: string
+          in_play?: boolean
           kind?: string
           name?: string
           npc_id?: string | null
+          owner_id?: string | null
           portrait_url?: string | null
           revealed?: boolean
           status?: string
@@ -1014,6 +1007,13 @@ export type Database = {
             columns: ["npc_id"]
             isOneToOne: false
             referencedRelation: "channel_npcs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ext_characters_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -1063,6 +1063,35 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ext_tags: {
+        Row: {
+          channel_id: string
+          created_at: string
+          id: string
+          name: string
+        }
+        Insert: {
+          channel_id: string
+          created_at?: string
+          id?: string
+          name: string
+        }
+        Update: {
+          channel_id?: string
+          created_at?: string
+          id?: string
+          name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ext_tags_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "channels"
             referencedColumns: ["id"]
           },
         ]
@@ -1980,6 +2009,10 @@ export type Database = {
         Returns: undefined
       }
       escape_markdown: { Args: { p_text: string }; Returns: string }
+      ext__event_visibility: {
+        Args: { p_kind: string; p_owner_id: string; p_revealed: boolean }
+        Returns: string
+      }
       ext__log_event: {
         Args: {
           p_character_id: string
@@ -1989,9 +2022,9 @@ export type Database = {
         }
         Returns: undefined
       }
-      ext__release_character: {
-        Args: { p_character_id: string; p_note: string }
-        Returns: string
+      ext__refresh_posting: {
+        Args: { p_channel_id: string; p_user_id: string }
+        Returns: undefined
       }
       ext__set_posting: {
         Args: {
@@ -2002,21 +2035,31 @@ export type Database = {
         }
         Returns: undefined
       }
-      ext_character_revealed: {
+      ext_can_edit_character: {
         Args: { p_character_id: string }
         Returns: boolean
       }
-      ext_convert_to_npc: { Args: { p_character_id: string }; Returns: string }
-      ext_give_character: {
-        Args: { p_character_id: string; p_user_id: string }
-        Returns: string
+      ext_can_read_entry: {
+        Args: {
+          p_character_id: string
+          p_private: boolean
+          p_visibility: string
+        }
+        Returns: boolean
+      }
+      ext_is_character_owner: {
+        Args: { p_character_id: string }
+        Returns: boolean
       }
       ext_list_revealed_characters: {
         Args: { p_channel_id: string }
         Returns: {
           id: string
+          in_play: boolean
+          is_mine: boolean
           kind: string
           name: string
+          owner_id: string
           portrait_url: string
           status: string
           updated_at: string
@@ -2034,8 +2077,18 @@ export type Database = {
           user_id: string
         }[]
       }
-      ext_take_character: {
-        Args: { p_character_id: string; p_note?: string }
+      ext_set_role: {
+        Args: {
+          p_character_id: string
+          p_in_play: boolean
+          p_kind: string
+          p_note?: string
+          p_owner_id: string
+        }
+        Returns: undefined
+      }
+      ext_update_my_character: {
+        Args: { p_character_id: string; p_name: string; p_portrait_url: string }
         Returns: undefined
       }
       get_admin_unread_count: { Args: { p_user_id: string }; Returns: number }

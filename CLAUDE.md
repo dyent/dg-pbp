@@ -131,8 +131,9 @@ lines for our new objects.
 
 **Database tests need a clean database.** The Playwright E2E run (pre-push) leaves listed test
 campaigns behind, which makes upstream's public-directory pgTAP tests fail. Run
-`npm run supabase:reset` before `npx supabase test db`. Baseline after Phase 2a step 3: 1,053
-database tests pass.
+`npm run supabase:reset` before `npx supabase test db`. Baseline after Phase 2a step 4a: 1,071
+database tests pass. Who-can-see-what is documented in `docs/delta-green/PERMISSIONS.md`; keep it
+in step with any access change.
 
 **Our migrations were rewritten in place once** (2026-11-17, `dg_` → `ext_` and generic terms)
 because nothing had been deployed. From the first deployment onwards, applied migrations are
