@@ -112,6 +112,11 @@ Git hooks (Husky) run automatically and must pass. **Never bypass them with `--n
 - **pre-push:** `npm run build`, full coverage test run, Playwright E2E (~3–5 min). Keep the local
   stack up (`npm run supabase:up`) before pushing.
 
+**Known flake:** under full parallel load, Vitest occasionally reports
+`EnvironmentTeardownError: Closing rpc while "onUserConsoleLog" was pending` from
+`src/features/channels/ChannelView.test.tsx`, with every test passing. It's upstream timing, and it
+passes when re-run alone. If the pre-push hook fails *only* on this, re-run the push.
+
 `npm run build` needs `VITE_CONTROLLER_NAME`/`VITE_CONTROLLER_EMAIL`. Locally they come from a
 gitignored `.env` with placeholder values (`supabase:up` rewrites `.env.local`, so they can't live
 there).
