@@ -1,5 +1,6 @@
 import { usePwaInstall } from '../hooks/usePwaInstall'
 import { useEscapeToClose } from '../hooks/useEscapeToClose'
+import { APP_NAME } from '../features/ext/branding' // FORK-EXT: configurable display name
 
 interface BannerActions {
   install: () => Promise<void>
@@ -25,12 +26,12 @@ function PwaInstallBannerInner({ install, dismiss }: BannerActions) {
     <div
       className="pointer-events-auto flex items-center gap-3 rounded-lg bg-white dark:bg-gray-800 shadow-lg border border-gray-200 dark:border-gray-700 px-4 py-3 max-w-[calc(100vw-2rem)]"
       role="region"
-      aria-label="Install Role by Post"
+      aria-label={`Install ${APP_NAME}`}
       data-testid="pwa-install-banner"
     >
       <img src="/RoleByPost.png" alt="" className="w-9 h-9 rounded shrink-0" />
       <div className="min-w-0">
-        <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">Install Role by Post</p>
+        <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">Install {APP_NAME}</p>
         <p className="text-xs text-gray-600 dark:text-gray-400">One-tap access and offline play.</p>
       </div>
       <div className="flex items-center gap-2 shrink-0 ml-2">

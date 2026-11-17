@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { ThemeToggle } from '../../components/ThemeToggle'
+import { APP_NAME } from '../ext/branding' // FORK-EXT: configurable display name
 
 // Slim header for signed-out visitors on public content and help pages
 // (issue #644). Signed-in users already get the app header, so pages render
@@ -9,7 +10,7 @@ export function MarketingHeader() {
     <header className="flex items-center justify-between gap-2 px-4 sm:px-6 py-3 max-w-3xl mx-auto w-full">
       <Link to="/" className="flex items-center gap-2 text-lg font-bold text-surface-900 dark:text-surface-100">
         <img src="/RoleByPost.png" alt="" width={32} height={32} className="w-8 h-8 rounded" />
-        Role by Post
+        {APP_NAME}
       </Link>
       <div className="flex items-center gap-2">
         <ThemeToggle />

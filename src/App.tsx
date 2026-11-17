@@ -1,4 +1,5 @@
 import { useEdgeSwipe } from './hooks/useEdgeSwipe'
+import { APP_NAME } from './features/ext/branding' // FORK-EXT: configurable display name
 import { useEscapeToClose } from './hooks/useEscapeToClose'
 import { useFocusTrap } from './hooks/useFocusTrap'
 import { useTheme } from './hooks/useTheme'
@@ -229,7 +230,7 @@ function AppNav() {
     <header className="bg-white dark:bg-surface-800 shadow-sm p-4 flex justify-between items-center gap-2 relative z-50">
       <Link to="/" replace className="flex items-center gap-2 text-lg font-bold text-surface-900 dark:text-surface-100 hover:text-primary-600 dark:hover:text-primary-400 transition-colors truncate min-w-0">
         <img src="/RoleByPost.png" alt="" className="w-8 h-8 rounded" />
-        Role by Post
+        {APP_NAME /* FORK-EXT: configurable display name */}
       </Link>
       
       <div className="flex items-center flex-shrink-0 gap-2">

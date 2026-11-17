@@ -1,4 +1,5 @@
 import { PUBLIC_ROUTES, ROUTES, normalizePath } from './publicRoutes'
+import { APP_NAME } from '../features/ext/branding' // FORK-EXT: configurable display name
 
 // Titles for the app's own routes — the client-rendered, noindex screens behind
 // sign-in.
@@ -27,9 +28,9 @@ const APP_ROUTE_TITLES: { pattern: string; title: string }[] = [
   { pattern: ROUTES.login, title: 'Sign in' },
 ]
 
-const SUFFIX = ' — Role by Post'
+const SUFFIX = ` — ${APP_NAME}` // FORK-EXT: configurable display name
 // An unmatched path renders the not-found screen, which titles itself this way.
-const DEFAULT_TITLE = 'Page not found — Role by Post'
+const DEFAULT_TITLE = `Page not found — ${APP_NAME}`
 
 function patternToRegExp(pattern: string): RegExp {
   const escaped = pattern

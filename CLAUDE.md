@@ -1,9 +1,16 @@
 # CLAUDE.md: Delta Green PBP (fork of Role by Post)
 
-Personal, AI-assisted Delta Green play-by-post platform. It extends
+Personal, AI-assisted play-by-post platform, built for running a Delta Green campaign. It extends
 [alvarocavalcanti/ttrpgpbp](https://github.com/alvarocavalcanti/ttrpgpbp) ("upstream") without
-rewriting it. The owner is a Handler with limited coding experience, so explain decisions in plain
+rewriting it. The owner is a GM with limited coding experience, so explain decisions in plain
 language, work in small steps, and ask before architectural changes.
+
+## Terminology: generic unless Delta Green-specific (DECISIONS.md #12)
+
+Features that any game could use stay **system-agnostic**: say **GM**, **player**, **character /
+PC**, **NPC** in code, database values, UI text and docs. Delta Green words (Handler, Agent,
+Sanity, Bonds, Home scenes) appear only in features that genuinely implement Delta Green rules.
+Test data may use Delta Green flavour names.
 
 Read first: [docs/delta-green/00-repository-assessment.md](docs/delta-green/00-repository-assessment.md)
 (architecture + plan) and [docs/delta-green/DECISIONS.md](docs/delta-green/DECISIONS.md) (decision log).
@@ -39,33 +46,35 @@ Do **not** follow from AGENTS.md:
 - **Backend:** Supabase. Postgres with Row-Level Security (RLS) on every table, `SECURITY DEFINER`
   RPCs for writes, Realtime, Storage (`images` bucket, private), Auth (Google OAuth).
 - **Server code:** Supabase Edge Functions (Deno) in `supabase/functions/`.
-- **Mapping:** channel = campaign · channel GM = Handler · room (`sub_channels`) = scene/thread ·
+- **Mapping:** channel = campaign · channel GM = GM · room (`sub_channels`) = scene/thread ·
   `channel_npcs` = NPC posting identities (name + portrait only).
-- Message author names are resolved **live** from `channel_members.character_name`
-  (`src/features/chat/MessageItem.tsx`), so character rotation needs our own per-post author record.
+- Upstream resolves message author names **live** from `channel_members.character_name`. Our
+  posting periods (`ext_posting_periods`) + `PostAuthorshipProvider` label each post and roll with
+  the character active at the time instead.
 
 ## Isolation conventions (keep upstream merges easy)
 
 | What | Where / how |
 |---|---|
-| Our tables, RPCs | Prefix `dg_` in schema `public`. Reference upstream tables by FK; don't alter them |
-| Our migrations | `supabase/migrations/<timestamp>_dg_<name>.sql`; log each one in `docs/delta-green/MIGRATIONS.md` |
-| Our DB tests | `supabase/tests/<timestamp>_dg_<name>.sql` |
-| Our frontend | `src/features/dg/` |
-| Our Edge Functions | `supabase/functions/dg-*` (AI: `dg-ai-*`) |
+| Our tables, RPCs | Schema `public`, prefixed **`ext_`** for generic fork features (characters, posting, activity, campaign records) and **`dg_`** only for Delta Green-specific rules (Sanity, Bonds…). Internal helpers use a double underscore (`ext__…`) and get no API grants. Reference upstream tables by FK; don't alter them |
+| Our migrations | `supabase/migrations/<timestamp>_ext_<name>.sql` (or `_dg_`); log each one in `docs/delta-green/MIGRATIONS.md` |
+| Our DB tests | `supabase/tests/<timestamp>_ext_<name>.sql` (or `_dg_`) |
+| Our frontend | `src/features/ext/` (generic), `src/features/dg/` (Delta Green-specific, later) |
+| Our Edge Functions | `supabase/functions/ext-*` (AI: `ext-ai-*`) |
 | Our docs | `docs/delta-green/` |
-| Edits to upstream files | Minimal hook points only, marked with a `// DG-EXT:` comment (or `-- DG-EXT:` in SQL). List them in `docs/delta-green/UPSTREAM-TOUCHPOINTS.md` |
+| Edits to upstream files | Minimal hook points only, marked with a `// FORK-EXT:` comment (or `-- FORK-EXT:` in SQL). List them in `docs/delta-green/UPSTREAM-TOUCHPOINTS.md` |
+| App display name | `VITE_APP_NAME` (default "Role by Post"); locally in gitignored `.env.development.local` so tests keep the default. Read via `APP_NAME` in `src/features/ext/branding.ts`. Upstream credit (About/legal pages) stays "Role by Post" |
 
 ## Core product rules (non-negotiable)
 
-- **Three kinds of information:** `source` (published adventure), `canon` (Handler-approved), and
+- **Three kinds of information:** `source` (published adventure), `canon` (GM-approved), and
   `ai_suggestion`. Source never overrides canon.
 - **AI never writes canon, character stats or Bond values directly.** AI output goes to a proposals
-  table for Handler approval.
-- **Knowledge belongs to characters, not players.** A replacement agent doesn't inherit a dead
-  agent's knowledge.
+  table for GM approval.
+- **Knowledge belongs to characters, not players.** A replacement character doesn't inherit a dead
+  character's knowledge.
 - **Privacy is enforced by RLS and retrieval, not by prompting.** Player-facing AI fetches context
-  with the player's own JWT so Handler-only data can't be retrieved.
+  with the player's own JWT so GM-only data can't be retrieved.
 - **Rules maths is deterministic code** (DB functions), never the AI.
 - **AI calls are event-driven** (button/explicit trigger), with minimal retrieved context, cheap
   models for routine work, and usage logging. The Anthropic API key lives only in Supabase secrets.
@@ -122,8 +131,12 @@ lines for our new objects.
 
 **Database tests need a clean database.** The Playwright E2E run (pre-push) leaves listed test
 campaigns behind, which makes upstream's public-directory pgTAP tests fail. Run
-`npm run supabase:reset` before `npx supabase test db`. Baseline after Phase 2a step 2: 1,047
+`npm run supabase:reset` before `npx supabase test db`. Baseline after Phase 2a step 3: 1,053
 database tests pass.
+
+**Our migrations were rewritten in place once** (2026-11-17, `dg_` → `ext_` and generic terms)
+because nothing had been deployed. From the first deployment onwards, applied migrations are
+immutable: fix forward with a new migration.
 
 **Known flake:** under full parallel load, Vitest occasionally reports
 `EnvironmentTeardownError: Closing rpc while "onUserConsoleLog" was pending` from

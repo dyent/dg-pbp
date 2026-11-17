@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
+import { APP_NAME } from '../ext/branding' // FORK-EXT: configurable display name
 import { Link, Navigate, useLocation, useSearchParams } from 'react-router-dom'
 import { useAuth } from './useAuth'
 import { isSafeRedirectPath } from './AuthContext'
@@ -156,8 +157,8 @@ export function LoginPage() {
     <div className="min-h-screen bg-surface-50 dark:bg-surface-900 px-4 sm:px-6 lg:px-8 flex flex-col items-center justify-center py-10 relative">
       <Seo
         path="/login"
-        title="Sign in — Role by Post"
-        description="Sign in to Role by Post with Google or a one-time email link."
+        title={`Sign in — ${APP_NAME}`}
+        description={`Sign in to ${APP_NAME} with Google or a one-time email link.`}
         noindex
       />
       <div className="absolute top-4 right-4">
@@ -167,9 +168,9 @@ export function LoginPage() {
         <div className="max-w-md w-full mx-auto bg-white dark:bg-surface-800 rounded-xl shadow-md p-8">
           <div>
             <div className="flex items-center justify-center gap-3 mt-6">
-              <img src="/RoleByPost.png" alt="Role by Post" width={48} height={48} className="w-12 h-12 rounded" />
+              <img src="/RoleByPost.png" alt={APP_NAME} width={48} height={48} className="w-12 h-12 rounded" />
               <h1 className="text-3xl font-extrabold text-surface-900 dark:text-surface-100">
-                Role by Post
+                {APP_NAME /* FORK-EXT: configurable display name */}
               </h1>
             </div>
             <p className="mt-4 text-center text-base font-medium text-surface-900 dark:text-surface-100">
