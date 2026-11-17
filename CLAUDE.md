@@ -122,7 +122,7 @@ lines for our new objects.
 
 **Database tests need a clean database.** The Playwright E2E run (pre-push) leaves listed test
 campaigns behind, which makes upstream's public-directory pgTAP tests fail. Run
-`npm run supabase:reset` before `npx supabase test db`. Baseline after Phase 2a step 1: 1,002
+`npm run supabase:reset` before `npx supabase test db`. Baseline after Phase 2a step 2: 1,047
 database tests pass.
 
 **Known flake:** under full parallel load, Vitest occasionally reports

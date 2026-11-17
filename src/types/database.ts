@@ -687,6 +687,58 @@ export type Database = {
           },
         ]
       }
+      dg_agent_controllers: {
+        Row: {
+          channel_id: string
+          character_id: string
+          end_note: string | null
+          ended_at: string | null
+          id: string
+          started_at: string
+          user_id: string | null
+        }
+        Insert: {
+          channel_id: string
+          character_id: string
+          end_note?: string | null
+          ended_at?: string | null
+          id?: string
+          started_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          channel_id?: string
+          character_id?: string
+          end_note?: string | null
+          ended_at?: string | null
+          id?: string
+          started_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dg_agent_controllers_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "channels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dg_agent_controllers_character_id_fkey"
+            columns: ["character_id"]
+            isOneToOne: false
+            referencedRelation: "dg_characters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dg_agent_controllers_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       dg_character_events: {
         Row: {
           actor_id: string | null
@@ -868,6 +920,55 @@ export type Database = {
             columns: ["npc_id"]
             isOneToOne: false
             referencedRelation: "channel_npcs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dg_posting_periods: {
+        Row: {
+          channel_id: string
+          character_id: string
+          ended_at: string | null
+          id: string
+          started_at: string
+          user_id: string | null
+        }
+        Insert: {
+          channel_id: string
+          character_id: string
+          ended_at?: string | null
+          id?: string
+          started_at: string
+          user_id?: string | null
+        }
+        Update: {
+          channel_id?: string
+          character_id?: string
+          ended_at?: string | null
+          id?: string
+          started_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dg_posting_periods_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "channels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dg_posting_periods_character_id_fkey"
+            columns: ["character_id"]
+            isOneToOne: false
+            referencedRelation: "dg_characters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dg_posting_periods_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -1878,9 +1979,36 @@ export type Database = {
         Args: { p_sub_channel_id: string }
         Returns: undefined
       }
+      dg__log_event: {
+        Args: {
+          p_character_id: string
+          p_details?: Json
+          p_event_type: string
+          p_note?: string
+        }
+        Returns: undefined
+      }
+      dg__release_agent: {
+        Args: { p_character_id: string; p_note: string }
+        Returns: string
+      }
+      dg__set_posting: {
+        Args: {
+          p_channel_id: string
+          p_character_id: string
+          p_started_at?: string
+          p_user_id: string
+        }
+        Returns: undefined
+      }
       dg_character_revealed: {
         Args: { p_character_id: string }
         Returns: boolean
+      }
+      dg_convert_to_npc: { Args: { p_character_id: string }; Returns: string }
+      dg_give_agent: {
+        Args: { p_character_id: string; p_user_id: string }
+        Returns: string
       }
       dg_list_revealed_characters: {
         Args: { p_channel_id: string }
@@ -1892,6 +2020,11 @@ export type Database = {
           status: string
           updated_at: string
         }[]
+      }
+      dg_post_as: { Args: { p_character_id: string }; Returns: undefined }
+      dg_take_agent: {
+        Args: { p_character_id: string; p_note?: string }
+        Returns: undefined
       }
       escape_markdown: { Args: { p_text: string }; Returns: string }
       get_admin_unread_count: { Args: { p_user_id: string }; Returns: number }
