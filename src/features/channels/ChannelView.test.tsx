@@ -21,6 +21,13 @@ vi.mock('./useChannel', () => ({
   useChannel: vi.fn()
 }))
 
+// FORK-EXT: our post-authorship provider loads posting periods and opens a
+// live-update channel; like the upstream data hooks above, keep it off the
+// network here (its real network calls caused teardown errors).
+vi.mock('../ext/authorship/usePostingIdentities', () => ({
+  usePostingIdentities: () => ({ identities: [], error: null })
+}))
+
 vi.mock('../chat/useMessages', () => ({
   useMessages: vi.fn()
 }))
@@ -1923,6 +1930,7 @@ describe('ChannelView search functionality', () => {
 
     // Table section (everyone) comes first, GM Tools (GM-only) after.
     expect(items).toEqual([
+      'Characters', // FORK-EXT: characters panel entry
       'Map',
       'Rolls',
       'Search',

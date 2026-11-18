@@ -2,6 +2,7 @@ import { useParams, Navigate, Link, useNavigate } from 'react-router-dom'
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { useChannel } from './useChannel'
 import { PostAuthorshipProvider } from '../ext/authorship/PostAuthorshipProvider' // FORK-EXT: character post authorship
+import { CharactersEntry } from '../ext/characters/CharactersEntry' // FORK-EXT: characters panel
 import { ChannelSettings } from './ChannelSettings'
 import { ChannelStatusBar } from './ChannelStatusBar'
 import { MemberList } from './MemberList'
@@ -910,6 +911,8 @@ export function ChannelView() {
           {/* Table tools — available to everyone (issue #346) */}
           <p className="px-4 pt-3 pb-1 text-xs font-semibold uppercase tracking-wider text-surface-400 dark:text-surface-400">Table</p>
           <div className="divide-y divide-surface-100 dark:divide-surface-700 border-t border-surface-100 dark:border-surface-700">
+            {/* FORK-EXT: characters panel (profiles, roles, posting as) */}
+            <CharactersEntry channelId={channel.id} isGM={isGM} isArchived={channel.is_archived} gmId={channel.gm_id} myUserId={user?.id} members={members} className={SIDEBAR_MENU_ITEM} />
             {channel.map_url && (
               <a
                 href={channel.map_url}

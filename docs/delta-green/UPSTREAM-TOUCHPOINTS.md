@@ -24,8 +24,14 @@ offer upstream as a pull request. If upstream accepts them, this section shrinks
 | `src/features/dice/RollHistoryModal.tsx` | Import `useAuthorLookup`; `authorAt` lookup; roller label prefers the character name | Label rolls with the character active at the time |
 | `src/features/channels/ChannelView.tsx` | Import `PostAuthorshipProvider`; wrap the main return's root `<div>` in it (inner JSX deliberately not re-indented to keep the diff small) | Provides the authorship lookup to chat and roll history |
 
-Tests for these hook points live in `src/features/ext/authorship/upstreamTouchpoints.test.tsx`, so
-upstream's own test files stay untouched.
+Tests for these hook points live in `src/features/ext/authorship/upstreamTouchpoints.test.tsx`.
+
+## Characters panel (Phase 2a step 4b)
+
+| Upstream file | What we changed | Why |
+|---|---|---|
+| `src/features/channels/ChannelView.tsx` | Import `CharactersEntry`; render it as the first item of the sidebar's *Table* section | Opens the characters panel. The panel itself renders through a portal (the sidebar is CSS-transformed) |
+| `src/features/channels/ChannelView.test.tsx` | `vi.mock` of our `usePostingIdentities` (like the upstream data hooks it already mocks); `'Characters'` added to the expected sidebar order | The provider's real network calls caused the "Closing rpc while onUserConsoleLog was pending" teardown errors (0 in 5 runs after the fix); the new menu item changes the list |
 
 ## Display name (DECISIONS.md #15)
 

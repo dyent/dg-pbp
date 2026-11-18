@@ -112,8 +112,9 @@ Upstream's suite originally had 12 Windows-only failures. We fixed them with sma
 test edits (listed in `docs/delta-green/UPSTREAM-TOUCHPOINTS.md`). The baseline is now **fully
 green**:
 
-- `npm run test:coverage`: 3245 passed, 11 skipped (`scripts/usage-report/run.test.ts`, skipped on
-  Windows only), ~93% line coverage. Thresholds: 80% lines/functions/statements, 81% branches.
+- `npm run test:coverage`: 3,436 passed, 11 skipped after Phase 2a step 4b
+  (`scripts/usage-report/run.test.ts`, skipped on Windows only), ~96% line coverage. Thresholds:
+  80% lines/functions/statements, 81% branches.
 - `npx supabase test db`: 958 database tests pass.
 - `npx playwright test`: 36 end-to-end tests pass (needs the local stack running).
 
@@ -139,10 +140,15 @@ in step with any access change.
 because nothing had been deployed. From the first deployment onwards, applied migrations are
 immutable: fix forward with a new migration.
 
-**Known flake:** under full parallel load, Vitest occasionally reports
-`EnvironmentTeardownError: Closing rpc while "onUserConsoleLog" was pending` from
-`src/features/channels/ChannelView.test.tsx`, with every test passing. It's upstream timing, and it
-passes when re-run alone. If the pre-push hook fails *only* on this, re-run the push.
+**Teardown errors (fixed 2026-11-18):** `EnvironmentTeardownError: Closing rpc while
+"onUserConsoleLog" was pending` from `ChannelView.test.tsx` was mostly caused by *our*
+post-authorship hook making real network calls inside upstream's test and logging after it ended.
+That test now mocks `usePostingIdentities`. Rule: when our code runs inside an upstream component,
+the upstream test must mock our data hooks (as it mocks upstream's own). If the error still appears
+occasionally under full load and every test passed, re-run the push.
+
+**Colours:** new code uses upstream's semantic Tailwind names (`primary-*`, `surface-*`), never raw
+`indigo-*` / `gray-*`; `src/tokenAdoption.test.ts` fails otherwise.
 
 `npm run build` needs `VITE_CONTROLLER_NAME`/`VITE_CONTROLLER_EMAIL`. Locally they come from a
 gitignored `.env` with placeholder values (`supabase:up` rewrites `.env.local`, so they can't live

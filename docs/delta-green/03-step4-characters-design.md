@@ -2,7 +2,8 @@
 
 *Agreed with the owner on 2026-11-17 (revising the step 4 mockup). Replaces steps 4–6 of
 `02-phase2a-plan.md`. Decisions: DECISIONS.md #17–#22. Progress: **4a done** (database; see
-`PERMISSIONS.md`); 4b–4d and 5 to do.*
+`PERMISSIONS.md`), **4b done** (characters panel; see `04-characters-panel.md`); 4c, 4d and 5 to
+do.*
 
 ## Direction
 
