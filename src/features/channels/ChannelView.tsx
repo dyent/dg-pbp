@@ -4,6 +4,7 @@ import { useChannel } from './useChannel'
 import { PostAuthorshipProvider } from '../ext/authorship/PostAuthorshipProvider' // FORK-EXT: character post authorship
 import { CharactersEntry } from '../ext/characters/CharactersEntry' // FORK-EXT: characters panel
 import { MySheetButton } from '../dg/sheet/MySheetButton' // FORK-EXT: "My sheet" pop-up
+import { FilesEntry } from '../ext/files/FilesEntry' // FORK-EXT: campaign files
 import { ChannelSettings } from './ChannelSettings'
 import { ChannelStatusBar } from './ChannelStatusBar'
 import { MemberList } from './MemberList'
@@ -916,6 +917,8 @@ export function ChannelView() {
           <div className="divide-y divide-surface-100 dark:divide-surface-700 border-t border-surface-100 dark:border-surface-700">
             {/* FORK-EXT: characters panel (profiles, roles, posting as) */}
             <CharactersEntry channelId={channel.id} isGM={isGM} isArchived={channel.is_archived} gmId={channel.gm_id} myUserId={user?.id} members={members} className={SIDEBAR_MENU_ITEM} />
+            {/* FORK-EXT: campaign files (handouts, case files, maps) */}
+            <FilesEntry channelId={channel.id} isGM={isGM} isArchived={channel.is_archived} gmId={channel.gm_id} myUserId={user?.id} members={members} className={SIDEBAR_MENU_ITEM} />
             {channel.map_url && (
               <a
                 href={channel.map_url}

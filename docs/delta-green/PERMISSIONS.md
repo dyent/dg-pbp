@@ -57,4 +57,22 @@ Every field addition, edit (old and new text), removal and visibility change is 
 history entry, and so is every sheet save (the list of changed values). A PC that becomes an NPC
 keeps its sheet, which becomes GM-only. Archived campaigns are read-only for everyone.
 
+## Campaign files
+
+Tests: `supabase/tests/*_ext_campaign_files.sql`. How to use: `06-campaign-files.md`.
+
+| What | GM | Player the file is shared with | Other player | Outsider |
+|---|---|---|---|---|
+| See and open a **GM only** file | Yes | No | No | No |
+| See and open an **All players** file | Yes | Yes | Yes | No |
+| See and open a **Chosen players** file | Yes | Yes | No | No |
+| Earlier versions | Yes | Same as the file | Same as the file | No |
+| Who a file is shared with; file history | Yes | No | No | No |
+| Add, replace, edit, share, delete | Yes (not in archived campaigns) | No | No | No |
+
+Sharing is with the player, not a character (DECISIONS.md #29). The stored files themselves follow
+the same rules (storage policies), so a copied storage path is useless without access. An "Open" or
+"Download" link already shown to a player keeps working for up to an hour, even if the file is
+unshared in the meantime.
+
 <!-- cspell:locale en-GB,en -->

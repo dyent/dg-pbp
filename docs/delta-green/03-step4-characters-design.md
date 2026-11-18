@@ -3,7 +3,8 @@
 *Agreed with the owner on 2026-11-17 (revising the step 4 mockup). Replaces steps 4–6 of
 `02-phase2a-plan.md`. Decisions: DECISIONS.md #17–#22. Progress: **4a done** (database; see
 `PERMISSIONS.md`), **4b done** (characters panel; see `04-characters-panel.md`), **4c done**
-(Delta Green sheet; see `05-dg-sheet.md`); 4d and 5 to do.*
+(Delta Green sheet; see `05-dg-sheet.md`), **4d done** (campaign files instead of PDF
+attachments; see `06-campaign-files.md`); 5 to do.*
 
 ## Direction
 
@@ -54,6 +55,10 @@ short stat block (always GM-only). Players get a **"My sheet"** pop-up reachable
 the campaign.
 
 ## PDF attachment (step 4d)
+
+*Replaced 2026-11-19 (DECISIONS.md #29): the built-in sheet makes PDF sheets unnecessary, so step
+4d became **campaign files** (handouts, case files, maps) shared per player. See
+`06-campaign-files.md`. The original plan, kept for the record:*
 
 Any character can have an attached PDF (e.g. a fillable official sheet): upload, view in the
 browser, download, replace with a new version (older versions kept). Editing a PDF inside the app

@@ -1931,6 +1931,7 @@ describe('ChannelView search functionality', () => {
     // Table section (everyone) comes first, GM Tools (GM-only) after.
     expect(items).toEqual([
       'Characters', // FORK-EXT: characters panel entry
+      'Files', // FORK-EXT: campaign files entry
       'Map',
       'Rolls',
       'Search',

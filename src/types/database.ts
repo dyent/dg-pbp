@@ -833,6 +833,183 @@ export type Database = {
           },
         ]
       }
+      ext_campaign_file_events: {
+        Row: {
+          actor_id: string | null
+          created_at: string
+          details: Json
+          file_id: string
+          id: string
+          kind: string
+        }
+        Insert: {
+          actor_id?: string | null
+          created_at?: string
+          details?: Json
+          file_id: string
+          id?: string
+          kind: string
+        }
+        Update: {
+          actor_id?: string | null
+          created_at?: string
+          details?: Json
+          file_id?: string
+          id?: string
+          kind?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ext_campaign_file_events_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ext_campaign_file_events_file_id_fkey"
+            columns: ["file_id"]
+            isOneToOne: false
+            referencedRelation: "ext_campaign_files"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ext_campaign_file_shares: {
+        Row: {
+          file_id: string
+          shared_at: string
+          user_id: string
+        }
+        Insert: {
+          file_id: string
+          shared_at?: string
+          user_id: string
+        }
+        Update: {
+          file_id?: string
+          shared_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ext_campaign_file_shares_file_id_fkey"
+            columns: ["file_id"]
+            isOneToOne: false
+            referencedRelation: "ext_campaign_files"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ext_campaign_file_shares_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ext_campaign_file_versions: {
+        Row: {
+          file_id: string
+          file_name: string
+          id: string
+          mime_type: string
+          object_path: string
+          size_bytes: number
+          uploaded_at: string
+          uploaded_by: string | null
+          version_no: number
+        }
+        Insert: {
+          file_id: string
+          file_name: string
+          id?: string
+          mime_type: string
+          object_path: string
+          size_bytes: number
+          uploaded_at?: string
+          uploaded_by?: string | null
+          version_no: number
+        }
+        Update: {
+          file_id?: string
+          file_name?: string
+          id?: string
+          mime_type?: string
+          object_path?: string
+          size_bytes?: number
+          uploaded_at?: string
+          uploaded_by?: string | null
+          version_no?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ext_campaign_file_versions_file_id_fkey"
+            columns: ["file_id"]
+            isOneToOne: false
+            referencedRelation: "ext_campaign_files"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ext_campaign_file_versions_uploaded_by_fkey"
+            columns: ["uploaded_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ext_campaign_files: {
+        Row: {
+          channel_id: string
+          created_at: string
+          created_by: string | null
+          description: string
+          folder: string
+          id: string
+          title: string
+          updated_at: string
+          visibility: string
+        }
+        Insert: {
+          channel_id: string
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          folder?: string
+          id?: string
+          title: string
+          updated_at?: string
+          visibility?: string
+        }
+        Update: {
+          channel_id?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          folder?: string
+          id?: string
+          title?: string
+          updated_at?: string
+          visibility?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ext_campaign_files_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "channels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ext_campaign_files_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ext_character_events: {
         Row: {
           actor_id: string | null
@@ -2109,6 +2286,18 @@ export type Database = {
         Returns: undefined
       }
       escape_markdown: { Args: { p_text: string }; Returns: string }
+      ext__check_campaign_file_object: {
+        Args: { p_channel_id: string; p_path: string }
+        Returns: Record<string, unknown>
+      }
+      ext__check_file_players: {
+        Args: {
+          p_channel_id: string
+          p_player_ids: string[]
+          p_visibility: string
+        }
+        Returns: string[]
+      }
       ext__event_visibility: {
         Args: { p_kind: string; p_owner_id: string; p_revealed: boolean }
         Returns: string
@@ -2131,6 +2320,10 @@ export type Database = {
         Args: { p_channel_id: string; p_user_id: string }
         Returns: undefined
       }
+      ext__require_files_gm: {
+        Args: { p_channel_id: string }
+        Returns: undefined
+      }
       ext__set_posting: {
         Args: {
           p_channel_id: string
@@ -2140,8 +2333,33 @@ export type Database = {
         }
         Returns: undefined
       }
+      ext_add_campaign_file: {
+        Args: {
+          p_channel_id: string
+          p_description: string
+          p_file_name: string
+          p_folder: string
+          p_object_path: string
+          p_player_ids: string[]
+          p_title: string
+          p_visibility: string
+        }
+        Returns: string
+      }
+      ext_campaign_file_path_channel: {
+        Args: { p_name: string }
+        Returns: string
+      }
       ext_can_edit_character: {
         Args: { p_character_id: string }
+        Returns: boolean
+      }
+      ext_can_read_campaign_file: {
+        Args: { p_file_id: string }
+        Returns: boolean
+      }
+      ext_can_read_campaign_file_object: {
+        Args: { p_name: string }
         Returns: boolean
       }
       ext_can_read_entry: {
@@ -2151,6 +2369,14 @@ export type Database = {
           p_visibility: string
         }
         Returns: boolean
+      }
+      ext_can_write_campaign_file_object: {
+        Args: { p_name: string }
+        Returns: boolean
+      }
+      ext_delete_campaign_file: {
+        Args: { p_file_id: string }
+        Returns: string[]
       }
       ext_is_character_owner: {
         Args: { p_character_id: string }
@@ -2183,6 +2409,10 @@ export type Database = {
           user_id: string
         }[]
       }
+      ext_replace_campaign_file: {
+        Args: { p_file_id: string; p_file_name: string; p_object_path: string }
+        Returns: number
+      }
       ext_set_my_status: {
         Args: { p_character_id: string; p_status: string }
         Returns: undefined
@@ -2195,6 +2425,17 @@ export type Database = {
           p_note?: string
           p_owner_id: string
           p_status?: string
+        }
+        Returns: undefined
+      }
+      ext_update_campaign_file: {
+        Args: {
+          p_description: string
+          p_file_id: string
+          p_folder: string
+          p_player_ids: string[]
+          p_title: string
+          p_visibility: string
         }
         Returns: undefined
       }

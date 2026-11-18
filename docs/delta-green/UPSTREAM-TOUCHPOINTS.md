@@ -58,6 +58,16 @@ No upstream *files* change for the step 4c follow-ups (Reserve, quick HP/WP/SAN,
 `20261118100834_ext_npc_posting_identities.sql` writes rows to upstream's `channel_npcs` table (data
 only, no schema change), so every NPC appears in upstream's *Speak as NPC* list.
 
+## Campaign files (Phase 2a step 4d)
+
+| Upstream file | What we changed | Why |
+|---|---|---|
+| `src/features/channels/ChannelView.tsx` | Import `FilesEntry`; render it after `CharactersEntry` in the sidebar's *Table* section | Opens the campaign files panel. It loads nothing until opened, so upstream's ChannelView tests need no new mocks |
+| `src/features/channels/ChannelView.test.tsx` | `'Files'` added to the expected sidebar order | The new menu item changes the list |
+
+The migration adds its own bucket and storage policies; upstream's `images` bucket, its rules and
+its clean-up are untouched.
+
 ## New files (no conflict risk)
 
 `CLAUDE.md`, `docs/delta-green/*`, `src/features/ext/**`, `src/features/dg/**`,

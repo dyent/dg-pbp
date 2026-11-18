@@ -23,7 +23,7 @@ interface CharactersEntryProps {
 }
 
 /** Account name of a member (character names change as they switch PCs). */
-function memberName(member: MemberLike): string {
+export function memberName(member: MemberLike): string {
   return member.profile?.display_name?.trim() || member.character_name?.trim() || 'Player'
 }
 

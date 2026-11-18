@@ -112,8 +112,8 @@ Upstream's suite originally had 12 Windows-only failures. We fixed them with sma
 test edits (listed in `docs/delta-green/UPSTREAM-TOUCHPOINTS.md`). The baseline is now **fully
 green**:
 
-- `npm run test:coverage`: 3,558 passed, 11 skipped after Phase 2a step 4c
-  and its follow-ups (`scripts/usage-report/run.test.ts`, skipped on Windows only), ~96% line coverage. Thresholds:
+- `npm run test:coverage`: 3,591 passed, 11 skipped after Phase 2a step 4d
+  (`scripts/usage-report/run.test.ts`, skipped on Windows only), ~96% line coverage. Thresholds:
   80% lines/functions/statements, 81% branches.
 - `npx supabase test db`: 958 database tests pass.
 - `npx playwright test`: 36 end-to-end tests pass (needs the local stack running).
@@ -132,8 +132,8 @@ lines for our new objects.
 
 **Database tests need a clean database.** The Playwright E2E run (pre-push) leaves listed test
 campaigns behind, which makes upstream's public-directory pgTAP tests fail. Run
-`npm run supabase:reset` before `npx supabase test db`. Baseline after Phase 2a step 4c and its
-follow-ups: 1,142 database tests pass. Who-can-see-what is documented in `docs/delta-green/PERMISSIONS.md`; keep it
+`npm run supabase:reset` before `npx supabase test db`. Baseline after Phase 2a step 4d: 1,168
+database tests pass. Who-can-see-what is documented in `docs/delta-green/PERMISSIONS.md`; keep it
 in step with any access change.
 
 **Our migrations were rewritten in place once** (2026-11-17, `dg_` → `ext_` and generic terms)
