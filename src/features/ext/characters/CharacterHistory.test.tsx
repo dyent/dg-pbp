@@ -31,6 +31,37 @@ describe('CharacterHistory', () => {
     expect(screen.queryByText('GM only')).not.toBeInTheDocument()
   })
 
+  it('lists sheet changes with readable labels for the GM', () => {
+    const sheetEvent: CharacterEvent = {
+      id: 's1',
+      eventType: 'sheet_edited',
+      details: {
+        action: 'edited',
+        total: 65,
+        changes: [
+          { path: 'stats.pow.score', from: '12', to: '11' },
+          { path: 'personal.profession', from: '', to: 'FBI' },
+          { path: 'skills.art:x.key', from: null, to: 'art' },
+        ],
+      },
+      note: null,
+      visibility: 'gm',
+      actorId: 'u1',
+      createdAt: '2026-11-18T10:00:00Z',
+    }
+    const { unmount } = render(<CharacterHistory events={[sheetEvent]} isGM canAddNote={false} nameOf={nameOf} onAddNote={vi.fn()} />)
+    expect(screen.getByText('Sheet edited (65 changes).')).toBeInTheDocument()
+    fireEvent.click(screen.getByText('Show the changes'))
+    expect(screen.getByText('POW:')).toBeInTheDocument()
+    expect(screen.getByText('Profession:')).toBeInTheDocument()
+    expect(screen.getByText('(empty)')).toBeInTheDocument()
+    expect(screen.queryByText(/Art/)).not.toBeInTheDocument()
+    expect(screen.getByText('…and 62 more.')).toBeInTheDocument()
+    unmount()
+    render(<CharacterHistory events={[sheetEvent]} isGM={false} canAddNote={false} nameOf={nameOf} onAddNote={vi.fn()} />)
+    expect(screen.queryByText('Show the changes')).not.toBeInTheDocument()
+  })
+
   it('shows an empty state', () => {
     render(<CharacterHistory events={[]} isGM canAddNote={false} nameOf={nameOf} onAddNote={vi.fn()} />)
     expect(screen.getByText('No history yet.')).toBeInTheDocument()

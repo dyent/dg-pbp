@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { useChannel } from './useChannel'
 import { PostAuthorshipProvider } from '../ext/authorship/PostAuthorshipProvider' // FORK-EXT: character post authorship
 import { CharactersEntry } from '../ext/characters/CharactersEntry' // FORK-EXT: characters panel
+import { MySheetButton } from '../dg/sheet/MySheetButton' // FORK-EXT: "My sheet" pop-up
 import { ChannelSettings } from './ChannelSettings'
 import { ChannelStatusBar } from './ChannelStatusBar'
 import { MemberList } from './MemberList'
@@ -643,6 +644,8 @@ export function ChannelView() {
               </svg>
               <span className="hidden sm:inline">Whispers</span>
             </button>
+            {/* FORK-EXT: players' own Delta Green sheets */}
+            <MySheetButton channelId={channel.id} myUserId={user?.id} isGM={isGM} isArchived={channel.is_archived} />
             {/* Mobile Sidebar Toggle. A GM with pending applications gets the
                 same count badge the Settings row carries, so the queue is
                 visible before the sidebar is opened (#722). The count goes in

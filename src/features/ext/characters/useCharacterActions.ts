@@ -18,6 +18,7 @@ export function useCharacterActions(channelId: string, userId: string | undefine
       updateMyCharacter: api.updateMyCharacter,
       deleteCharacter: api.deleteCharacter,
       setRole: api.setRole,
+      setMyStatus: api.setMyStatus,
       postAs: api.postAs,
       saveFields: (characterId: string, changes: FieldChanges) => api.saveFields(characterId, channelId, changes),
       addNote: (characterId: string, note: string) => {

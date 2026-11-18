@@ -152,6 +152,7 @@ export async function setRole(
   inPlay: boolean,
   ownerId: string | null,
   note: string,
+  status?: Status,
 ): Promise<void> {
   const { error } = await supabase.rpc('ext_set_role', {
     p_character_id: characterId,
@@ -160,7 +161,14 @@ export async function setRole(
     // The generated types mark this as required text; the function accepts NULL.
     p_owner_id: ownerId as string,
     p_note: note.trim() || undefined,
+    p_status: status,
   })
+  if (error) fail(error)
+}
+
+/** A player switches their own in-play PC between the temporary statuses. */
+export async function setMyStatus(characterId: string, status: Status): Promise<void> {
+  const { error } = await supabase.rpc('ext_set_my_status', { p_character_id: characterId, p_status: status })
   if (error) fail(error)
 }
 

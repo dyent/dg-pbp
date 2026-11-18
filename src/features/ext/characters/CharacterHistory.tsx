@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { LIMITS, describeEvent, editDetails, type CharacterEvent } from './characterModel'
+import { isMeaningfulChange, pathLabel } from '../../dg/sheet/sheetModel'
+import { LIMITS, describeEvent, editDetails, sheetChanges, type CharacterEvent } from './characterModel'
 import { BADGE, BTN_PRIMARY, INPUT } from './ui'
 
 interface CharacterHistoryProps {
@@ -49,6 +50,9 @@ export function CharacterHistory({ events, isGM, canAddNote, nameOf, onAddNote }
         <ol className="space-y-2">
           {events.map(event => {
             const edit = isGM ? editDetails(event) : null
+            const logged = isGM ? sheetChanges(event) : []
+            const sheet = logged.filter(isMeaningfulChange)
+            const hidden = typeof event.details.total === 'number' ? Math.max(event.details.total - logged.length, 0) : 0
             return (
               <li key={event.id} className="border-l-2 border-surface-200 pl-3 dark:border-surface-700">
                 <p className="text-sm text-surface-900 dark:text-surface-100">
@@ -63,6 +67,20 @@ export function CharacterHistory({ events, isGM, canAddNote, nameOf, onAddNote }
                   {event.actorId && <span>by {nameOf(event.actorId)}</span>}
                   {isGM && event.visibility === 'gm' && <span className={`${BADGE} bg-surface-100 dark:bg-surface-700`}>GM only</span>}
                 </p>
+                {sheet.length > 0 && (
+                  <details className="mt-1 text-xs">
+                    <summary className="cursor-pointer text-primary-600 dark:text-primary-400">Show the changes</summary>
+                    <ul className="mt-1 space-y-0.5 text-surface-800 dark:text-surface-200">
+                      {sheet.map(change => (
+                        <li key={change.path}>
+                          <span className="font-medium">{pathLabel(change.path)}:</span>{' '}
+                          <span className="whitespace-pre-wrap">{change.from || '(empty)'}</span> → <span className="whitespace-pre-wrap">{change.to || '(empty)'}</span>
+                        </li>
+                      ))}
+                      {hidden > 0 && <li className="italic">…and {hidden} more.</li>}
+                    </ul>
+                  </details>
+                )}
                 {edit && (
                   <details className="mt-1 text-xs">
                     <summary className="cursor-pointer text-primary-600 dark:text-primary-400">Show the change</summary>

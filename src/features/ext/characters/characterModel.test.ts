@@ -9,13 +9,16 @@ import {
   editableColumns,
   hasChanges,
   isStatus,
+  isTemporaryStatus,
   itemsIn,
   moveItem,
   moveToColumn,
   newDraftItem,
   removeItem,
+  roleLabel,
   roleOf,
   roleToArgs,
+  sheetChanges,
   toDraft,
   updateItem,
   validateDraft,
@@ -192,7 +195,40 @@ describe('describeRoleChange', () => {
   it('explains taking a PC out of play', () => {
     const lines = describeRoleChange('Reyes', inPlay, { ...inPlay, inPlay: false }, nameOf)
     expect(lines.join(' ')).toMatch(/Sam can no longer post as or edit Reyes/)
-    expect(lines.join(' ')).toMatch(/except those marked Private/)
+    expect(lines.join(' ')).toMatch(/except fields marked Private/)
+    expect(lines.join(' ')).toMatch(/Retired characters do not count/)
+  })
+
+  it('explains moving a PC to Reserve and back', () => {
+    const reserve = describeRoleChange('Reyes', { ...inPlay, status: 'active' }, { ...inPlay, status: 'backup' }, nameOf)
+    expect(reserve[0]).toBe("Reyes's status becomes Backup (you can change it to e.g. Incapacitated afterwards).")
+    expect(reserve.join(' ')).toMatch(/Sam keeps control of Reyes/)
+    expect(reserve.join(' ')).toMatch(/If Sam is posting as Reyes, they switch/)
+    const active = describeRoleChange('Reyes', { ...inPlay, status: 'incapacitated' }, { ...inPlay, status: 'active' }, nameOf)
+    expect(active[0]).toBe("Reyes's status becomes Active.")
+    expect(active[1]).toMatch(/limit of 3 active characters/)
+    const unowned = describeRoleChange('Reyes', { ...inPlay, ownerId: null, inPlay: false }, { ...inPlay, ownerId: null, status: 'backup' }, nameOf)
+    expect(unowned).toContain('No player controls Reyes.')
+    expect(unowned.join(' ')).toMatch(/go back to being seen only by the owner/)
+  })
+
+  it('maps roles to role-change arguments', () => {
+    expect(roleToArgs('pc_reserve', { kind: 'pc', inPlay: true, status: 'active' })).toEqual({ kind: 'pc', inPlay: true, status: 'backup' })
+    expect(roleToArgs('pc_reserve', { kind: 'pc', inPlay: true, status: 'missing' })).toEqual({ kind: 'pc', inPlay: true })
+    expect(roleToArgs('pc_in_play', { kind: 'pc', inPlay: false, status: 'deceased' })).toEqual({ kind: 'pc', inPlay: true, status: 'active' })
+    expect(roleToArgs('pc_in_play', { kind: 'pc', inPlay: true, status: 'active' })).toEqual({ kind: 'pc', inPlay: true })
+    expect(roleToArgs('pc_out_of_play')).toEqual({ kind: 'pc', inPlay: false })
+    expect(roleToArgs('npc')).toEqual({ kind: 'npc', inPlay: true })
+  })
+
+  it('labels roles, neutrally when the status is hidden', () => {
+    expect(roleOf({ kind: 'pc', inPlay: true, status: 'backup' })).toBe('pc_reserve')
+    expect(roleLabel({ kind: 'pc', inPlay: true, status: null })).toBe('PC – in play')
+    expect(roleLabel({ kind: 'pc', inPlay: true, status: 'active' })).toBe('PC – active')
+    expect(roleLabel({ kind: 'pc', inPlay: false })).toBe('PC – retired')
+    expect(isTemporaryStatus('incapacitated')).toBe(true)
+    expect(isTemporaryStatus('deceased')).toBe(false)
+    expect(isTemporaryStatus(null)).toBe(false)
   })
 
   it('explains giving an out-of-play PC to someone else', () => {
@@ -203,7 +239,7 @@ describe('describeRoleChange', () => {
 
   it('explains bringing a PC back into play', () => {
     const lines = describeRoleChange('Reyes', { ...inPlay, inPlay: false }, inPlay, nameOf)
-    expect(lines[0]).toMatch(/Sam can edit Reyes and post as them\. This counts/)
+    expect(lines[0]).toMatch(/Sam can edit Reyes and post as them \(straight away if not posting as anyone else\)\. This counts toward their limit of 3 active/)
     expect(lines[1]).toMatch(/go back to being seen only by the owner/)
   })
 
@@ -253,7 +289,7 @@ describe('describeEvent', () => {
     [event('posting_ended', { user_id: 'u2' }), 'Alex stopped posting as this character.'],
     [
       event('role_changed', { from: { kind: 'pc', in_play: true, owner_id: null }, to: { kind: 'pc', in_play: false, owner_id: 'u1' } }),
-      'Role changed from PC – in play (no player) to PC – out of play (Sam).',
+      'Role changed from PC – in play (no player) to PC – retired (Sam).',
     ],
     [event('role_changed', { from: null, to: { kind: 'npc' } }), 'Role changed from unknown to NPC.'],
     [event('field_visibility_changed', { label: 'Secrets', from: 'owner', to: 'gm' }), '"Secrets" moved from Owner to GM only.'],
@@ -265,6 +301,11 @@ describe('describeEvent', () => {
     [event('field_edited', { action: 'removed', label: 'Pet' }), 'Removed field "Pet".'],
     [event('field_edited', { action: 'edited', label: 'B', old_label: 'A' }), 'Renamed field "A" to "B".'],
     [event('field_edited', { action: 'edited', label: 'B', old_label: 'B' }), 'Edited "B".'],
+    [event('sheet_edited', { action: 'created' }), 'Sheet created.'],
+    [event('sheet_edited', { action: 'removed' }), 'Sheet removed.'],
+    [event('sheet_edited', { action: 'edited', total: 1, changes: [] }), 'Sheet edited (1 change).'],
+    [event('sheet_edited', { action: 'edited', changes: [{}, {}] }), 'Sheet edited (2 changes).'],
+    [event('sheet_edited', { action: 'edited' }), 'Sheet edited (0 changes).'],
     [event('given'), 'Role changed (earlier version).'],
     [event('something_new'), 'something_new'],
   ])('describes %o', (e, text) => {
@@ -273,6 +314,20 @@ describe('describeEvent', () => {
 
   it('treats missing details as empty', () => {
     expect(describeEvent({ ...event('renamed'), details: undefined as never }, nameOf)).toBe('Renamed from "" to "".')
+  })
+})
+
+describe('sheetChanges', () => {
+  it('reads the logged value changes of a sheet edit, skipping malformed ones', () => {
+    const e = event('sheet_edited', {
+      changes: [{ path: 'stats.pow.score', from: '12', to: '11' }, { path: 'bonds.0.name', from: null, to: 'Maya' }, 'junk', { from: 'x' }, null],
+    })
+    expect(sheetChanges(e)).toEqual([
+      { path: 'stats.pow.score', from: '12', to: '11' },
+      { path: 'bonds.0.name', from: null, to: 'Maya' },
+    ])
+    expect(sheetChanges(event('sheet_edited', {}))).toEqual([])
+    expect(sheetChanges(event('renamed', { changes: [] }))).toEqual([])
   })
 })
 

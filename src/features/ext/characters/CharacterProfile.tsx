@@ -1,10 +1,13 @@
 import { useEffect, useState } from 'react'
 import { useToast } from '../../../contexts/ToastContext'
+import { CharacterSheet } from '../../dg/sheet/CharacterSheet'
 import { HiddenBadge, Portrait, RoleBadge, StatusBadge } from './CharacterBadges'
 import { CharacterHistory } from './CharacterHistory'
 import { GmControls, type PlayerOption } from './GmControls'
+import { OwnStatus } from './OwnStatus'
 import { ProfileEditor, type ProfileSave } from './ProfileEditor'
 import {
+  STATUS_LABELS,
   VISIBILITY_LABELS,
   columnsFor,
   hasChanges,
@@ -31,6 +34,23 @@ interface CharacterProfileProps {
   onEditingChange: (editing: boolean) => void
 }
 
+type ProfileTab = 'profile' | 'sheet' | 'history'
+
+const TAB_LABELS: Record<ProfileTab, (c: CharacterSummary) => string> = {
+  profile: () => 'Profile',
+  sheet: c => (c.kind === 'npc' ? 'Stats' : 'Sheet'),
+  history: () => 'History',
+}
+
+/**
+ * Tabs this viewer gets. The sheet (Delta Green, step 4c) is Owner-level for
+ * PCs and GM-only for NPCs, so others only get the tab once a PC is out of play.
+ */
+export function profileTabs(character: CharacterSummary, isGM: boolean): ProfileTab[] {
+  const sheetVisible = isGM || (character.kind === 'pc' && (character.isMine || !character.inPlay))
+  return sheetVisible ? ['profile', 'sheet', 'history'] : ['profile', 'history']
+}
+
 /** Columns shown to this viewer when reading the profile. */
 export function viewColumns(character: CharacterSummary, fields: CharacterField[], isGM: boolean): Visibility[] {
   if (isGM) return columnsFor(character.kind)
@@ -44,9 +64,9 @@ export function viewColumns(character: CharacterSummary, fields: CharacterField[
 function columnHint(column: Visibility, character: CharacterSummary, isGM: boolean): string {
   if (column === 'players') return 'All players can read these.'
   if (column === 'gm') return 'Only you can see these.'
-  if (isGM) return character.inPlay ? "This character's player and you." : 'Out of play: all players can read these, except Private ones.'
-  if (character.isMine) return character.inPlay ? 'Only you and the GM.' : 'Out of play: other players can read these, except Private ones.'
-  return 'Shared now this character is out of play.'
+  if (isGM) return character.inPlay ? "This character's player and you." : 'Retired: all players can read these, except Private ones.'
+  if (character.isMine) return character.inPlay ? 'Only you and the GM.' : 'Retired: other players can read these, except Private ones.'
+  return 'Shared now this character is retired.'
 }
 
 export function CharacterProfile({
@@ -64,15 +84,17 @@ export function CharacterProfile({
 }: CharacterProfileProps) {
   const { fields, events, loading, error, reload } = useCharacterProfile(character.id)
   const { addToast } = useToast()
-  const [tab, setTab] = useState<'profile' | 'history'>('profile')
+  const [tab, setTab] = useState<ProfileTab>('profile')
   const [editing, setEditing] = useState(false)
+  const [sheetEditing, setSheetEditing] = useState(false)
   const [saving, setSaving] = useState(false)
 
   const canEdit = !isArchived && (isGM || (character.isMine && character.kind === 'pc' && character.inPlay))
+  const tabs = profileTabs(character, isGM)
 
   useEffect(() => {
-    onEditingChange(editing)
-  }, [editing, onEditingChange])
+    onEditingChange(editing || sheetEditing)
+  }, [editing, sheetEditing, onEditingChange])
 
   const run = async (action: () => Promise<unknown>, success: string): Promise<boolean> => {
     try {
@@ -115,7 +137,7 @@ export function CharacterProfile({
             {owner && <span className="text-xs text-surface-600 dark:text-surface-400">Player: {owner}</span>}
           </div>
         </div>
-        {canEdit && !editing && (
+        {canEdit && !editing && tab === 'profile' && (
           <button type="button" className={BTN_PRIMARY} onClick={() => setEditing(true)} disabled={loading || !!error}>
             Edit
           </button>
@@ -123,7 +145,14 @@ export function CharacterProfile({
       </header>
 
       {!canEdit && character.isMine && !character.inPlay && !isArchived && (
-        <p className="text-sm text-surface-600 dark:text-surface-400">This character is out of play, so you can read but not edit it.</p>
+        <p className="text-sm text-surface-600 dark:text-surface-400">This character is retired (has left the story), so you can read but not edit it.</p>
+      )}
+
+      {!isGM && canEdit && character.kind === 'pc' && !editing && !sheetEditing && (
+        <OwnStatus
+          character={character}
+          onChange={status => run(() => actions.setMyStatus(character.id, status), `Status set to ${STATUS_LABELS[status]}.`)}
+        />
       )}
 
       {editing ? (
@@ -138,17 +167,18 @@ export function CharacterProfile({
         />
       ) : (
         <>
-          {isGM && !isArchived && (
+          {isGM && !isArchived && !sheetEditing && (
             <GmControls character={character} players={players} tags={tags} nameOf={nameOf} actions={actions} run={run} onDeleted={onDeleted} />
           )}
 
           <div role="tablist" aria-label="Profile sections" className="flex gap-4 border-b border-surface-200 dark:border-surface-700">
-            {(['profile', 'history'] as const).map(t => (
+            {tabs.map(t => (
               <button
                 key={t}
                 type="button"
                 role="tab"
                 aria-selected={tab === t}
+                disabled={sheetEditing && tab !== t}
                 onClick={() => setTab(t)}
                 className={`-mb-px border-b-2 px-1 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary-500 ${
                   tab === t
@@ -156,12 +186,21 @@ export function CharacterProfile({
                     : 'border-transparent text-surface-500 hover:text-surface-800 dark:text-surface-400 dark:hover:text-surface-200'
                 }`}
               >
-                {t === 'profile' ? 'Profile' : 'History'}
+                {TAB_LABELS[t](character)}
               </button>
             ))}
           </div>
 
-          {error ? (
+          {tab === 'sheet' ? (
+            <CharacterSheet
+              channelId={channelId}
+              characterId={character.id}
+              kind={character.kind}
+              canEdit={canEdit}
+              isGM={isGM}
+              onEditingChange={setSheetEditing}
+            />
+          ) : error ? (
             <div role="alert" className="flex items-center justify-between rounded bg-red-50 p-3 text-sm text-red-700 dark:bg-red-900/30 dark:text-red-300">
               <span>Couldn't load this character.</span>
               <button type="button" onClick={reload} className={BTN_SECONDARY}>

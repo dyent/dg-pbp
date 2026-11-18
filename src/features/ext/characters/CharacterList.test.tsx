@@ -2,7 +2,7 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { describe, it, expect, vi } from 'vitest'
 import { CharacterList } from './CharacterList'
-import { Portrait, StatusBadge } from './CharacterBadges'
+import { Portrait, RoleBadge, StatusBadge } from './CharacterBadges'
 import type { CharacterSummary } from './characterModel'
 
 function make(overrides: Partial<CharacterSummary>): CharacterSummary {
@@ -40,7 +40,9 @@ describe('CharacterList', () => {
     expect(screen.getByText('Your characters')).toBeInTheDocument()
     expect(screen.getByText('Others')).toBeInTheDocument()
     expect(screen.getByText('Agent Reyes')).toBeInTheDocument()
-    expect(screen.getByText('Out of play')).toBeInTheDocument()
+    expect(screen.getByText('Retired')).toBeInTheDocument()
+    // Agent Reyes: role badge "Active" and status badge "Active".
+    expect(screen.getAllByText('Active')).toHaveLength(2)
     expect(screen.getByText('Deceased')).toBeInTheDocument()
     expect(screen.getByText('Alex')).toBeInTheDocument()
     expect(screen.getByText('Hidden')).toBeInTheDocument()
@@ -117,6 +119,15 @@ describe('badges', () => {
     expect(container).toBeEmptyDOMElement()
     render(<Portrait character={{ name: '', portraitUrl: null }} size="sm" />)
     expect(screen.getByText('?')).toBeInTheDocument()
+  })
+
+  it('labels Reserve PCs, and in-play PCs whose status is hidden', () => {
+    render(<RoleBadge character={make({ status: 'backup' })} />)
+    expect(screen.getByText('Reserve')).toHaveAttribute('title', expect.stringMatching(/can’t post as them/))
+    render(<RoleBadge character={make({ status: null })} />)
+    expect(screen.getByText('In play')).toBeInTheDocument()
+    render(<RoleBadge character={make({ kind: 'npc' })} />)
+    expect(screen.getByText('NPC')).toBeInTheDocument()
   })
 
   it('renders a portrait image when there is one', () => {

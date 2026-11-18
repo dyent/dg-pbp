@@ -48,10 +48,21 @@ Tests for these hook points live in `src/features/ext/authorship/upstreamTouchpo
 Tests keep the default name (the setting is only in `.env.development.local`), so upstream's
 tests needed no changes.
 
+## Delta Green sheet (Phase 2a step 4c)
+
+| Upstream file | What we changed | Why |
+|---|---|---|
+| `src/features/channels/ChannelView.tsx` | Import `MySheetButton`; render it in the header, before the sidebar toggle | "My sheet" for players from anywhere in a campaign. It loads nothing until opened, so upstream's ChannelView tests need no new mocks |
+
+No upstream *files* change for the step 4c follow-ups (Reserve, quick HP/WP/SAN, NPC identities).
+`20261118100834_ext_npc_posting_identities.sql` writes rows to upstream's `channel_npcs` table (data
+only, no schema change), so every NPC appears in upstream's *Speak as NPC* list.
+
 ## New files (no conflict risk)
 
-`CLAUDE.md`, `docs/delta-green/*`, `src/features/ext/**`, `src/test/stubs/pwaRegister.ts`,
-`supabase/migrations/*_ext_*.sql`, `supabase/tests/*_ext_*.sql`.
+`CLAUDE.md`, `docs/delta-green/*`, `src/features/ext/**`, `src/features/dg/**`,
+`src/test/stubs/pwaRegister.ts`, `supabase/migrations/*_ext_*.sql` and `*_dg_*.sql`,
+`supabase/tests/*_ext_*.sql` and `*_dg_*.sql`.
 
 <!-- cspell:locale en-GB,en -->
 <!-- cspell:words Touchpoints TOUCHPOINTS -->

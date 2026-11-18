@@ -17,6 +17,7 @@ function actionsMock(): CharacterActions {
     updateMyCharacter: vi.fn(),
     deleteCharacter: vi.fn().mockResolvedValue(undefined),
     setRole: vi.fn().mockResolvedValue(undefined),
+    setMyStatus: vi.fn(),
     postAs: vi.fn(),
     saveFields: vi.fn(),
     addNote: vi.fn(),
@@ -56,7 +57,7 @@ describe('GmControls: role', () => {
     expect(screen.getByText(/Sam can no longer post as or edit Reyes/)).toBeInTheDocument()
     fireEvent.change(screen.getByLabelText('Note for the history (optional)'), { target: { value: 'Sidelined' } })
     fireEvent.click(screen.getByRole('button', { name: 'Save role' }))
-    await waitFor(() => expect(actions.setRole).toHaveBeenCalledWith('c1', 'pc', false, 'u1', 'Sidelined'))
+    await waitFor(() => expect(actions.setRole).toHaveBeenCalledWith('c1', 'pc', false, 'u1', 'Sidelined', undefined))
     await waitFor(() => expect(screen.getByLabelText('Note for the history (optional)')).toHaveValue(''))
   })
 
@@ -67,7 +68,25 @@ describe('GmControls: role', () => {
     fireEvent.change(screen.getByLabelText('Player'), { target: { value: '' } })
     expect(screen.getByText('No player controls Reyes.')).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Save role' }))
-    await waitFor(() => expect(actions.setRole).toHaveBeenCalledWith('c1', 'pc', true, null, ''))
+    await waitFor(() => expect(actions.setRole).toHaveBeenCalledWith('c1', 'pc', true, null, '', undefined))
+  })
+
+  it('moves an active PC to Reserve as a Backup, and back to Active', async () => {
+    const { actions } = setup(pc)
+    fireEvent.change(screen.getByLabelText('Role'), { target: { value: 'pc_reserve' } })
+    expect(screen.getByText(/status becomes Backup/)).toBeInTheDocument()
+    expect(screen.getByText(/Sam keeps control of Reyes/)).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Save role' }))
+    await waitFor(() => expect(actions.setRole).toHaveBeenCalledWith('c1', 'pc', true, 'u1', '', 'backup'))
+  })
+
+  it('brings a Reserve PC back to Active', async () => {
+    const { actions } = setup({ ...pc, status: 'incapacitated' })
+    expect(screen.getByLabelText('Role')).toHaveValue('pc_reserve')
+    fireEvent.change(screen.getByLabelText('Role'), { target: { value: 'pc_in_play' } })
+    expect(screen.getByText("Reyes's status becomes Active.")).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Save role' }))
+    await waitFor(() => expect(actions.setRole).toHaveBeenCalledWith('c1', 'pc', true, 'u1', '', 'active'))
   })
 
   it('converts to an NPC (no player dropdown) and can cancel', () => {
@@ -106,9 +125,16 @@ describe('GmControls: status, reveal, aliases', () => {
     await waitFor(() => expect(actions.updateCharacter).toHaveBeenCalledWith('c1', { status_visible: false }))
   })
 
-  it('explains that inactive PCs cannot be posted as', () => {
+  it('explains that inactive PCs are in Reserve, and which statuses players can set', () => {
     setup({ ...pc, status: 'incapacitated' })
-    expect(screen.getByText(/Only Active characters can be posted as/)).toBeInTheDocument()
+    expect(screen.getByText(/puts this PC in Reserve/)).toBeInTheDocument()
+    expect(screen.queryByText(/The player can’t change this status/)).not.toBeInTheDocument()
+    expect(screen.getByText(/Players can set Active, Backup/)).toBeInTheDocument()
+  })
+
+  it('points to Retired when the GM sets a permanent status', () => {
+    setup({ ...pc, status: 'deceased' })
+    expect(screen.getByText(/The player can’t change this status/)).toBeInTheDocument()
   })
 
   it('reveals a hidden character', async () => {

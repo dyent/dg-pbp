@@ -8,10 +8,32 @@ export function RoleBadge({ character }: { character: CharacterSummary }) {
   const color =
     role === 'pc_in_play'
       ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200'
+      : role === 'pc_reserve'
+        ? 'bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-200'
+        : role === 'pc_out_of_play'
+          ? 'bg-surface-200 text-surface-700 dark:bg-surface-700 dark:text-surface-200'
+          : 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200'
+  const text =
+    role === 'npc'
+      ? 'NPC'
+      : role === 'pc_reserve'
+        ? 'Reserve'
+        : role === 'pc_out_of_play'
+          ? 'Retired'
+          : character.status
+            ? 'Active'
+            : 'In play'
+  const title =
+    role === 'pc_reserve'
+      ? 'Backup, wounded or on hiatus: the player keeps control but can’t post as them'
       : role === 'pc_out_of_play'
-        ? 'bg-surface-200 text-surface-700 dark:bg-surface-700 dark:text-surface-200'
-        : 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200'
-  return <span className={`${BADGE} ${color}`}>{role === 'npc' ? 'NPC' : role === 'pc_in_play' ? 'In play' : 'Out of play'}</span>
+        ? 'Left the story (dead, insane, gone for good)'
+        : undefined
+  return (
+    <span className={`${BADGE} ${color}`} title={title}>
+      {text}
+    </span>
+  )
 }
 
 export function StatusBadge({ character }: { character: CharacterSummary }) {

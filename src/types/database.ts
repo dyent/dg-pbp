@@ -687,6 +687,58 @@ export type Database = {
           },
         ]
       }
+      dg_character_sheets: {
+        Row: {
+          channel_id: string
+          character_id: string
+          created_at: string
+          data: Json
+          system: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          channel_id: string
+          character_id: string
+          created_at?: string
+          data?: Json
+          system?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          channel_id?: string
+          character_id?: string
+          created_at?: string
+          data?: Json
+          system?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dg_character_sheets_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "channels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dg_character_sheets_character_id_fkey"
+            columns: ["character_id"]
+            isOneToOne: true
+            referencedRelation: "ext_characters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dg_character_sheets_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       dice_roll_favorites: {
         Row: {
           channel_id: string
@@ -2008,9 +2060,61 @@ export type Database = {
         Args: { p_sub_channel_id: string }
         Returns: undefined
       }
+      dg__flatten: {
+        Args: { p_doc: Json }
+        Returns: {
+          kind: string
+          path: string
+          value: string
+        }[]
+      }
+      dg_breaking_point: {
+        Args: { p_pow: number; p_san: number }
+        Returns: number
+      }
+      dg_can_edit_sheet: { Args: { p_character_id: string }; Returns: boolean }
+      dg_can_read_sheet: { Args: { p_character_id: string }; Returns: boolean }
+      dg_derived_attributes: {
+        Args: {
+          p_con: number
+          p_pow: number
+          p_str: number
+          p_unnatural: number
+        }
+        Returns: {
+          breaking_point_start: number
+          hp_max: number
+          san_max: number
+          san_start: number
+          wp_max: number
+        }[]
+      }
+      dg_get_sheet: {
+        Args: { p_character_id: string }
+        Returns: {
+          breaking_point_start_calc: number
+          character_id: string
+          data: Json
+          hp_max_calc: number
+          san_max_calc: number
+          san_start_calc: number
+          updated_at: string
+          updated_by: string
+          wp_max_calc: number
+        }[]
+      }
+      dg_json_int: { Args: { p_value: Json }; Returns: number }
+      dg_set_pool: {
+        Args: { p_character_id: string; p_pool: string; p_value: number }
+        Returns: undefined
+      }
       escape_markdown: { Args: { p_text: string }; Returns: string }
       ext__event_visibility: {
         Args: { p_kind: string; p_owner_id: string; p_revealed: boolean }
+        Returns: string
+      }
+      ext__link_npc_identity: {
+        Args: { p_character_id: string }
         Returns: string
       }
       ext__log_event: {
@@ -2022,6 +2126,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      ext__npc_avatar: { Args: { p_portrait_url: string }; Returns: string }
       ext__refresh_posting: {
         Args: { p_channel_id: string; p_user_id: string }
         Returns: undefined
@@ -2051,6 +2156,7 @@ export type Database = {
         Args: { p_character_id: string }
         Returns: boolean
       }
+      ext_is_temporary_status: { Args: { p_status: string }; Returns: boolean }
       ext_list_revealed_characters: {
         Args: { p_channel_id: string }
         Returns: {
@@ -2077,6 +2183,10 @@ export type Database = {
           user_id: string
         }[]
       }
+      ext_set_my_status: {
+        Args: { p_character_id: string; p_status: string }
+        Returns: undefined
+      }
       ext_set_role: {
         Args: {
           p_character_id: string
@@ -2084,6 +2194,7 @@ export type Database = {
           p_kind: string
           p_note?: string
           p_owner_id: string
+          p_status?: string
         }
         Returns: undefined
       }

@@ -94,7 +94,7 @@ export function CharactersPanel({ channelId, isGM, isArchived, myUserId, players
           </button>
         </div>
 
-        <div className="min-h-0 flex-1 overflow-hidden px-4 pt-3">
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden px-4 pt-3">
           <PostingAsSwitcher channelId={channelId} myUserId={myUserId} characters={characters} disabled={isArchived} onSwitch={handleSwitch} />
 
           {error ? (
@@ -110,7 +110,9 @@ export function CharactersPanel({ channelId, isGM, isArchived, myUserId, players
               <div className="h-10 rounded bg-surface-200 dark:bg-surface-700" />
             </div>
           ) : (
-            <div className="grid h-full min-h-0 gap-4 md:grid-cols-[18rem_1fr]">
+            // flex-1 (not h-full): the "Posting as" bar above takes space too, and h-full
+            // pushed the bottom of the profile (and its Save/Cancel bar) out of view.
+            <div className="grid min-h-0 flex-1 gap-4 md:grid-cols-[18rem_1fr]">
               <div className={`min-h-0 pb-4 ${selected ? 'hidden md:block' : ''}`}>
                 <CharacterList
                   characters={characters}

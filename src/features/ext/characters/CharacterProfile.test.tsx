@@ -1,12 +1,21 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { ToastProvider } from '../../../contexts/ToastContext'
-import { CharacterProfile, viewColumns } from './CharacterProfile'
+import { CharacterProfile, profileTabs, viewColumns } from './CharacterProfile'
 import { useCharacterProfile } from './useCharacterProfile'
 import type { CharacterField, CharacterSummary } from './characterModel'
 import type { CharacterActions } from './useCharacterActions'
 
 vi.mock('./useCharacterProfile', () => ({ useCharacterProfile: vi.fn() }))
+vi.mock('../../dg/sheet/CharacterSheet', () => ({
+  CharacterSheet: ({ kind, canEdit, onEditingChange }: { kind: string; canEdit: boolean; onEditingChange: (e: boolean) => void }) => (
+    <div data-testid="sheet">
+      {kind} sheet, {canEdit ? 'editable' : 'read-only'}
+      <button type="button" onClick={() => onEditingChange(true)}>Start sheet edit</button>
+      <button type="button" onClick={() => onEditingChange(false)}>Stop sheet edit</button>
+    </div>
+  ),
+}))
 vi.mock('../../../hooks/useImageUpload', () => ({
   useImageUpload: () => ({ uploadEnabled: true, settingsLoading: false, uploading: false, uploadImage: vi.fn() }),
 }))
@@ -35,6 +44,7 @@ function actionsMock(overrides: Partial<CharacterActions> = {}): CharacterAction
     updateMyCharacter: vi.fn().mockResolvedValue(undefined),
     deleteCharacter: vi.fn(),
     setRole: vi.fn(),
+    setMyStatus: vi.fn().mockResolvedValue(undefined),
     postAs: vi.fn(),
     saveFields: vi.fn().mockResolvedValue(undefined),
     addNote: vi.fn().mockResolvedValue(undefined),
@@ -78,8 +88,44 @@ describe('viewColumns', () => {
   })
 })
 
+describe('profileTabs', () => {
+  it('gives the sheet tab to the GM, the owner, and everyone once a PC is out of play', () => {
+    expect(profileTabs(pc, true)).toEqual(['profile', 'sheet', 'history'])
+    expect(profileTabs({ ...pc, kind: 'npc', isMine: false }, true)).toEqual(['profile', 'sheet', 'history'])
+    expect(profileTabs(pc, false)).toEqual(['profile', 'sheet', 'history'])
+    expect(profileTabs({ ...pc, isMine: false }, false)).toEqual(['profile', 'history'])
+    expect(profileTabs({ ...pc, isMine: false, inPlay: false }, false)).toEqual(['profile', 'sheet', 'history'])
+    expect(profileTabs({ ...pc, kind: 'npc', isMine: false }, false)).toEqual(['profile', 'history'])
+  })
+})
+
 describe('CharacterProfile', () => {
   beforeEach(() => vi.clearAllMocks())
+
+  it('shows the sheet tab and locks the panel while the sheet is edited', async () => {
+    const props = setup({ isGM: true })
+    fireEvent.click(screen.getByRole('tab', { name: 'Sheet' }))
+    expect(screen.getByTestId('sheet')).toHaveTextContent('pc sheet, editable')
+    expect(screen.queryByRole('button', { name: 'Edit' })).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Start sheet edit' }))
+    await waitFor(() => expect(props.onEditingChange).toHaveBeenLastCalledWith(true))
+    expect(screen.queryByTestId('gm-controls')).not.toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: 'History' })).toBeDisabled()
+    fireEvent.click(screen.getByRole('button', { name: 'Stop sheet edit' }))
+    await waitFor(() => expect(props.onEditingChange).toHaveBeenLastCalledWith(false))
+    expect(screen.getByTestId('gm-controls')).toBeInTheDocument()
+  })
+
+  it('calls an NPC sheet "Stats" and hides it from players who may not read it', () => {
+    setup({ isGM: true, character: { ...pc, kind: 'npc', ownerId: null, isMine: false } })
+    fireEvent.click(screen.getByRole('tab', { name: 'Stats' }))
+    expect(screen.getByTestId('sheet')).toHaveTextContent('npc sheet')
+  })
+
+  it('shows another player an in-play PC without a sheet tab', () => {
+    setup({ character: { ...pc, isMine: false } })
+    expect(screen.queryByRole('tab', { name: 'Sheet' })).not.toBeInTheDocument()
+  })
 
   it('shows the owner their columns, headings and Private markers, but no GM tools', () => {
     setup()
@@ -103,9 +149,9 @@ describe('CharacterProfile', () => {
   })
 
   it.each([
-    [{ isGM: true, character: { ...pc, inPlay: false } }, /Out of play: all players can read these/],
-    [{ character: { ...pc, inPlay: false } }, /Out of play: other players can read these/],
-    [{ character: { ...pc, isMine: false, inPlay: false } }, /Shared now this character is out of play/],
+    [{ isGM: true, character: { ...pc, inPlay: false } }, /Retired: all players can read these/],
+    [{ character: { ...pc, inPlay: false } }, /Retired: other players can read these/],
+    [{ character: { ...pc, isMine: false, inPlay: false } }, /Shared now this character is retired/],
   ])('explains the Owner column for %o', (props, text) => {
     setup(props, { fields: [f('Motivations', { visibility: 'owner' })] })
     expect(screen.getByText(text)).toBeInTheDocument()
@@ -114,7 +160,37 @@ describe('CharacterProfile', () => {
   it('is read-only for an out-of-play owner and in archived campaigns', () => {
     setup({ character: { ...pc, inPlay: false } })
     expect(screen.queryByRole('button', { name: 'Edit' })).not.toBeInTheDocument()
-    expect(screen.getByText(/out of play, so you can read but not edit it/)).toBeInTheDocument()
+    expect(screen.getByText(/retired \(has left the story\), so you can read but not edit it/)).toBeInTheDocument()
+    expect(screen.queryByLabelText('Status')).not.toBeInTheDocument()
+  })
+
+  it('lets the owner move their PC between Active and Reserve', async () => {
+    const props = setup()
+    expect(screen.getByText(/Active: you can post as this character/)).toBeInTheDocument()
+    expect(screen.queryByRole('option', { name: 'Deceased' })).not.toBeInTheDocument()
+    fireEvent.change(screen.getByLabelText('Status'), { target: { value: 'incapacitated' } })
+    await waitFor(() => expect(props.actions.setMyStatus).toHaveBeenCalledWith('c1', 'incapacitated'))
+    expect(await screen.findByText('Status set to Incapacitated.')).toBeInTheDocument()
+    expect(props.onChanged).toHaveBeenCalled()
+  })
+
+  it('shows a Reserve hint', () => {
+    setup({ character: { ...pc, status: 'backup' } })
+    expect(screen.getByText(/Reserve: you keep this character/)).toBeInTheDocument()
+  })
+
+  it('shows a GM-set status read-only', () => {
+    setup({ character: { ...pc, status: 'missing' } })
+    expect(screen.getByText('Status: Missing. Only the GM can change this status.')).toBeInTheDocument()
+  })
+
+  it.each([
+    [{ isGM: true }],
+    [{ character: { ...pc, isMine: false } }],
+    [{ isArchived: true }],
+  ])('has no own-status picker for %o', props => {
+    setup(props)
+    expect(screen.queryByText(/you can post as this character/)).not.toBeInTheDocument()
   })
 
   it('hides editing and GM tools in an archived campaign', () => {

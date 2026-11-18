@@ -2,10 +2,11 @@ import { useState } from 'react'
 import { ConfirmDialog } from '../../../components/ConfirmDialog'
 import {
   LIMITS,
-  ROLE_LABELS,
+  ROLE_OPTION_LABELS,
   STATUSES,
   STATUS_LABELS,
   describeRoleChange,
+  isTemporaryStatus,
   roleOf,
   roleToArgs,
   type CharacterSummary,
@@ -36,7 +37,7 @@ export function GmControls({ character, players, tags, nameOf, actions, run, onD
   return (
     <div className="space-y-4 rounded-md border border-amber-200 bg-amber-50/50 p-3 dark:border-amber-800 dark:bg-amber-900/10" data-testid="gm-controls">
       <p className={SECTION_TITLE}>GM controls</p>
-      <RoleSection key={`role-${character.id}-${character.kind}-${character.inPlay}-${character.ownerId}`} character={character} players={players} nameOf={nameOf} actions={actions} run={run} />
+      <RoleSection key={`role-${character.id}-${character.kind}-${character.inPlay}-${character.ownerId}-${character.status}`} character={character} players={players} nameOf={nameOf} actions={actions} run={run} />
       <StatusSection character={character} actions={actions} run={run} />
       {character.kind === 'npc' && <TagSection character={character} tags={tags} actions={actions} run={run} />}
       <AliasSection key={`aliases-${character.id}`} character={character} actions={actions} run={run} />
@@ -53,12 +54,12 @@ function RoleSection({ character, players, nameOf, actions, run }: SectionProps 
   const [note, setNote] = useState('')
   const [saving, setSaving] = useState(false)
 
-  const { kind, inPlay } = roleToArgs(role)
+  const { kind, inPlay, status } = roleToArgs(role, character)
   const nextOwner = kind === 'npc' ? null : ownerId || null
   const consequences = describeRoleChange(
     character.name,
-    { kind: character.kind, inPlay: character.inPlay, ownerId: character.ownerId },
-    { kind, inPlay, ownerId: nextOwner },
+    { kind: character.kind, inPlay: character.inPlay, ownerId: character.ownerId, status: character.status },
+    { kind, inPlay, ownerId: nextOwner, status: status ?? character.status },
     nameOf,
   )
   // Former owners stay selectable even if they have left, so the dropdown
@@ -69,7 +70,7 @@ function RoleSection({ character, players, nameOf, actions, run }: SectionProps 
 
   const handleSave = async () => {
     setSaving(true)
-    const ok = await run(() => actions.setRole(character.id, kind, inPlay, nextOwner, note), 'Role updated.')
+    const ok = await run(() => actions.setRole(character.id, kind, inPlay, nextOwner, note, status), 'Role updated.')
     setSaving(false)
     if (ok) setNote('')
   }
@@ -81,9 +82,9 @@ function RoleSection({ character, players, nameOf, actions, run }: SectionProps 
         <label className={LABEL}>
           Role
           <select value={role} onChange={e => setRole(e.target.value as Role)} className={`${INPUT} mt-1`}>
-            {(Object.keys(ROLE_LABELS) as Role[]).map(r => (
+            {(Object.keys(ROLE_OPTION_LABELS) as Role[]).map(r => (
               <option key={r} value={r}>
-                {ROLE_LABELS[r]}
+                {ROLE_OPTION_LABELS[r]}
               </option>
             ))}
           </select>
@@ -161,8 +162,14 @@ function StatusSection({ character, actions, run }: SectionProps) {
           ))}
         </select>
       </label>
-      {character.kind === 'pc' && character.status !== 'active' && (
-        <p className="text-xs text-surface-600 dark:text-surface-400">Only Active characters can be posted as. The player keeps control while the role is "in play".</p>
+      {character.kind === 'pc' && character.inPlay && character.status !== 'active' && (
+        <p className="text-xs text-surface-600 dark:text-surface-400">
+          Any status other than Active puts this PC in Reserve: the player keeps control but can't post as them, and they don't count toward the limit of 3 active characters.
+          {character.status && !isTemporaryStatus(character.status) && ' The player can’t change this status; for a PC who has left the story, set the role to Retired.'}
+        </p>
+      )}
+      {character.kind === 'pc' && character.inPlay && (
+        <p className="text-xs text-surface-500 dark:text-surface-400">Players can set Active, Backup, Temporarily unavailable and Incapacitated on their own PCs.</p>
       )}
       <label className="flex items-center gap-2 text-sm text-surface-700 dark:text-surface-300">
         <input

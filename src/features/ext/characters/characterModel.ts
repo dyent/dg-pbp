@@ -4,10 +4,16 @@
 export type CharacterKind = 'pc' | 'npc'
 export type Visibility = 'players' | 'owner' | 'gm'
 export type ItemType = 'field' | 'heading'
-export type Role = 'pc_in_play' | 'pc_out_of_play' | 'npc'
+/**
+ * Roles as the app shows them. In the database a PC is either in play or out
+ * of play; an in-play PC whose status isn't Active is shown as Reserve
+ * (backup, wounded, on hiatus). Out of play is shown as Retired.
+ */
+export type Role = 'pc_in_play' | 'pc_reserve' | 'pc_out_of_play' | 'npc'
 
 export const STATUSES = [
   'active',
+  'backup',
   'unavailable',
   'incapacitated',
   'missing',
@@ -19,6 +25,7 @@ export type Status = (typeof STATUSES)[number]
 
 export const STATUS_LABELS: Record<Status, string> = {
   active: 'Active',
+  backup: 'Backup',
   unavailable: 'Temporarily unavailable',
   incapacitated: 'Incapacitated',
   missing: 'Missing',
@@ -27,9 +34,25 @@ export const STATUS_LABELS: Record<Status, string> = {
   deceased: 'Deceased',
 }
 
+/** Statuses a player may set on their own in-play PC (the rest are GM-only). */
+export const TEMPORARY_STATUSES: readonly Status[] = ['active', 'backup', 'unavailable', 'incapacitated']
+
+export function isTemporaryStatus(status: Status | null): boolean {
+  return status !== null && TEMPORARY_STATUSES.includes(status)
+}
+
 export const ROLE_LABELS: Record<Role, string> = {
-  pc_in_play: 'PC – in play',
-  pc_out_of_play: 'PC – out of play',
+  pc_in_play: 'PC – active',
+  pc_reserve: 'PC – reserve',
+  pc_out_of_play: 'PC – retired',
+  npc: 'NPC',
+}
+
+/** Longer labels for the GM's role dropdown. */
+export const ROLE_OPTION_LABELS: Record<Role, string> = {
+  pc_in_play: 'PC – active (in play, can be posted as)',
+  pc_reserve: 'PC – reserve (backup, wounded, on hiatus)',
+  pc_out_of_play: 'PC – retired (dead, insane, left the story)',
   npc: 'NPC',
 }
 
@@ -107,14 +130,40 @@ export interface Tag {
   name: string
 }
 
-export function roleOf(c: Pick<CharacterSummary, 'kind' | 'inPlay'>): Role {
+/**
+ * The role shown for a character. An in-play PC is Reserve when its status
+ * is known and not Active; when the viewer can't see the status it counts as
+ * in play (see `roleLabel`).
+ */
+export function roleOf(c: { kind: CharacterKind; inPlay: boolean; status?: Status | null }): Role {
   if (c.kind === 'npc') return 'npc'
-  return c.inPlay ? 'pc_in_play' : 'pc_out_of_play'
+  if (!c.inPlay) return 'pc_out_of_play'
+  return c.status && c.status !== 'active' ? 'pc_reserve' : 'pc_in_play'
 }
 
-export function roleToArgs(role: Role): { kind: CharacterKind; inPlay: boolean } {
+/** Badge text; neutral "PC – in play" when the viewer can't see the status. */
+export function roleLabel(c: { kind: CharacterKind; inPlay: boolean; status?: Status | null }): string {
+  const role = roleOf(c)
+  if (role === 'pc_in_play' && !c.status) return 'PC – in play'
+  return ROLE_LABELS[role]
+}
+
+/**
+ * Arguments for ext_set_role. Moving between Active and Reserve changes the
+ * status in the same step (Reserve starts as Backup); otherwise the status is
+ * left alone (`status` undefined).
+ */
+export function roleToArgs(
+  role: Role,
+  current?: { kind: CharacterKind; inPlay: boolean; status?: Status | null },
+): { kind: CharacterKind; inPlay: boolean; status?: Status } {
   if (role === 'npc') return { kind: 'npc', inPlay: true }
-  return { kind: 'pc', inPlay: role === 'pc_in_play' }
+  if (role === 'pc_out_of_play') return { kind: 'pc', inPlay: false }
+  const currentRole = current ? roleOf(current) : null
+  if (role === 'pc_in_play') {
+    return current?.status && current.status !== 'active' ? { kind: 'pc', inPlay: true, status: 'active' } : { kind: 'pc', inPlay: true }
+  }
+  return currentRole === 'pc_reserve' ? { kind: 'pc', inPlay: true } : { kind: 'pc', inPlay: true, status: 'backup' }
 }
 
 export function isStatus(value: unknown): value is Status {
@@ -310,6 +359,7 @@ export interface RoleState {
   kind: CharacterKind
   inPlay: boolean
   ownerId: string | null
+  status?: Status | null
 }
 
 /**
@@ -347,9 +397,10 @@ export function describeRoleChange(
   }
 
   if (toRole === 'pc_in_play') {
+    if (fromRole === 'pc_reserve') lines.push(`${characterName}'s status becomes Active.`)
     if (newOwner) {
       lines.push(
-        `${newOwner} can edit ${characterName} and post as them${ownerChanged ? ' (straight away if not posting as anyone else)' : ''}. This counts toward their limit of 3 characters in play.`,
+        `${newOwner} can edit ${characterName} and post as them${ownerChanged || fromRole !== 'pc_in_play' ? ' (straight away if not posting as anyone else)' : ''}. This counts toward their limit of 3 active characters.`,
       )
     } else {
       lines.push(`No player controls ${characterName}.`)
@@ -357,17 +408,32 @@ export function describeRoleChange(
     if (fromRole === 'pc_out_of_play') {
       lines.push('Owner fields go back to being seen only by the owner and you.')
     }
+  } else if (toRole === 'pc_reserve') {
+    if (fromRole !== 'pc_reserve') lines.push(`${characterName}'s status becomes Backup (you can change it to e.g. Incapacitated afterwards).`)
+    if (newOwner) {
+      lines.push(
+        `${newOwner} keeps control of ${characterName} and can edit them, but can't post as them until they're active again. Reserve characters don't count toward the limit of 3 active characters.`,
+      )
+      if (fromRole === 'pc_in_play' && !ownerChanged) {
+        lines.push(`If ${newOwner} is posting as ${characterName}, they switch to another active character of theirs (if they have one).`)
+      }
+    } else {
+      lines.push(`No player controls ${characterName}.`)
+    }
+    if (fromRole === 'pc_out_of_play') {
+      lines.push('Owner fields go back to being seen only by the owner and you.')
+    }
   } else {
-    // Out of play.
-    if (fromRole === 'pc_in_play' && !ownerChanged && oldOwner) {
+    // Retired (out of play).
+    if (fromRole !== 'pc_out_of_play' && !ownerChanged && oldOwner) {
       lines.push(
         `${oldOwner} can no longer post as or edit ${characterName}, but keeps a read-only view. If ${oldOwner} is posting as ${characterName}, they switch to another active character of theirs (or their own name).`,
       )
     } else if (newOwner) {
       lines.push(`${newOwner} gets a read-only view of ${characterName}.`)
     }
-    lines.push('All players can now read the Owner fields, except those marked Private.')
-    lines.push('Out-of-play characters do not count toward the limit of 3 characters in play.')
+    lines.push('All players can now read the Owner fields and the sheet, except fields marked Private.')
+    lines.push('Retired characters do not count toward the limit of 3 active characters.')
   }
   if (from.kind === 'npc') {
     lines.push('Fields that were GM only stay GM only. Move any the player should see.')
@@ -390,9 +456,10 @@ function statusLabel(value: unknown): string {
 function roleDescription(value: unknown, nameOf: (userId: string) => string): string {
   if (!value || typeof value !== 'object') return 'unknown'
   const v = value as { kind?: unknown; in_play?: unknown; owner_id?: unknown }
-  const role = roleOf({ kind: v.kind === 'npc' ? 'npc' : 'pc', inPlay: v.in_play !== false })
+  // Role entries don't record the status, so an in-play PC reads "PC – in play".
+  const state = { kind: v.kind === 'npc' ? ('npc' as const) : ('pc' as const), inPlay: v.in_play !== false }
   const owner = typeof v.owner_id === 'string' ? ` (${nameOf(v.owner_id)})` : ' (no player)'
-  return `${ROLE_LABELS[role]}${role === 'npc' ? '' : owner}`
+  return `${roleLabel(state)}${state.kind === 'npc' ? '' : owner}`
 }
 
 /** One-line description of a history entry. */
@@ -436,6 +503,12 @@ export function describeEvent(event: CharacterEvent, nameOf: (userId: string) =>
       if (d.old_label && d.old_label !== d.label) return `Renamed field "${str(d.old_label)}" to "${str(d.label)}".`
       return `Edited "${str(d.label)}".`
     }
+    case 'sheet_edited': {
+      if (d.action === 'created') return 'Sheet created.'
+      if (d.action === 'removed') return 'Sheet removed.'
+      const total = typeof d.total === 'number' ? d.total : Array.isArray(d.changes) ? d.changes.length : 0
+      return `Sheet edited (${total} ${total === 1 ? 'change' : 'changes'}).`
+    }
     case 'given':
     case 'taken':
     case 'converted_to_npc':
@@ -443,6 +516,23 @@ export function describeEvent(event: CharacterEvent, nameOf: (userId: string) =>
     default:
       return event.eventType
   }
+}
+
+export interface SheetChange {
+  path: string
+  from: string | null
+  to: string | null
+}
+
+/** The value changes of a sheet edit (as logged by the database), else []. */
+export function sheetChanges(event: CharacterEvent): SheetChange[] {
+  if (event.eventType !== 'sheet_edited' || !Array.isArray(event.details?.changes)) return []
+  return (event.details.changes as unknown[]).flatMap(c => {
+    if (!c || typeof c !== 'object') return []
+    const o = c as Record<string, unknown>
+    if (typeof o.path !== 'string') return []
+    return [{ path: o.path, from: typeof o.from === 'string' ? o.from : null, to: typeof o.to === 'string' ? o.to : null }]
+  })
 }
 
 /** Old/new text of an edit, for the GM's expandable change log. */

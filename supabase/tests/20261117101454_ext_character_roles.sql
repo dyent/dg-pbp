@@ -107,8 +107,8 @@ SELECT lives_ok(
 
 SELECT throws_ok(
   $$SELECT ext_set_role('00000000-0000-0000-0000-0000000e6004', 'pc', true, '00000000-0000-0000-0000-0000000e4002')$$,
-  'P0001', 'A player can have at most 3 characters in play at once',
-  'a fourth PC in play is refused'
+  'P0001', 'A player can have at most 3 active characters at once; move one to Reserve first',
+  'a fourth active PC in play is refused (message updated by 20261118100838_ext_character_reserve)'
 );
 
 SELECT throws_ok(
@@ -362,11 +362,13 @@ SELECT is(
   'with no other active PC in play, Sam is no longer posting as anyone'
 );
 
+-- (Every entry in this transaction shares one timestamp, so match the note
+-- itself rather than "the latest" entry.)
 SELECT is(
-  (SELECT note FROM ext_character_events
+  (SELECT count(*)::int FROM ext_character_events
    WHERE character_id = '00000000-0000-0000-0000-0000000e6001' AND event_type = 'role_changed'
-   ORDER BY created_at DESC, id LIMIT 1),
-  'Killed in action',
+     AND note = 'Killed in action'),
+  1,
   'the role change note is kept in history'
 );
 

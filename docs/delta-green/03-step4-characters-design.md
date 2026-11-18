@@ -2,8 +2,8 @@
 
 *Agreed with the owner on 2026-11-17 (revising the step 4 mockup). Replaces steps 4–6 of
 `02-phase2a-plan.md`. Decisions: DECISIONS.md #17–#22. Progress: **4a done** (database; see
-`PERMISSIONS.md`), **4b done** (characters panel; see `04-characters-panel.md`); 4c, 4d and 5 to
-do.*
+`PERMISSIONS.md`), **4b done** (characters panel; see `04-characters-panel.md`), **4c done**
+(Delta Green sheet; see `05-dg-sheet.md`); 4d and 5 to do.*
 
 ## Direction
 
@@ -24,6 +24,11 @@ not linked to the dice roller.
 **Status** is the in-story condition (Active, Temporarily unavailable, Incapacitated, Missing,
 Insane, Retired, Deceased). A PC who is recovering, swapped out or on hiatus stays *PC – in play*
 with a non-Active status, so the player keeps control. Only *Active* characters can be posted as.
+
+*Refined 2026-11-18 (DECISIONS.md #25):* the app shows these as **PC – active**, **PC – reserve**
+(in play, any other status: backup, wounded, on hiatus) and **PC – retired** (out of play). The
+limit of 3 counts active PCs only, there is a new *Backup* status, and players set their own PC's
+temporary statuses. See `04-characters-panel.md`.
 
 ## Visibility levels
 

@@ -15,6 +15,7 @@ vi.mock('./characterApi', () => ({
   updateMyCharacter: vi.fn(),
   deleteCharacter: vi.fn(),
   setRole: vi.fn(),
+  setMyStatus: vi.fn(),
   postAs: vi.fn(),
   saveFields: vi.fn(),
   addNote: vi.fn(),
