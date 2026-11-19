@@ -62,6 +62,38 @@ describe('CharacterSheet', () => {
     }
   })
 
+  it('ticks failed skills, SAN-loss incidents and first aid straight from the view', async () => {
+    mockSheet({ row: agentRow })
+    renderSheet()
+    expect(screen.queryByText(/Use − \/ \+/)).not.toBeInTheDocument()
+    fireEvent.click(screen.getByLabelText('Firearms failed this session'))
+    expect(screen.getByLabelText('Firearms failed this session')).toBeChecked()
+    await waitFor(() => expect(save).toHaveBeenCalledTimes(1))
+    expect(save.mock.calls[0][0].skills.firearms.failed).toBe(true)
+    await waitFor(() => expect(reload).toHaveBeenCalled())
+
+    fireEvent.click(screen.getByLabelText('Violence incident 2'))
+    expect(save.mock.calls[1][0].adapted.violence).toBe(2)
+    fireEvent.click(screen.getByLabelText('First aid attempted since last injury'))
+    expect(save.mock.calls[2][0].firstAidAttempted).toBe(true)
+  })
+
+  it('reports a failed tick save and shows the saved value again', async () => {
+    save.mockRejectedValue(new Error('This campaign is archived'))
+    mockSheet({ row: agentRow })
+    renderSheet()
+    fireEvent.click(screen.getByLabelText('Helplessness incident 1'))
+    expect(await screen.findByText('This campaign is archived')).toBeInTheDocument()
+    expect(screen.getByLabelText('Helplessness incident 1')).not.toBeChecked()
+  })
+
+  it('shows tick boxes as read-only marks for viewers who cannot edit', () => {
+    mockSheet({ row: agentRow })
+    renderSheet({ canEdit: false })
+    expect(screen.queryByLabelText('Firearms failed this session')).not.toBeInTheDocument()
+    expect(screen.getByText('First aid attempted since last injury: No')).toBeInTheDocument()
+  })
+
   it('types a new SAN value, and reports a failed save', async () => {
     setPool.mockRejectedValue(new Error('Numbers on the sheet must be between 0 and 999 (san.current)'))
     mockSheet({ row: agentRow })

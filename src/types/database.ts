@@ -833,6 +833,67 @@ export type Database = {
           },
         ]
       }
+      ext_calendar_changes: {
+        Row: {
+          calendar: string
+          changed_by: string | null
+          channel_id: string
+          created_at: string
+          day_number: number | null
+          id: string
+          kind: string
+          shift_amount: number | null
+          shift_unit: string | null
+          sub_channel_id: string | null
+        }
+        Insert: {
+          calendar?: string
+          changed_by?: string | null
+          channel_id: string
+          created_at?: string
+          day_number?: number | null
+          id?: string
+          kind: string
+          shift_amount?: number | null
+          shift_unit?: string | null
+          sub_channel_id?: string | null
+        }
+        Update: {
+          calendar?: string
+          changed_by?: string | null
+          channel_id?: string
+          created_at?: string
+          day_number?: number | null
+          id?: string
+          kind?: string
+          shift_amount?: number | null
+          shift_unit?: string | null
+          sub_channel_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ext_calendar_changes_changed_by_fkey"
+            columns: ["changed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ext_calendar_changes_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "channels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ext_calendar_changes_sub_channel_id_fkey"
+            columns: ["sub_channel_id"]
+            isOneToOne: false
+            referencedRelation: "sub_channels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ext_campaign_file_events: {
         Row: {
           actor_id: string | null
@@ -2290,6 +2351,7 @@ export type Database = {
         Args: { p_channel_id: string; p_path: string }
         Returns: Record<string, unknown>
       }
+      ext__check_day: { Args: { p_day: number }; Returns: undefined }
       ext__check_file_players: {
         Args: {
           p_channel_id: string
@@ -2297,6 +2359,10 @@ export type Database = {
           p_visibility: string
         }
         Returns: string[]
+      }
+      ext__current_day: {
+        Args: { p_channel_id: string; p_sub_channel_id: string }
+        Returns: number
       }
       ext__event_visibility: {
         Args: { p_kind: string; p_owner_id: string; p_revealed: boolean }
@@ -2316,13 +2382,22 @@ export type Database = {
         Returns: undefined
       }
       ext__npc_avatar: { Args: { p_portrait_url: string }; Returns: string }
+      ext__npc_from_roster: { Args: { p_npc_id: string }; Returns: string }
       ext__refresh_posting: {
         Args: { p_channel_id: string; p_user_id: string }
+        Returns: undefined
+      }
+      ext__require_calendar_gm: {
+        Args: { p_channel_id: string; p_sub_channel_id: string }
         Returns: undefined
       }
       ext__require_files_gm: {
         Args: { p_channel_id: string }
         Returns: undefined
+      }
+      ext__room_has_own_date: {
+        Args: { p_channel_id: string; p_sub_channel_id: string }
+        Returns: boolean
       }
       ext__set_posting: {
         Args: {
@@ -2374,6 +2449,10 @@ export type Database = {
         Args: { p_name: string }
         Returns: boolean
       }
+      ext_clear_room_date: {
+        Args: { p_channel_id: string; p_sub_channel_id: string }
+        Returns: string
+      }
       ext_delete_campaign_file: {
         Args: { p_file_id: string }
         Returns: string[]
@@ -2382,6 +2461,7 @@ export type Database = {
         Args: { p_character_id: string }
         Returns: boolean
       }
+      ext_is_reserve_status: { Args: { p_status: string }; Returns: boolean }
       ext_is_temporary_status: { Args: { p_status: string }; Returns: boolean }
       ext_list_revealed_characters: {
         Args: { p_channel_id: string }
@@ -2413,6 +2493,14 @@ export type Database = {
         Args: { p_file_id: string; p_file_name: string; p_object_path: string }
         Returns: number
       }
+      ext_set_in_game_date: {
+        Args: {
+          p_channel_id: string
+          p_day_number: number
+          p_sub_channel_id: string
+        }
+        Returns: string
+      }
       ext_set_my_status: {
         Args: { p_character_id: string; p_status: string }
         Returns: undefined
@@ -2426,6 +2514,19 @@ export type Database = {
           p_owner_id: string
           p_status?: string
         }
+        Returns: undefined
+      }
+      ext_shift_in_game_date: {
+        Args: {
+          p_amount: number
+          p_channel_id: string
+          p_sub_channel_id: string
+          p_unit: string
+        }
+        Returns: string
+      }
+      ext_undo_in_game_date_change: {
+        Args: { p_change_id: string }
         Returns: undefined
       }
       ext_update_campaign_file: {

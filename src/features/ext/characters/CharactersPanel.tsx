@@ -21,14 +21,16 @@ export interface CharactersPanelProps {
   /** Display name for any user id (players, the GM, people who have left). */
   nameOf: (userId: string) => string
   onClose: () => void
+  /** Which list to start on (PCs unless opened from GM Tools → NPCs). */
+  initialKind?: CharacterKind
 }
 
-export function CharactersPanel({ channelId, isGM, isArchived, myUserId, players, nameOf, onClose }: CharactersPanelProps) {
+export function CharactersPanel({ channelId, isGM, isArchived, myUserId, players, nameOf, onClose, initialKind = 'pc' }: CharactersPanelProps) {
   const dialogRef = useRef<HTMLDivElement>(null)
   const { addToast } = useToast()
   const { characters, tags, loading, error, reload } = useCharacterList(channelId, isGM, myUserId)
   const actions = useCharacterActions(channelId, myUserId)
-  const [kind, setKind] = useState<CharacterKind>('pc')
+  const [kind, setKind] = useState<CharacterKind>(initialKind)
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [editing, setEditing] = useState(false)
 
@@ -55,7 +57,7 @@ export function CharactersPanel({ channelId, isGM, isArchived, myUserId, players
   }
 
   const handleSwitch = async (characterId: string) => {
-    await actions.postAs(characterId)
+    await actions.setMyStatus(characterId, 'active')
     reload()
   }
 

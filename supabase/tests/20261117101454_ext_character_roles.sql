@@ -105,11 +105,16 @@ SELECT lives_ok(
   'the GM gives Sam a third PC (unrevealed)'
 );
 
-SELECT throws_ok(
-  $$SELECT ext_set_role('00000000-0000-0000-0000-0000000e6004', 'pc', true, '00000000-0000-0000-0000-0000000e4002')$$,
-  'P0001', 'A player can have at most 3 active characters at once; move one to Reserve first',
-  'a fourth active PC in play is refused (message updated by 20261118100838_ext_character_reserve)'
+-- Updated by 20261119103000_ext_one_active_character: one active PC per player.
+SELECT is(
+  (SELECT string_agg(name || ':' || status, ',' ORDER BY name) FROM ext_characters
+   WHERE owner_id = '00000000-0000-0000-0000-0000000e4002'),
+  'Okafor:backup,Reyes:backup,Vance:active',
+  'one active PC per player: each newly given PC moves the previous one to Backup'
 );
+
+-- Reyes back to active for the owner tests below (Vance steps back to Backup).
+UPDATE ext_characters SET status = 'active' WHERE id = '00000000-0000-0000-0000-0000000e6001';
 
 SELECT throws_ok(
   $$SELECT ext_set_role('00000000-0000-0000-0000-0000000e6004', 'pc', true, '00000000-0000-0000-0000-0000000e4005')$$,
@@ -276,8 +281,8 @@ SELECT is(
 );
 
 SELECT lives_ok(
-  $$SELECT ext_post_as('00000000-0000-0000-0000-0000000e6002')$$,
-  'the owner switches to posting as their second PC'
+  $$SELECT ext_set_my_status('00000000-0000-0000-0000-0000000e6002', 'active')$$,
+  'the owner switches to posting as their second PC by making it active'
 );
 
 SELECT throws_ok(
@@ -344,10 +349,10 @@ UPDATE ext_characters SET status = 'unavailable' WHERE id = '00000000-0000-0000-
 SELECT ext_set_role('00000000-0000-0000-0000-0000000e6002', 'pc', false, '00000000-0000-0000-0000-0000000e4002');
 
 SELECT is(
-  (SELECT character_id FROM ext_posting_periods
+  (SELECT count(*) FROM ext_posting_periods
    WHERE user_id = '00000000-0000-0000-0000-0000000e4002' AND ended_at IS NULL),
-  '00000000-0000-0000-0000-0000000e6001'::uuid,
-  'taking the current PC out of play switches Sam to his other active PC (not the sidelined one)'
+  0::bigint,
+  'taking the active PC out of play leaves Sam posting as himself (his other PCs are in Reserve)'
 );
 
 SELECT lives_ok(

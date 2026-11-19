@@ -29,6 +29,8 @@ export function CharacterSheet({ channelId, characterId, kind, canEdit, isGM, on
   const [editing, setEditing] = useState(false)
   const [busy, setBusy] = useState(false)
   const [confirmRemove, setConfirmRemove] = useState(false)
+  // A tick-box change shown straight away, until the saved sheet comes back.
+  const [ticked, setTicked] = useState<{ data: unknown; sheet: SheetData } | null>(null)
   const noun = kind === 'pc' ? 'sheet' : 'stat block'
 
   useEffect(() => {
@@ -91,7 +93,23 @@ export function CharacterSheet({ channelId, characterId, kind, canEdit, isGM, on
     )
   }
 
-  const sheet = parseSheet(row.data, kind === 'pc' ? 'agent' : 'npc')
+  // The optimistic copy only applies to the row it was made from.
+  const sheet = ticked && ticked.data === row.data ? ticked.sheet : parseSheet(row.data, kind === 'pc' ? 'agent' : 'npc')
+
+  // Tick boxes (failed skills, SAN-loss incidents, first aid) save straight
+  // from the view, like the quick HP/WP/SAN changes.
+  const tickChange = canEdit
+    ? (next: SheetData) => {
+        setTicked({ data: row.data, sheet: next })
+        save(next)
+          .then(reload)
+          .catch((err: unknown) => {
+            addToast(err instanceof Error ? err.message : 'Could not save the change.', 'error')
+            setTicked(null)
+            reload()
+          })
+      }
+    : undefined
 
   // Quick HP/WP/SAN changes: no success message (they'd pile up); on failure
   // say why and reload the saved values.
@@ -137,13 +155,8 @@ export function CharacterSheet({ channelId, characterId, kind, canEdit, isGM, on
           )}
         </div>
       </div>
-      {canEdit && (
-        <p className="text-xs text-surface-500 dark:text-surface-400">
-          Use − / + (or click a number) to change current HP, WP or SAN without opening the editor. Changes save by themselves.
-        </p>
-      )}
       {sheet.format === 'agent' ? (
-        <SheetView sheet={sheet} calc={row.calc} onPoolChange={poolChange} />
+        <SheetView sheet={sheet} calc={row.calc} onPoolChange={poolChange} onTick={tickChange} />
       ) : (
         <NpcBlockView block={sheet} calc={row.calc} onPoolChange={poolChange} />
       )}

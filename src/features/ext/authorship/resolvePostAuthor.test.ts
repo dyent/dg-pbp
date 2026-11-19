@@ -105,6 +105,14 @@ describe('resolvePostAuthor', () => {
     expect(resolvePostAuthor(overlapping, sam, '2026-03-01T00:00:00Z')?.name).toBe('Second')
   })
 
+  it('labels a post made after a period, with no character active, with the player name', () => {
+    expect(resolvePostAuthor(identities, jo, '2026-02-20T00:00:00Z', 'Jo')).toEqual({ characterId: '', name: 'Jo', portraitUrl: null })
+    // Before the first period it stays upstream's business.
+    expect(resolvePostAuthor(identities, jo, '2026-01-20T00:00:00Z', 'Jo')).toBeNull()
+    // Without a usable name it falls back as before.
+    expect(resolvePostAuthor(identities, jo, '2026-02-20T00:00:00Z', '  ')).toBeNull()
+  })
+
   it('returns null when there are no identities at all', () => {
     expect(resolvePostAuthor([], sam, '2026-03-01T00:00:00Z')).toBeNull()
   })

@@ -127,7 +127,8 @@ describe('GmControls: status, reveal, aliases', () => {
 
   it('explains that inactive PCs are in Reserve, and which statuses players can set', () => {
     setup({ ...pc, status: 'incapacitated' })
-    expect(screen.getByText(/puts this PC in Reserve/)).toBeInTheDocument()
+    expect(screen.getByText(/Reserve: the player keeps control/)).toBeInTheDocument()
+    expect(screen.getByText(/One active PC per player/)).toBeInTheDocument()
     expect(screen.queryByText(/The player can’t change this status/)).not.toBeInTheDocument()
     expect(screen.getByText(/Players can set Active, Backup/)).toBeInTheDocument()
   })

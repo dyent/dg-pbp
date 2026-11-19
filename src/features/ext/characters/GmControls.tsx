@@ -164,12 +164,16 @@ function StatusSection({ character, actions, run }: SectionProps) {
       </label>
       {character.kind === 'pc' && character.inPlay && character.status !== 'active' && (
         <p className="text-xs text-surface-600 dark:text-surface-400">
-          Any status other than Active puts this PC in Reserve: the player keeps control but can't post as them, and they don't count toward the limit of 3 active characters.
+          {character.status === 'insane' || character.status === 'retired' || character.status === 'deceased'
+            ? 'Not active and not in Reserve: the player can’t post as this PC, and it doesn’t count toward the limit of 3 in Reserve.'
+            : 'Reserve: the player keeps control but can’t post as this PC. A player can have up to 3 in Reserve. Incapacitated also covers a stay in hospital or an institution.'}
           {character.status && !isTemporaryStatus(character.status) && ' The player can’t change this status; for a PC who has left the story, set the role to Retired.'}
         </p>
       )}
       {character.kind === 'pc' && character.inPlay && (
-        <p className="text-xs text-surface-500 dark:text-surface-400">Players can set Active, Backup, Temporarily unavailable and Incapacitated on their own PCs.</p>
+        <p className="text-xs text-surface-500 dark:text-surface-400">
+          One active PC per player: making this one Active moves their other active PC to Backup. Players can set Active, Backup, Temporarily unavailable and Incapacitated on their own PCs.
+        </p>
       )}
       <label className="flex items-center gap-2 text-sm text-surface-700 dark:text-surface-300">
         <input

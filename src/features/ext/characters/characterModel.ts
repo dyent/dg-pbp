@@ -387,7 +387,7 @@ export function describeRoleChange(
     if (oldOwner) lines.push(`${oldOwner} can no longer post as, edit or see the Owner fields of ${characterName}.`)
     if (from.kind === 'pc') {
       lines.push('Owner fields become GM only. This stays so even if you change the role back.')
-      lines.push(`${characterName} is added to the NPC posting names (GM Tools → NPCs).`)
+      lines.push(`${characterName} can be used with "Speak as NPC" in the message box.`)
     }
     return lines
   }
@@ -400,7 +400,7 @@ export function describeRoleChange(
     if (fromRole === 'pc_reserve') lines.push(`${characterName}'s status becomes Active.`)
     if (newOwner) {
       lines.push(
-        `${newOwner} can edit ${characterName} and post as them${ownerChanged || fromRole !== 'pc_in_play' ? ' (straight away if not posting as anyone else)' : ''}. This counts toward their limit of 3 active characters.`,
+        `${newOwner} can edit ${characterName} and posts as them from now on. A player has one active character: any other active character of theirs moves to Reserve (Backup).`,
       )
     } else {
       lines.push(`No player controls ${characterName}.`)
@@ -412,10 +412,10 @@ export function describeRoleChange(
     if (fromRole !== 'pc_reserve') lines.push(`${characterName}'s status becomes Backup (you can change it to e.g. Incapacitated afterwards).`)
     if (newOwner) {
       lines.push(
-        `${newOwner} keeps control of ${characterName} and can edit them, but can't post as them until they're active again. Reserve characters don't count toward the limit of 3 active characters.`,
+        `${newOwner} keeps control of ${characterName} and can edit them, but can't post as them until they're active again. A player can have up to 3 characters in Reserve.`,
       )
       if (fromRole === 'pc_in_play' && !ownerChanged) {
-        lines.push(`If ${newOwner} is posting as ${characterName}, they switch to another active character of theirs (if they have one).`)
+        lines.push(`${newOwner} posts under their own name until they make another character active.`)
       }
     } else {
       lines.push(`No player controls ${characterName}.`)
@@ -427,13 +427,13 @@ export function describeRoleChange(
     // Retired (out of play).
     if (fromRole !== 'pc_out_of_play' && !ownerChanged && oldOwner) {
       lines.push(
-        `${oldOwner} can no longer post as or edit ${characterName}, but keeps a read-only view. If ${oldOwner} is posting as ${characterName}, they switch to another active character of theirs (or their own name).`,
+        `${oldOwner} can no longer post as or edit ${characterName}, but keeps a read-only view. If ${characterName} was active, ${oldOwner} posts under their own name until they make another character active.`,
       )
     } else if (newOwner) {
       lines.push(`${newOwner} gets a read-only view of ${characterName}.`)
     }
     lines.push('All players can now read the Owner fields and the sheet, except fields marked Private.')
-    lines.push('Retired characters do not count toward the limit of 3 active characters.')
+    lines.push('Retired characters do not count toward the limit of 3 in Reserve.')
   }
   if (from.kind === 'npc') {
     lines.push('Fields that were GM only stay GM only. Move any the player should see.')

@@ -27,6 +27,14 @@ vi.mock('./useChannel', () => ({
 vi.mock('../ext/authorship/usePostingIdentities', () => ({
   usePostingIdentities: () => ({ identities: [], error: null })
 }))
+// FORK-EXT: same for the in-game calendar's loader.
+vi.mock('../ext/calendar/useCalendarChanges', () => ({
+  useCalendarChanges: () => ({ changes: [], reload: () => {} })
+}))
+// FORK-EXT: and the Characters panel's loader (GM Tools → NPCs opens it).
+vi.mock('../ext/characters/useCharacterList', () => ({
+  useCharacterList: () => ({ characters: [], tags: [], loading: false, error: null, reload: () => {} })
+}))
 
 vi.mock('../chat/useMessages', () => ({
   useMessages: vi.fn()
@@ -2093,7 +2101,8 @@ describe('ChannelView search functionality', () => {
 
     expect(items).toContain('NPCs')
     fireEvent.click(screen.getByText('NPCs'))
-    expect(screen.getByRole('dialog', { name: 'Manage NPCs' })).toBeInTheDocument()
+    // FORK-EXT: "NPCs" opens our Characters panel (one NPC list).
+    expect(screen.getByRole('dialog', { name: 'Characters' })).toBeInTheDocument()
   })
 
   it('applies dark-mode classes to the NPCs sidebar item', () => {

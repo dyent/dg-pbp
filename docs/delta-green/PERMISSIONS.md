@@ -4,7 +4,8 @@ Enforced by the database (row-level security and functions), so it holds no matt
 or tool is used. Every row below is covered by pgTAP tests
 (`supabase/tests/*_ext_characters.sql`, `*_ext_character_roles.sql`,
 `*_ext_posting_identities.sql`, `*_dg_character_sheets.sql`, `*_ext_character_reserve.sql`,
-`*_dg_sheet_quick_pools.sql`). Current as of Phase 2a step 4c with its follow-ups (2026-11-18).
+`*_dg_sheet_quick_pools.sql`, `*_ext_npc_roster_merge.sql`). Current as of the step 5a follow-ups
+(2026-11-19). Every "Speak as NPC" name is an NPC character (GM only until revealed).
 
 "In play" covers **active** and **reserve** PCs (reserve = in play with a status other than
 Active); "out of play" is shown in the app as **retired**.
@@ -40,15 +41,16 @@ owner loses access to them.
 | Action | GM | Owner (PC in play) | Former owner | Other player |
 |---|---|---|---|---|
 | Create / delete characters | Yes (delete only if it never posted) | No | No | No |
-| Role and player (active / reserve / retired / NPC), limit of 3 active PCs | Yes (`ext_set_role`) | No | No | No |
-| Status: Active, Backup, Temporarily unavailable, Incapacitated | Yes | Yes (`ext_set_my_status`, own PC in play, only from one of these) | No | No |
+| Role and player (active / reserve / retired / NPC); 1 active and up to 3 reserve PCs per player | Yes (`ext_set_role`) | No | No | No |
+| Status: Active, Backup, Temporarily unavailable, Incapacitated (making one Active moves the player's other active PC to Backup) | Yes | Yes (`ext_set_my_status`, own PC in play, only from one of these) | No | No |
 | Status: Missing, Insane, Retired, Deceased; reveal, status visibility, aliases, tags | Yes | No | No | No |
 | Name and portrait | Yes | Yes (`ext_update_my_character`) | No | No |
 | Edit Everyone / Owner fields, toggle Private | Yes | Yes | No | No |
 | Add custom fields and headings | Yes (any visibility) | Yes (Everyone / Owner only) | No | No |
 | Delete fields | Yes | Own custom fields only (not standard fields) | No | No |
 | GM-only fields | Yes | No (can't see, add, or move fields into GM-only) | No | No |
-| Choose which PC to post as | Yes | Yes (own PCs in play with status Active) | No | No |
+| Which PC a player posts as | Follows the active PC | Their one active PC, or their own name when none is active | No | No |
+| Tick boxes on the sheet (failed skills, SAN-loss incidents, first aid) from the view | Yes | Yes (PC in play) | No | No |
 | Add history notes | Yes | No | No | No |
 | Create / edit a PC's Delta Green sheet, quick HP / WP / SAN (`dg_set_pool`) | Yes | Yes (PC in play) | No | No |
 | NPC stat block; remove any sheet | Yes | No | No | No |
@@ -69,6 +71,16 @@ Tests: `supabase/tests/*_ext_campaign_files.sql`. How to use: `06-campaign-files
 | Earlier versions | Yes | Same as the file | Same as the file | No |
 | Who a file is shared with; file history | Yes | No | No | No |
 | Add, replace, edit, share, delete | Yes (not in archived campaigns) | No | No | No |
+
+## In-game calendar
+
+Tests: `supabase/tests/*_ext_in_game_calendar.sql`. How to use: `08-in-game-calendar.md`.
+
+| What | GM | Player | Outsider |
+|---|---|---|---|
+| See the campaign date and its changes | Yes | Yes | No |
+| See a room's own date and its changes | Yes | If they can see the room (private rooms: invited players only) | No |
+| Set, move, clear a room's date, undo the last change | Yes (not in archived campaigns) | No | No |
 
 Sharing is with the player, not a character (DECISIONS.md #29). The stored files themselves follow
 the same rules (storage policies), so a copied storage path is useless without access. An "Open" or

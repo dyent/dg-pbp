@@ -68,6 +68,22 @@ only, no schema change), so every NPC appears in upstream's *Speak as NPC* list.
 The migration adds its own bucket and storage policies; upstream's `images` bucket, its rules and
 its clean-up are untouched.
 
+## In-game calendar (Phase 2a step 5a)
+
+| Upstream file | What we changed | Why |
+|---|---|---|
+| `src/features/channels/ChannelView.tsx` | Import `InGameCalendarProvider` and `InGameDateBar`; wrap the main return's root `<div>` in the provider (inside `PostAuthorshipProvider`, not re-indented); render `InGameDateBar` after `ChannelStatusBar` | Loads the date changes once per campaign; shows the room's date and the GM's controls |
+| `src/features/chat/MessageList.tsx` | Import `InGameDateDivider`; render it before each message (changes since the post above) and once after the last message | Date-change dividers in the chat. Outside our provider it renders nothing, so upstream's MessageList tests need no changes |
+| `src/features/channels/ChannelView.test.tsx` | `vi.mock` of our `useCalendarChanges` | Keeps the provider's loader off the network, as for `usePostingIdentities` |
+
+## One NPC list, one active character (step 5a follow-ups)
+
+| Upstream file / object | What we changed | Why |
+|---|---|---|
+| `src/features/channels/ChannelView.tsx` | GM Tools *NPCs* button replaced by a `CharactersEntry` (label "NPCs", opens on the NPC tab); `onClosed={refetchNpcs}` on both entries; room invite names via `withPlayerName` (`"Agent Reyes (Sam)"`); `playerNames` map passed to `PostAuthorshipProvider`; `NoActiveCharacterBanner` after `InGameDateBar`. Upstream's `NpcManagementModal` code is left in place, just no longer opened | One NPC list (DECISIONS.md #34); "Speak as" names reload after Characters closes; rooms are shared with players; posts made with no active character keep the player's name; reminder banner (#33) |
+| `src/features/channels/ChannelView.test.tsx` | `vi.mock` of our `useCharacterList`; the NPCs test expects the *Characters* dialog instead of *Manage NPCs* | The NPCs button opens our panel |
+| Table `channel_npcs` (upstream) | `20261119103100_ext_npc_roster_merge.sql` adds a deferred trigger `ext_channel_npcs_to_character` (no column or policy change) | Every "Speak as" name becomes an NPC character |
+
 ## New files (no conflict risk)
 
 `CLAUDE.md`, `docs/delta-green/*`, `src/features/ext/**`, `src/features/dg/**`,

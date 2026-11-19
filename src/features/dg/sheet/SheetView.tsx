@@ -153,20 +153,55 @@ export function DerivedBlock({ sheet, calc, onPoolChange }: { sheet: AgentSheet 
   )
 }
 
-function Ticks({ count, label }: { count: number; label: string }) {
+/** A change to the sheet's tick boxes, saved straight from the view. */
+export type TickChange = (next: AgentSheet) => void
+
+function Ticks({ count, label, onChange }: { count: number; label: string; onChange?: (count: number) => void }) {
   return (
     <div className="flex items-center gap-2 text-sm text-surface-800 dark:text-surface-200">
       <span className="w-28">{label}</span>
-      <span aria-label={`${count} of 3`} className="tracking-widest">
-        {[0, 1, 2].map(i => (i < count ? '☒' : '☐')).join('')}
-      </span>
+      {onChange ? (
+        <span className="flex gap-1">
+          {[1, 2, 3].map(n => (
+            <input
+              key={n}
+              type="checkbox"
+              aria-label={`${label} incident ${n}`}
+              checked={count >= n}
+              onChange={e => onChange(e.target.checked ? n : n - 1)}
+              className="h-4 w-4 rounded border-surface-300 text-primary-600 focus:ring-primary-500 dark:border-surface-600"
+            />
+          ))}
+        </span>
+      ) : (
+        <span aria-label={`${count} of 3`} className="tracking-widest">
+          {[0, 1, 2].map(i => (i < count ? '☒' : '☐')).join('')}
+        </span>
+      )}
       {count >= 3 && <span className={`${BADGE} bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200`}>Adapted</span>}
     </div>
   )
 }
 
-export function SheetView({ sheet, calc, onPoolChange }: { sheet: AgentSheet; calc: SheetCalc; onPoolChange?: PoolChange }) {
+export function SheetView({
+  sheet,
+  calc,
+  onPoolChange,
+  onTick,
+}: {
+  sheet: AgentSheet
+  calc: SheetCalc
+  onPoolChange?: PoolChange
+  onTick?: TickChange
+}) {
   const p = sheet.personal
+  const tick = onTick
+    ? (change: (draft: AgentSheet) => void) => {
+        const next = structuredClone(sheet)
+        change(next)
+        onTick(next)
+      }
+    : undefined
   return (
     <div className="grid gap-3 lg:grid-cols-2" data-testid="agent-sheet">
       <Section title="Personal data" className="lg:col-span-2">
@@ -212,8 +247,16 @@ export function SheetView({ sheet, calc, onPoolChange }: { sheet: AgentSheet; ca
       </Section>
 
       <Section title="Incidents of SAN loss without going insane">
-        <Ticks count={sheet.adapted.violence} label="Violence" />
-        <Ticks count={sheet.adapted.helplessness} label="Helplessness" />
+        <Ticks
+          count={sheet.adapted.violence}
+          label="Violence"
+          onChange={tick && (n => tick(d => { d.adapted.violence = n }))}
+        />
+        <Ticks
+          count={sheet.adapted.helplessness}
+          label="Helplessness"
+          onChange={tick && (n => tick(d => { d.adapted.helplessness = n }))}
+        />
       </Section>
 
       <Section title="Skills" className="lg:col-span-2">
@@ -225,10 +268,24 @@ export function SheetView({ sheet, calc, onPoolChange }: { sheet: AgentSheet; ca
                 key={id}
                 className={`flex justify-between gap-2 text-sm ${value === 0 ? 'text-surface-400 dark:text-surface-500' : 'text-surface-900 dark:text-surface-100'}`}
               >
-                <span>
-                  {skill.failed && <span title="Failed this session" aria-label="failed this session">☒ </span>}
-                  {skillLabel(skill)}
-                </span>
+                {tick ? (
+                  <label className="flex items-center gap-1.5">
+                    <input
+                      type="checkbox"
+                      aria-label={`${skillLabel(skill)} failed this session`}
+                      title="Failed this session (for the improvement roll)"
+                      checked={skill.failed}
+                      onChange={e => tick(d => { d.skills[id].failed = e.target.checked })}
+                      className="h-3.5 w-3.5 rounded border-surface-300 text-primary-600 focus:ring-primary-500 dark:border-surface-600"
+                    />
+                    {skillLabel(skill)}
+                  </label>
+                ) : (
+                  <span>
+                    {skill.failed && <span title="Failed this session" aria-label="failed this session">☒ </span>}
+                    {skillLabel(skill)}
+                  </span>
+                )}
                 <span className="font-medium">{value}%</span>
               </li>
             )
@@ -253,9 +310,21 @@ export function SheetView({ sheet, calc, onPoolChange }: { sheet: AgentSheet; ca
 
       <Section title="Wounds and ailments">
         <TextBlock value={sheet.wounds} />
-        <p className="mt-1 text-xs text-surface-600 dark:text-surface-400">
-          First aid attempted since last injury: {sheet.firstAidAttempted ? 'Yes' : 'No'}
-        </p>
+        {tick ? (
+          <label className="mt-1 flex items-center gap-1.5 text-xs text-surface-600 dark:text-surface-400">
+            <input
+              type="checkbox"
+              checked={sheet.firstAidAttempted}
+              onChange={e => tick(d => { d.firstAidAttempted = e.target.checked })}
+              className="h-3.5 w-3.5 rounded border-surface-300 text-primary-600 focus:ring-primary-500 dark:border-surface-600"
+            />
+            First aid attempted since last injury
+          </label>
+        ) : (
+          <p className="mt-1 text-xs text-surface-600 dark:text-surface-400">
+            First aid attempted since last injury: {sheet.firstAidAttempted ? 'Yes' : 'No'}
+          </p>
+        )}
       </Section>
 
       <Section title="Armour and gear">

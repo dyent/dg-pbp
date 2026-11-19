@@ -2,9 +2,12 @@ import { useParams, Navigate, Link, useNavigate } from 'react-router-dom'
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { useChannel } from './useChannel'
 import { PostAuthorshipProvider } from '../ext/authorship/PostAuthorshipProvider' // FORK-EXT: character post authorship
-import { CharactersEntry } from '../ext/characters/CharactersEntry' // FORK-EXT: characters panel
+import { CharactersEntry, withPlayerName } from '../ext/characters/CharactersEntry' // FORK-EXT: characters panel
+import { NoActiveCharacterBanner } from '../ext/characters/NoActiveCharacterBanner' // FORK-EXT: no active character reminder
 import { MySheetButton } from '../dg/sheet/MySheetButton' // FORK-EXT: "My sheet" pop-up
 import { FilesEntry } from '../ext/files/FilesEntry' // FORK-EXT: campaign files
+import { InGameCalendarProvider } from '../ext/calendar/calendarContext' // FORK-EXT: in-game calendar
+import { InGameDateBar } from '../ext/calendar/InGameDateBar' // FORK-EXT: in-game calendar
 import { ChannelSettings } from './ChannelSettings'
 import { ChannelStatusBar } from './ChannelStatusBar'
 import { MemberList } from './MemberList'
@@ -144,10 +147,17 @@ export function ChannelView() {
   const inviteCandidates = useMemo(
     () => members
       .filter(m => m.user_id !== channel?.gm_id && !m.is_blocked)
-      .map(m => ({ user_id: m.user_id, character_name: m.character_name })),
+      // FORK-EXT: rooms are shared with players, so show the player as well as
+      // the character they post as ("Agent Reyes (Sam)").
+      .map(m => ({ user_id: m.user_id, character_name: withPlayerName(m.character_name, m.profile?.display_name) })),
     [members, channel?.gm_id],
   )
-  
+  // FORK-EXT: account names, for posts made while a player had no active character.
+  const playerNames = useMemo(
+    () => new Map(members.map(m => [m.user_id, m.profile?.display_name?.trim() || 'Player'])),
+    [members],
+  )
+
   const [showSettings, setShowSettings] = useState(false)
   const [showRollHistory, setShowRollHistory] = useState(false)
   const [showSearch, setShowSearch] = useState(false)
@@ -560,7 +570,9 @@ export function ChannelView() {
 
   return (
     // FORK-EXT: makes "which character wrote this?" available to chat and roll history.
-    <PostAuthorshipProvider channelId={channel.id}>
+    <PostAuthorshipProvider channelId={channel.id} playerNames={playerNames}>
+    {/* FORK-EXT: in-game dates for the header bar and chat dividers */}
+    <InGameCalendarProvider channelId={channel.id}>
     <div className="fixed inset-0 flex overflow-hidden bg-white dark:bg-surface-800">
       {/* Main Chat Area */}
       <div className="flex-1 flex flex-col min-w-0 bg-surface-50 dark:bg-surface-900 border-r border-surface-200 dark:border-surface-700">
@@ -713,6 +725,21 @@ export function ChannelView() {
           isGM={isGM && (!subId || !!activeRoom)}
           onUpdate={text => (subId ? patchRoomStatus(subId, text) : refetch())}
         />
+        {/* FORK-EXT: in-game date of this room (GM can change it) */}
+        <InGameDateBar
+          key={`in-game-${subId ?? 'main'}`}
+          channelId={channel.id}
+          subChannelId={subId ?? null}
+          roomName={subId ? (activeRoom?.name ?? null) : null}
+          isGM={isGM}
+          isArchived={channel.is_archived}
+        />
+        {/* FORK-EXT: reminder when a player has no active character */}
+        {!isGM && !channel.is_archived && (
+          <NoActiveCharacterBanner myUserId={user?.id}>
+            <CharactersEntry channelId={channel.id} isGM={false} isArchived={false} gmId={channel.gm_id} myUserId={user?.id} members={members} className="rounded-md border border-primary-300 bg-white px-2 py-1 text-xs font-medium text-primary-700 hover:bg-primary-100 dark:border-primary-700 dark:bg-surface-800 dark:text-primary-300" label="Choose a character" />
+          </NoActiveCharacterBanner>
+        )}
 
         {/* Issue #825: one quiet line when the timeline on screen came from
             this device instead of the network. The long explanation lives in
@@ -916,7 +943,7 @@ export function ChannelView() {
           <p className="px-4 pt-3 pb-1 text-xs font-semibold uppercase tracking-wider text-surface-400 dark:text-surface-400">Table</p>
           <div className="divide-y divide-surface-100 dark:divide-surface-700 border-t border-surface-100 dark:border-surface-700">
             {/* FORK-EXT: characters panel (profiles, roles, posting as) */}
-            <CharactersEntry channelId={channel.id} isGM={isGM} isArchived={channel.is_archived} gmId={channel.gm_id} myUserId={user?.id} members={members} className={SIDEBAR_MENU_ITEM} />
+            <CharactersEntry channelId={channel.id} isGM={isGM} isArchived={channel.is_archived} gmId={channel.gm_id} myUserId={user?.id} members={members} className={SIDEBAR_MENU_ITEM} onClosed={refetchNpcs} />
             {/* FORK-EXT: campaign files (handouts, case files, maps) */}
             <FilesEntry channelId={channel.id} isGM={isGM} isArchived={channel.is_archived} gmId={channel.gm_id} myUserId={user?.id} members={members} className={SIDEBAR_MENU_ITEM} />
             {channel.map_url && (
@@ -1039,13 +1066,10 @@ export function ChannelView() {
                     GM Resources
                   </a>
                 )}
-                <button
-                  type="button"
-                  onClick={() => setShowNpcs(true)}
-                  className={SIDEBAR_MENU_ITEM}
-                >
-                  NPCs
-                </button>
+                {/* FORK-EXT: one NPC list. "NPCs" opens our Characters panel on its NPC tab
+                    (every "Speak as" name is an NPC character); upstream's NpcManagementModal
+                    is no longer opened from here. */}
+                <CharactersEntry channelId={channel.id} isGM={isGM} isArchived={channel.is_archived} gmId={channel.gm_id} myUserId={user?.id} members={members} className={SIDEBAR_MENU_ITEM} label="NPCs" initialKind="npc" onClosed={refetchNpcs} />
                 <button
                   type="button"
                   onClick={() => setShowManageRooms(true)}
@@ -1216,6 +1240,7 @@ export function ChannelView() {
         />
       )}
     </div>
+    </InGameCalendarProvider>
     </PostAuthorshipProvider>
   )
 }

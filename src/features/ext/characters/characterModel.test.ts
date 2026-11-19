@@ -203,10 +203,11 @@ describe('describeRoleChange', () => {
     const reserve = describeRoleChange('Reyes', { ...inPlay, status: 'active' }, { ...inPlay, status: 'backup' }, nameOf)
     expect(reserve[0]).toBe("Reyes's status becomes Backup (you can change it to e.g. Incapacitated afterwards).")
     expect(reserve.join(' ')).toMatch(/Sam keeps control of Reyes/)
-    expect(reserve.join(' ')).toMatch(/If Sam is posting as Reyes, they switch/)
+    expect(reserve.join(' ')).toMatch(/up to 3 characters in Reserve/)
+    expect(reserve.join(' ')).toMatch(/Sam posts under their own name until they make another character active/)
     const active = describeRoleChange('Reyes', { ...inPlay, status: 'incapacitated' }, { ...inPlay, status: 'active' }, nameOf)
     expect(active[0]).toBe("Reyes's status becomes Active.")
-    expect(active[1]).toMatch(/limit of 3 active characters/)
+    expect(active[1]).toMatch(/any other active character of theirs moves to Reserve/)
     const unowned = describeRoleChange('Reyes', { ...inPlay, ownerId: null, inPlay: false }, { ...inPlay, ownerId: null, status: 'backup' }, nameOf)
     expect(unowned).toContain('No player controls Reyes.')
     expect(unowned.join(' ')).toMatch(/go back to being seen only by the owner/)
@@ -239,14 +240,14 @@ describe('describeRoleChange', () => {
 
   it('explains bringing a PC back into play', () => {
     const lines = describeRoleChange('Reyes', { ...inPlay, inPlay: false }, inPlay, nameOf)
-    expect(lines[0]).toMatch(/Sam can edit Reyes and post as them \(straight away if not posting as anyone else\)\. This counts toward their limit of 3 active/)
+    expect(lines[0]).toMatch(/Sam can edit Reyes and posts as them from now on\. A player has one active character/)
     expect(lines[1]).toMatch(/go back to being seen only by the owner/)
   })
 
   it('explains handing a PC to another player', () => {
     const lines = describeRoleChange('Reyes', inPlay, { ...inPlay, ownerId: 'u2' }, nameOf)
     expect(lines[0]).toMatch(/Sam loses Reyes/)
-    expect(lines[1]).toMatch(/Alex can edit Reyes and post as them \(straight away/)
+    expect(lines[1]).toMatch(/Alex can edit Reyes and posts as them from now on/)
   })
 
   it('explains removing the player', () => {
@@ -258,7 +259,7 @@ describe('describeRoleChange', () => {
     const lines = describeRoleChange('Reyes', inPlay, { kind: 'npc', inPlay: true, ownerId: 'u1' }, nameOf)
     expect(lines[0]).toBe('Reyes becomes an NPC.')
     expect(lines.join(' ')).toMatch(/Owner fields become GM only/)
-    expect(lines.join(' ')).toMatch(/NPC posting names/)
+    expect(lines.join(' ')).toMatch(/"Speak as NPC"/)
   })
 
   it('explains turning an NPC into a PC', () => {

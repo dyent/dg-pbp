@@ -3,6 +3,7 @@ import { MessageItem } from './MessageItem'
 import type { ReactionSummary } from './useMessages'
 import type { ChatMessage, Member } from './types'
 import { useAuth } from '../auth/useAuth'
+import { InGameDateDivider } from '../ext/calendar/InGameDateDivider' // FORK-EXT: in-game date dividers
 
 type Message = ChatMessage
 
@@ -490,6 +491,8 @@ export function MessageList({ messages, isGM, onEdit, onDelete, onRollDice, high
                 <div className="flex-grow border-t border-surface-300 dark:border-surface-600"></div>
               </div>
             )}
+            {/* FORK-EXT: in-game date changes made since the post above */}
+            <InGameDateDivider subChannelId={message.sub_channel_id} from={prevMessage?.created_at} to={message.created_at} />
             {showNewDivider && (
               <div ref={newMessagesDividerRef} data-testid="new-messages-divider" className="flex items-center my-3">
                 <div className="flex-grow border-t-2 border-red-400 dark:border-red-500"></div>
@@ -524,6 +527,10 @@ export function MessageList({ messages, isGM, onEdit, onDelete, onRollDice, high
             </Fragment>
         )
       })}
+      {/* FORK-EXT: in-game date changes made since the last post */}
+      {messages.length > 0 && (
+        <InGameDateDivider subChannelId={messages[messages.length - 1].sub_channel_id} from={messages[messages.length - 1].created_at} to={null} />
+      )}
       </div>
     </div>
   )

@@ -166,7 +166,7 @@ describe('CharacterProfile', () => {
 
   it('lets the owner move their PC between Active and Reserve', async () => {
     const props = setup()
-    expect(screen.getByText(/Active: you can post as this character/)).toBeInTheDocument()
+    expect(screen.getByText(/Active: you post as this character/)).toBeInTheDocument()
     expect(screen.queryByRole('option', { name: 'Deceased' })).not.toBeInTheDocument()
     fireEvent.change(screen.getByLabelText('Status'), { target: { value: 'incapacitated' } })
     await waitFor(() => expect(props.actions.setMyStatus).toHaveBeenCalledWith('c1', 'incapacitated'))

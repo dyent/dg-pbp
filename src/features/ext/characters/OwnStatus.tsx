@@ -51,8 +51,8 @@ export function OwnStatus({ character, disabled, onChange }: OwnStatusProps) {
       </label>
       <p className="text-xs text-surface-500 dark:text-surface-400">
         {character.status === 'active'
-          ? 'Active: you can post as this character. Choose another status to move them to Reserve.'
-          : 'Reserve: you keep this character but can’t post as them. Choose Active to bring them back (at most 3 active at once).'}
+          ? 'Active: you post as this character. Choose another status to move them to Reserve; you then post under your own name until you make a character active.'
+          : 'Reserve: you keep this character but can’t post as them. Choose Active to post as them (your current active character moves to Backup).'}
       </p>
     </div>
   )

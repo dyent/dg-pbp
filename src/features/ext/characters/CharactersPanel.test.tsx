@@ -31,7 +31,7 @@ vi.mock('./PostingAsSwitcher', () => ({
 const reyes: CharacterSummary = { id: 'c1', kind: 'pc', inPlay: true, name: 'Agent Reyes', portraitUrl: null, status: 'active', ownerId: 'u1', isMine: false, updatedAt: 't' }
 
 const reload = vi.fn()
-const actions = { create: vi.fn(), postAs: vi.fn().mockResolvedValue(undefined) }
+const actions = { create: vi.fn(), setMyStatus: vi.fn().mockResolvedValue(undefined) }
 
 function mockList(overrides: Partial<ReturnType<typeof useCharacterList>> = {}) {
   vi.mocked(useCharacterList).mockReturnValue({ characters: [reyes], tags: [], loading: false, error: null, reload, ...overrides })
@@ -90,10 +90,10 @@ describe('CharactersPanel', () => {
     expect(await screen.findByText('Could not add the character.')).toBeInTheDocument()
   })
 
-  it('switches posting character and reloads', async () => {
+  it('switches posting character by making it active, and reloads', async () => {
     renderPanel()
     fireEvent.click(screen.getByRole('button', { name: 'Switch stub' }))
-    await waitFor(() => expect(actions.postAs).toHaveBeenCalledWith('c1'))
+    await waitFor(() => expect(actions.setMyStatus).toHaveBeenCalledWith('c1', 'active'))
     await waitFor(() => expect(reload).toHaveBeenCalled())
   })
 
@@ -180,6 +180,19 @@ describe('CharactersEntry', () => {
     expect(screen.getByTestId('names')).toHaveTextContent('Dylan (GM)|You|A former player')
     // Active players only, sorted; the GM and blocked members are left out.
     expect(screen.getByTestId('players')).toHaveTextContent('Player|Sam')
+  })
+
+  it('as GM Tools → NPCs: own label, starts on the NPC list, reports closing', () => {
+    const onClosed = vi.fn()
+    render(
+      <ToastProvider>
+        <CharactersEntry channelId="ch1" isGM isArchived={false} gmId="gm" myUserId="gm" members={members} className="" label="NPCs" initialKind="npc" onClosed={onClosed} />
+      </ToastProvider>,
+    )
+    fireEvent.click(screen.getByRole('button', { name: 'NPCs' }))
+    expect(screen.getByRole('tab', { name: /NPCs/, selected: true })).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Close characters' }))
+    expect(onClosed).toHaveBeenCalledTimes(1)
   })
 
   it('labels a GM without a name', () => {

@@ -48,25 +48,33 @@ export function toPostingIdentities(rows: readonly PostingIdentityRow[]): Postin
 /**
  * The character `userId` was posting as at `createdAt`, or null when they were not
  * posting as any character then (callers fall back to the upstream name).
+ *
+ * A gap *after* a period (no character active, e.g. the active one went into
+ * Reserve) means they posted under their own name: with `playerName` given,
+ * that is returned (characterId ''), so the post doesn't later take the name
+ * of whichever character becomes active next.
  */
 export function resolvePostAuthor(
   identities: readonly PostingIdentity[],
   userId: string | null | undefined,
   createdAt: string | null | undefined,
+  playerName?: string | null,
 ): PostAuthor | null {
   if (!userId || !createdAt) return null
   const at = Date.parse(createdAt)
   if (Number.isNaN(at)) return null
 
   let match: PostingIdentity | null = null
+  let afterAPeriod = false
   for (const identity of identities) {
     if (identity.userId !== userId) continue
     const covers = identity.startedAt <= at && (identity.endedAt === null || at < identity.endedAt)
     // Periods never overlap in practice; if they ever did, the latest start wins.
     if (covers && (!match || identity.startedAt >= match.startedAt)) match = identity
+    if (identity.endedAt !== null && identity.endedAt <= at) afterAPeriod = true
   }
 
-  return match
-    ? { characterId: match.characterId, name: match.name, portraitUrl: match.portraitUrl }
-    : null
+  if (match) return { characterId: match.characterId, name: match.name, portraitUrl: match.portraitUrl }
+  const player = playerName?.trim()
+  return afterAPeriod && player ? { characterId: '', name: player, portraitUrl: null } : null
 }

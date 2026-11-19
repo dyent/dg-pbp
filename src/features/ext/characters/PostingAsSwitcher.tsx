@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useToast } from '../../../contexts/ToastContext'
 import { usePostingIdentities } from '../authorship/usePostingIdentities'
-import { STATUS_LABELS, type CharacterSummary } from './characterModel'
+import { isTemporaryStatus, type CharacterSummary } from './characterModel'
 import { BTN_SECONDARY, INPUT } from './ui'
 
 interface PostingAsSwitcherProps {
@@ -9,12 +9,14 @@ interface PostingAsSwitcherProps {
   myUserId: string | undefined
   characters: CharacterSummary[]
   disabled: boolean
+  /** Makes one of the player's Reserve PCs their active character. */
   onSwitch: (characterId: string) => Promise<void>
 }
 
 /**
- * "You're posting as X": lets a player choose which of their in-play PCs their
- * posts and rolls are labelled with. Only Active characters can be chosen.
+ * "You're posting as X": a player posts as their one active PC (or under their
+ * own name when none is active) and can make a Reserve PC active instead.
+ * Reserve PCs with a status only the GM sets (e.g. Missing) aren't offered.
  */
 export function PostingAsSwitcher({ channelId, myUserId, characters, disabled, onSwitch }: PostingAsSwitcherProps) {
   const { identities } = usePostingIdentities(channelId)
@@ -27,7 +29,7 @@ export function PostingAsSwitcher({ channelId, myUserId, characters, disabled, o
 
   const current = identities.find(i => i.userId === myUserId && i.endedAt === null)
   const currentCharacter = current ? mine.find(c => c.id === current.characterId) : undefined
-  const choices = mine.filter(c => c.status === 'active' && c.id !== currentCharacter?.id)
+  const choices = mine.filter(c => c.status !== 'active' && isTemporaryStatus(c.status))
 
   const handleSwitch = async () => {
     if (!choice) return
@@ -48,17 +50,16 @@ export function PostingAsSwitcher({ channelId, myUserId, characters, disabled, o
       <span className="text-surface-800 dark:text-surface-200">
         {currentCharacter ? (
           <>
-            You're posting as <strong>{currentCharacter.name}</strong>
-            {currentCharacter.status && currentCharacter.status !== 'active' && ` (${STATUS_LABELS[currentCharacter.status]})`}.
+            You're posting as <strong>{currentCharacter.name}</strong>.
           </>
         ) : (
-          "You're posting under your own name."
+          "You're posting under your own name: none of your characters is active."
         )}
       </span>
       {choices.length > 0 && !disabled && (
         <span className="flex items-center gap-2">
-          <select value={choice} onChange={e => setChoice(e.target.value)} aria-label="Switch to character" className={`${INPUT} w-auto py-1`}>
-            <option value="">Switch to…</option>
+          <select value={choice} onChange={e => setChoice(e.target.value)} aria-label="Make a character active" className={`${INPUT} w-auto py-1`}>
+            <option value="">Make active…</option>
             {choices.map(c => (
               <option key={c.id} value={c.id}>
                 {c.name}
@@ -66,7 +67,7 @@ export function PostingAsSwitcher({ channelId, myUserId, characters, disabled, o
             ))}
           </select>
           <button type="button" className={BTN_SECONDARY} onClick={handleSwitch} disabled={!choice || busy}>
-            {busy ? 'Switching…' : 'Switch'}
+            {busy ? 'Switching…' : 'Make active'}
           </button>
         </span>
       )}

@@ -2,6 +2,7 @@ import { useCallback, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { CharactersPanel } from './CharactersPanel'
 import type { PlayerOption } from './GmControls'
+import type { CharacterKind } from './characterModel'
 
 /** The bits of an upstream channel_members row this feature needs. */
 export interface MemberLike {
@@ -20,6 +21,12 @@ interface CharactersEntryProps {
   members: MemberLike[]
   /** Upstream's sidebar menu item classes, so the entry looks native. */
   className: string
+  /** Button text; "NPCs" when it stands in for upstream's NPC window. */
+  label?: string
+  /** List shown first: PCs, or NPCs from GM Tools. */
+  initialKind?: CharacterKind
+  /** Called when the panel closes (ChannelView reloads the "Speak as" names). */
+  onClosed?: () => void
 }
 
 /** Account name of a member (character names change as they switch PCs). */
@@ -27,11 +34,17 @@ export function memberName(member: MemberLike): string {
   return member.profile?.display_name?.trim() || member.character_name?.trim() || 'Player'
 }
 
+/** "Agent Reyes (Sam)": a member's posting name plus their account name, when different. */
+export function withPlayerName(characterName: string, displayName: string | null | undefined): string {
+  const player = displayName?.trim()
+  return player && player !== characterName.trim() ? `${characterName} (${player})` : characterName
+}
+
 /**
  * Fork hook point: the "Characters" item in the campaign sidebar plus the
  * panel it opens. ChannelView renders this one component (FORK-EXT).
  */
-export function CharactersEntry({ channelId, isGM, isArchived, gmId, myUserId, members, className }: CharactersEntryProps) {
+export function CharactersEntry({ channelId, isGM, isArchived, gmId, myUserId, members, className, label = 'Characters', initialKind, onClosed }: CharactersEntryProps) {
   const [open, setOpen] = useState(false)
 
   const players: PlayerOption[] = useMemo(
@@ -56,7 +69,7 @@ export function CharactersEntry({ channelId, isGM, isArchived, gmId, myUserId, m
   return (
     <>
       <button type="button" onClick={() => setOpen(true)} className={className}>
-        Characters
+        {label}
       </button>
       {/* Portal: the sidebar is CSS-transformed, which would trap a fixed
           overlay inside it. */}
@@ -69,7 +82,11 @@ export function CharactersEntry({ channelId, isGM, isArchived, gmId, myUserId, m
             myUserId={myUserId}
             players={players}
             nameOf={nameOf}
-            onClose={() => setOpen(false)}
+            initialKind={initialKind}
+            onClose={() => {
+              setOpen(false)
+              onClosed?.()
+            }}
           />,
           document.body,
         )}
