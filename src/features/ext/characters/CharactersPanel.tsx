@@ -144,6 +144,7 @@ export function CharactersPanel({ channelId, isGM, isArchived, myUserId, players
                     onChanged={reload}
                     onDeleted={() => setSelectedId(null)}
                     onEditingChange={handleEditingChange}
+                    myUserId={myUserId}
                   />
                 ) : (
                   <p className="py-8 text-center text-sm text-surface-500 dark:text-surface-400">Choose a character to see their profile.</p>

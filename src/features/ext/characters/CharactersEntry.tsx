@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 import { CharactersPanel } from './CharactersPanel'
 import type { PlayerOption } from './GmControls'
 import type { CharacterKind } from './characterModel'
+import { OpenPostContext, type OpenPost } from '../activity/openPostContext'
 
 /** The bits of an upstream channel_members row this feature needs. */
 export interface MemberLike {
@@ -27,6 +28,8 @@ interface CharactersEntryProps {
   initialKind?: CharacterKind
   /** Called when the panel closes (ChannelView reloads the "Speak as" names). */
   onClosed?: () => void
+  /** Shows a post in the chat (Activity tab's "Go to post"); the panel closes first. */
+  onOpenPost?: OpenPost
 }
 
 /** Account name of a member (character names change as they switch PCs). */
@@ -44,8 +47,22 @@ export function withPlayerName(characterName: string, displayName: string | null
  * Fork hook point: the "Characters" item in the campaign sidebar plus the
  * panel it opens. ChannelView renders this one component (FORK-EXT).
  */
-export function CharactersEntry({ channelId, isGM, isArchived, gmId, myUserId, members, className, label = 'Characters', initialKind, onClosed }: CharactersEntryProps) {
+export function CharactersEntry({ channelId, isGM, isArchived, gmId, myUserId, members, className, label = 'Characters', initialKind, onClosed, onOpenPost }: CharactersEntryProps) {
   const [open, setOpen] = useState(false)
+  const close = useCallback(() => {
+    setOpen(false)
+    onClosed?.()
+  }, [onClosed])
+  const openPost = useMemo<OpenPost | null>(
+    () =>
+      onOpenPost
+        ? (messageId, subChannelId) => {
+            close()
+            onOpenPost(messageId, subChannelId)
+          }
+        : null,
+    [onOpenPost, close],
+  )
 
   const players: PlayerOption[] = useMemo(
     () =>
@@ -75,19 +92,18 @@ export function CharactersEntry({ channelId, isGM, isArchived, gmId, myUserId, m
           overlay inside it. */}
       {open &&
         createPortal(
-          <CharactersPanel
-            channelId={channelId}
-            isGM={isGM}
-            isArchived={isArchived}
-            myUserId={myUserId}
-            players={players}
-            nameOf={nameOf}
-            initialKind={initialKind}
-            onClose={() => {
-              setOpen(false)
-              onClosed?.()
-            }}
-          />,
+          <OpenPostContext.Provider value={openPost}>
+            <CharactersPanel
+              channelId={channelId}
+              isGM={isGM}
+              isArchived={isArchived}
+              myUserId={myUserId}
+              players={players}
+              nameOf={nameOf}
+              initialKind={initialKind}
+              onClose={close}
+            />
+          </OpenPostContext.Provider>,
           document.body,
         )}
     </>

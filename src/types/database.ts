@@ -1189,6 +1189,80 @@ export type Database = {
           },
         ]
       }
+      ext_character_notes: {
+        Row: {
+          author_character_id: string | null
+          author_character_name: string | null
+          author_id: string | null
+          body: string
+          calendar: string
+          channel_id: string
+          character_id: string
+          created_at: string
+          id: string
+          in_game_day: number | null
+          updated_at: string
+          visibility: string
+        }
+        Insert: {
+          author_character_id?: string | null
+          author_character_name?: string | null
+          author_id?: string | null
+          body: string
+          calendar?: string
+          channel_id: string
+          character_id: string
+          created_at?: string
+          id?: string
+          in_game_day?: number | null
+          updated_at?: string
+          visibility: string
+        }
+        Update: {
+          author_character_id?: string | null
+          author_character_name?: string | null
+          author_id?: string | null
+          body?: string
+          calendar?: string
+          channel_id?: string
+          character_id?: string
+          created_at?: string
+          id?: string
+          in_game_day?: number | null
+          updated_at?: string
+          visibility?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ext_character_notes_author_character_id_fkey"
+            columns: ["author_character_id"]
+            isOneToOne: false
+            referencedRelation: "ext_characters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ext_character_notes_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ext_character_notes_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "channels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ext_character_notes_character_id_fkey"
+            columns: ["character_id"]
+            isOneToOne: false
+            referencedRelation: "ext_characters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ext_character_tags: {
         Row: {
           character_id: string
@@ -2351,6 +2425,15 @@ export type Database = {
         Args: { p_channel_id: string; p_path: string }
         Returns: Record<string, unknown>
       }
+      ext__check_character_note: {
+        Args: {
+          p_body: string
+          p_character_id: string
+          p_in_game_day: number
+          p_visibility: string
+        }
+        Returns: string
+      }
       ext__check_day: { Args: { p_day: number }; Returns: undefined }
       ext__check_file_players: {
         Args: {
@@ -2421,6 +2504,15 @@ export type Database = {
         }
         Returns: string
       }
+      ext_add_character_note: {
+        Args: {
+          p_body: string
+          p_character_id: string
+          p_in_game_day?: number
+          p_visibility: string
+        }
+        Returns: string
+      }
       ext_campaign_file_path_channel: {
         Args: { p_name: string }
         Returns: string
@@ -2449,6 +2541,27 @@ export type Database = {
         Args: { p_name: string }
         Returns: boolean
       }
+      ext_character_posts: {
+        Args: {
+          p_before?: string
+          p_channel_id: string
+          p_character_id: string
+          p_limit?: number
+          p_npc_name: string
+          p_terms: string[]
+        }
+        Returns: {
+          content: string
+          created_at: string
+          id: string
+          kind: string
+          npc_name: string
+          sender_id: string
+          sub_channel_id: string
+          type: string
+          whisper_to: string
+        }[]
+      }
       ext_clear_room_date: {
         Args: { p_channel_id: string; p_sub_channel_id: string }
         Returns: string
@@ -2456,6 +2569,10 @@ export type Database = {
       ext_delete_campaign_file: {
         Args: { p_file_id: string }
         Returns: string[]
+      }
+      ext_delete_character_note: {
+        Args: { p_note_id: string }
+        Returns: undefined
       }
       ext_is_character_owner: {
         Args: { p_character_id: string }
@@ -2536,6 +2653,15 @@ export type Database = {
           p_folder: string
           p_player_ids: string[]
           p_title: string
+          p_visibility: string
+        }
+        Returns: undefined
+      }
+      ext_update_character_note: {
+        Args: {
+          p_body: string
+          p_in_game_day?: number
+          p_note_id: string
           p_visibility: string
         }
         Returns: undefined

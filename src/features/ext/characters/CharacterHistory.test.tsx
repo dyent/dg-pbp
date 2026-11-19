@@ -1,33 +1,38 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
-import { describe, it, expect, vi } from 'vitest'
-import { CharacterHistory } from './CharacterHistory'
+import { render, screen, fireEvent } from '@testing-library/react'
+import { describe, it, expect } from 'vitest'
+import { HistoryEntry } from './CharacterHistory'
 import type { CharacterEvent } from './characterModel'
 
-const events: CharacterEvent[] = [
-  { id: 'e1', eventType: 'field_edited', details: { action: 'edited', label: 'Occupation', old_label: 'Occupation', old_body: 'Cop', new_body: '' }, note: null, visibility: 'gm', actorId: 'u1', createdAt: '2026-11-18T10:00:00Z' },
-  { id: 'e2', eventType: 'role_changed', details: { from: { kind: 'pc', in_play: true, owner_id: 'u1' }, to: { kind: 'pc', in_play: false, owner_id: 'u1' } }, note: 'Sidelined', visibility: 'owner', actorId: null, createdAt: '2026-11-17T10:00:00Z' },
-  { id: 'e3', eventType: 'note', details: {}, note: 'Met the cultist', visibility: 'gm', actorId: 'gm', createdAt: '2026-11-16T10:00:00Z' },
-]
+const edited: CharacterEvent = { id: 'e1', eventType: 'field_edited', details: { action: 'edited', label: 'Occupation', old_label: 'Occupation', old_body: 'Cop', new_body: '' }, note: null, visibility: 'gm', actorId: 'u1', createdAt: '2026-11-18T10:00:00Z' }
+const role: CharacterEvent = { id: 'e2', eventType: 'role_changed', details: { from: { kind: 'pc', in_play: true, owner_id: 'u1' }, to: { kind: 'pc', in_play: false, owner_id: 'u1' } }, note: 'Sidelined', visibility: 'owner', actorId: null, createdAt: '2026-11-17T10:00:00Z' }
+const note: CharacterEvent = { id: 'e3', eventType: 'note', details: {}, note: 'Met the cultist', visibility: 'gm', actorId: 'gm', createdAt: '2026-11-16T10:00:00Z' }
 
 const nameOf = (id: string) => (id === 'u1' ? 'Sam' : 'GM')
 
-describe('CharacterHistory', () => {
-  it('lists entries with author, notes and GM-only markers for the GM', () => {
-    render(<CharacterHistory events={events} isGM canAddNote nameOf={nameOf} onAddNote={vi.fn()} />)
+describe('HistoryEntry', () => {
+  it('shows an edit with its author, GM-only marker and details for the GM', () => {
+    render(<HistoryEntry event={edited} isGM nameOf={nameOf} extra={<span>extra line</span>} />)
     expect(screen.getByText('Edited "Occupation".')).toBeInTheDocument()
     expect(screen.getByText('by Sam')).toBeInTheDocument()
-    expect(screen.getByText('"Sidelined"')).toBeInTheDocument()
-    expect(screen.getByText('Met the cultist')).toBeInTheDocument()
-    expect(screen.getAllByText('GM only')).toHaveLength(2)
+    expect(screen.getByText('extra line')).toBeInTheDocument()
+    expect(screen.getByText('GM only')).toBeInTheDocument()
     fireEvent.click(screen.getByText('Show the change'))
     expect(screen.getByText('Cop')).toBeInTheDocument()
     expect(screen.getByText('(empty)')).toBeInTheDocument()
   })
 
-  it('hides change details and the note box from players', () => {
-    render(<CharacterHistory events={events} isGM={false} canAddNote nameOf={nameOf} onAddNote={vi.fn()} />)
+  it('shows the note of a role change and old GM notes', () => {
+    const { unmount } = render(<HistoryEntry event={role} isGM={false} nameOf={nameOf} />)
+    expect(screen.getByText('"Sidelined"')).toBeInTheDocument()
+    unmount()
+    render(<HistoryEntry event={note} isGM nameOf={nameOf} />)
+    expect(screen.getByText('Note:')).toBeInTheDocument()
+    expect(screen.getByText('Met the cultist')).toBeInTheDocument()
+  })
+
+  it('hides change details and markers from players', () => {
+    render(<HistoryEntry event={edited} isGM={false} nameOf={nameOf} />)
     expect(screen.queryByText('Show the change')).not.toBeInTheDocument()
-    expect(screen.queryByLabelText('New history note')).not.toBeInTheDocument()
     expect(screen.queryByText('GM only')).not.toBeInTheDocument()
   })
 
@@ -49,7 +54,7 @@ describe('CharacterHistory', () => {
       actorId: 'u1',
       createdAt: '2026-11-18T10:00:00Z',
     }
-    const { unmount } = render(<CharacterHistory events={[sheetEvent]} isGM canAddNote={false} nameOf={nameOf} onAddNote={vi.fn()} />)
+    const { unmount } = render(<HistoryEntry event={sheetEvent} isGM nameOf={nameOf} />)
     expect(screen.getByText('Sheet edited (65 changes).')).toBeInTheDocument()
     fireEvent.click(screen.getByText('Show the changes'))
     expect(screen.getByText('POW:')).toBeInTheDocument()
@@ -58,28 +63,7 @@ describe('CharacterHistory', () => {
     expect(screen.queryByText(/Art/)).not.toBeInTheDocument()
     expect(screen.getByText('…and 62 more.')).toBeInTheDocument()
     unmount()
-    render(<CharacterHistory events={[sheetEvent]} isGM={false} canAddNote={false} nameOf={nameOf} onAddNote={vi.fn()} />)
+    render(<HistoryEntry event={sheetEvent} isGM={false} nameOf={nameOf} />)
     expect(screen.queryByText('Show the changes')).not.toBeInTheDocument()
-  })
-
-  it('shows an empty state', () => {
-    render(<CharacterHistory events={[]} isGM canAddNote={false} nameOf={nameOf} onAddNote={vi.fn()} />)
-    expect(screen.getByText('No history yet.')).toBeInTheDocument()
-    expect(screen.queryByLabelText('New history note')).not.toBeInTheDocument()
-  })
-
-  it('adds a note and clears the box on success only', async () => {
-    const onAddNote = vi.fn().mockResolvedValueOnce(false).mockResolvedValueOnce(true)
-    render(<CharacterHistory events={[]} isGM canAddNote nameOf={nameOf} onAddNote={onAddNote} />)
-    const box = screen.getByLabelText('New history note')
-    fireEvent.submit(box.closest('form')!)
-    expect(onAddNote).not.toHaveBeenCalled()
-    fireEvent.change(box, { target: { value: 'Owes the GM a favour' } })
-    fireEvent.click(screen.getByRole('button', { name: 'Add note' }))
-    await waitFor(() => expect(onAddNote).toHaveBeenCalledTimes(1))
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Add note' })).not.toBeDisabled())
-    expect(box).toHaveValue('Owes the GM a favour')
-    fireEvent.click(screen.getByRole('button', { name: 'Add note' }))
-    await waitFor(() => expect(box).toHaveValue(''))
   })
 })

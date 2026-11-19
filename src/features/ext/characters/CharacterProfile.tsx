@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useToast } from '../../../contexts/ToastContext'
 import { CharacterSheet } from '../../dg/sheet/CharacterSheet'
 import { HiddenBadge, Portrait, RoleBadge, StatusBadge } from './CharacterBadges'
-import { CharacterHistory } from './CharacterHistory'
+import { CharacterActivity } from '../activity/CharacterActivity'
 import { GmControls, type PlayerOption } from './GmControls'
 import { OwnStatus } from './OwnStatus'
 import { ProfileEditor, type ProfileSave } from './ProfileEditor'
@@ -32,14 +32,16 @@ interface CharacterProfileProps {
   onChanged: () => void
   onDeleted: () => void
   onEditingChange: (editing: boolean) => void
+  /** The viewer, to offer Edit on their own notes. */
+  myUserId?: string
 }
 
-type ProfileTab = 'profile' | 'sheet' | 'history'
+type ProfileTab = 'profile' | 'sheet' | 'activity'
 
 const TAB_LABELS: Record<ProfileTab, (c: CharacterSummary) => string> = {
   profile: () => 'Profile',
   sheet: c => (c.kind === 'npc' ? 'Stats' : 'Sheet'),
-  history: () => 'History',
+  activity: () => 'Activity',
 }
 
 /**
@@ -48,7 +50,7 @@ const TAB_LABELS: Record<ProfileTab, (c: CharacterSummary) => string> = {
  */
 export function profileTabs(character: CharacterSummary, isGM: boolean): ProfileTab[] {
   const sheetVisible = isGM || (character.kind === 'pc' && (character.isMine || !character.inPlay))
-  return sheetVisible ? ['profile', 'sheet', 'history'] : ['profile', 'history']
+  return sheetVisible ? ['profile', 'sheet', 'activity'] : ['profile', 'activity']
 }
 
 /** Columns shown to this viewer when reading the profile. */
@@ -81,6 +83,7 @@ export function CharacterProfile({
   onChanged,
   onDeleted,
   onEditingChange,
+  myUserId,
 }: CharacterProfileProps) {
   const { fields, events, loading, error, reload } = useCharacterProfile(character.id)
   const { addToast } = useToast()
@@ -223,12 +226,14 @@ export function CharacterProfile({
               ))}
             </div>
           ) : (
-            <CharacterHistory
-              events={events}
+            <CharacterActivity
+              channelId={channelId}
+              character={character}
               isGM={isGM}
-              canAddNote={!isArchived}
+              isArchived={isArchived}
+              myUserId={myUserId}
+              events={events}
               nameOf={nameOf}
-              onAddNote={note => run(() => actions.addNote(character.id, note), 'Note added.')}
             />
           )}
         </>

@@ -16,6 +16,11 @@ vi.mock('../../dg/sheet/CharacterSheet', () => ({
     </div>
   ),
 }))
+vi.mock('../activity/CharacterActivity', () => ({
+  CharacterActivity: ({ events, myUserId }: { events: unknown[]; myUserId?: string }) => (
+    <div data-testid="activity">{events.length} history entries, viewer {myUserId ?? 'unknown'}</div>
+  ),
+}))
 vi.mock('../../../hooks/useImageUpload', () => ({
   useImageUpload: () => ({ uploadEnabled: true, settingsLoading: false, uploading: false, uploadImage: vi.fn() }),
 }))
@@ -90,12 +95,12 @@ describe('viewColumns', () => {
 
 describe('profileTabs', () => {
   it('gives the sheet tab to the GM, the owner, and everyone once a PC is out of play', () => {
-    expect(profileTabs(pc, true)).toEqual(['profile', 'sheet', 'history'])
-    expect(profileTabs({ ...pc, kind: 'npc', isMine: false }, true)).toEqual(['profile', 'sheet', 'history'])
-    expect(profileTabs(pc, false)).toEqual(['profile', 'sheet', 'history'])
-    expect(profileTabs({ ...pc, isMine: false }, false)).toEqual(['profile', 'history'])
-    expect(profileTabs({ ...pc, isMine: false, inPlay: false }, false)).toEqual(['profile', 'sheet', 'history'])
-    expect(profileTabs({ ...pc, kind: 'npc', isMine: false }, false)).toEqual(['profile', 'history'])
+    expect(profileTabs(pc, true)).toEqual(['profile', 'sheet', 'activity'])
+    expect(profileTabs({ ...pc, kind: 'npc', isMine: false }, true)).toEqual(['profile', 'sheet', 'activity'])
+    expect(profileTabs(pc, false)).toEqual(['profile', 'sheet', 'activity'])
+    expect(profileTabs({ ...pc, isMine: false }, false)).toEqual(['profile', 'activity'])
+    expect(profileTabs({ ...pc, isMine: false, inPlay: false }, false)).toEqual(['profile', 'sheet', 'activity'])
+    expect(profileTabs({ ...pc, kind: 'npc', isMine: false }, false)).toEqual(['profile', 'activity'])
   })
 })
 
@@ -110,7 +115,7 @@ describe('CharacterProfile', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Start sheet edit' }))
     await waitFor(() => expect(props.onEditingChange).toHaveBeenLastCalledWith(true))
     expect(screen.queryByTestId('gm-controls')).not.toBeInTheDocument()
-    expect(screen.getByRole('tab', { name: 'History' })).toBeDisabled()
+    expect(screen.getByRole('tab', { name: 'Activity' })).toBeDisabled()
     fireEvent.click(screen.getByRole('button', { name: 'Stop sheet edit' }))
     await waitFor(() => expect(props.onEditingChange).toHaveBeenLastCalledWith(false))
     expect(screen.getByTestId('gm-controls')).toBeInTheDocument()
@@ -265,13 +270,10 @@ describe('CharacterProfile', () => {
     expect(screen.getByRole('button', { name: 'Edit' })).toBeInTheDocument()
   })
 
-  it('shows history and lets the GM add a note', async () => {
-    const props = setup({ isGM: true })
-    fireEvent.click(screen.getByRole('tab', { name: 'History' }))
-    expect(screen.getByText('No history yet.')).toBeInTheDocument()
-    fireEvent.change(screen.getByLabelText('New history note'), { target: { value: 'Owes a favour' } })
-    fireEvent.click(screen.getByRole('button', { name: 'Add note' }))
-    await waitFor(() => expect(props.actions.addNote).toHaveBeenCalledWith('c1', 'Owes a favour'))
+  it('shows the Activity tab with the history entries', () => {
+    setup({ isGM: true, myUserId: 'gm' }, { events: [{ id: 'e1', eventType: 'note', details: {}, note: 'x', visibility: 'gm', actorId: 'gm', createdAt: 't' }] })
+    fireEvent.click(screen.getByRole('tab', { name: 'Activity' }))
+    expect(screen.getByTestId('activity')).toHaveTextContent('1 history entries, viewer gm')
     fireEvent.click(screen.getByRole('tab', { name: 'Profile' }))
     expect(screen.getByText('FBI Special Agent')).toBeInTheDocument()
   })

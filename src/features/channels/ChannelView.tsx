@@ -4,6 +4,7 @@ import { useChannel } from './useChannel'
 import { PostAuthorshipProvider } from '../ext/authorship/PostAuthorshipProvider' // FORK-EXT: character post authorship
 import { CharactersEntry, withPlayerName } from '../ext/characters/CharactersEntry' // FORK-EXT: characters panel
 import { NoActiveCharacterBanner } from '../ext/characters/NoActiveCharacterBanner' // FORK-EXT: no active character reminder
+import { forgetPost, rememberPost, waitingPost } from '../ext/activity/pendingPost' // FORK-EXT: Go to post
 import { MySheetButton } from '../dg/sheet/MySheetButton' // FORK-EXT: "My sheet" pop-up
 import { FilesEntry } from '../ext/files/FilesEntry' // FORK-EXT: campaign files
 import { InGameCalendarProvider } from '../ext/calendar/calendarContext' // FORK-EXT: in-game calendar
@@ -297,6 +298,24 @@ export function ChannelView() {
       }
     })
   }, [jumpToMessage, addToast])
+
+  // FORK-EXT: "Go to post" from a character's Activity tab. Switch room if
+  // needed (that mounts a fresh view, so the target is kept in pendingPost),
+  // then jump once that room's messages are on screen.
+  const [postRequest, setPostRequest] = useState(0)
+  const openPost = useCallback((messageId: string, roomId: string | null) => {
+    if (!id) return
+    rememberPost(messageId, roomId ?? null)
+    if ((roomId ?? null) !== (subId ?? null)) navigate(roomId ? channelRoomPath(id, roomId) : `/channel/${id}`)
+    else setPostRequest(n => n + 1)
+  }, [id, subId, navigate])
+  const postToShow = waitingPost(subId ?? null)
+  const roomMessagesReady = !messagesLoading && messages.every(m => (m.sub_channel_id ?? null) === (subId ?? null))
+  useEffect(() => {
+    if (!postToShow || !roomMessagesReady) return
+    forgetPost()
+    handleJumpToMessage(postToShow)
+  }, [postToShow, postRequest, roomMessagesReady, handleJumpToMessage])
 
   const handleReply = useCallback((message: ChatMessage) => {
     const senderName = members.find(m => m.user_id === message.sender_id)?.character_name || message.sender?.display_name || null
@@ -943,7 +962,7 @@ export function ChannelView() {
           <p className="px-4 pt-3 pb-1 text-xs font-semibold uppercase tracking-wider text-surface-400 dark:text-surface-400">Table</p>
           <div className="divide-y divide-surface-100 dark:divide-surface-700 border-t border-surface-100 dark:border-surface-700">
             {/* FORK-EXT: characters panel (profiles, roles, posting as) */}
-            <CharactersEntry channelId={channel.id} isGM={isGM} isArchived={channel.is_archived} gmId={channel.gm_id} myUserId={user?.id} members={members} className={SIDEBAR_MENU_ITEM} onClosed={refetchNpcs} />
+            <CharactersEntry channelId={channel.id} isGM={isGM} isArchived={channel.is_archived} gmId={channel.gm_id} myUserId={user?.id} members={members} className={SIDEBAR_MENU_ITEM} onClosed={refetchNpcs} onOpenPost={openPost} />
             {/* FORK-EXT: campaign files (handouts, case files, maps) */}
             <FilesEntry channelId={channel.id} isGM={isGM} isArchived={channel.is_archived} gmId={channel.gm_id} myUserId={user?.id} members={members} className={SIDEBAR_MENU_ITEM} />
             {channel.map_url && (
@@ -1069,7 +1088,7 @@ export function ChannelView() {
                 {/* FORK-EXT: one NPC list. "NPCs" opens our Characters panel on its NPC tab
                     (every "Speak as" name is an NPC character); upstream's NpcManagementModal
                     is no longer opened from here. */}
-                <CharactersEntry channelId={channel.id} isGM={isGM} isArchived={channel.is_archived} gmId={channel.gm_id} myUserId={user?.id} members={members} className={SIDEBAR_MENU_ITEM} label="NPCs" initialKind="npc" onClosed={refetchNpcs} />
+                <CharactersEntry channelId={channel.id} isGM={isGM} isArchived={channel.is_archived} gmId={channel.gm_id} myUserId={user?.id} members={members} className={SIDEBAR_MENU_ITEM} label="NPCs" initialKind="npc" onClosed={refetchNpcs} onOpenPost={openPost} />
                 <button
                   type="button"
                   onClick={() => setShowManageRooms(true)}

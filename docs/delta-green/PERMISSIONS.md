@@ -59,6 +59,23 @@ Every field addition, edit (old and new text), removal and visibility change is 
 history entry, and so is every sheet save (the list of changed values). A PC that becomes an NPC
 keeps its sheet, which becomes GM-only. Archived campaigns are read-only for everyone.
 
+## Character notes and activity
+
+Tests: `supabase/tests/*_ext_character_activity.sql`. How to use: `09-activity-log.md`.
+
+| What | GM | Writer | Other player | Outsider |
+|---|---|---|---|---|
+| Read a **GM only** note (GM's) | Yes | (the GM) | No | No |
+| Read a **Me and the GM** note (player's) | Yes | Yes | No | No |
+| Read an **Everyone** note | Yes | Yes | If they can see the character | No |
+| Add a note | Any character | Players: characters they can see | Same | No |
+| Edit a note | Own notes only | Yes | No | No |
+| Delete a note | Any note | Yes | No | No |
+| Posts and mentions in the Activity tab | Everything in the campaign, aliases included | Only posts they can read in the chat; the name only | Same | Nothing |
+
+Notes belong to the player who wrote them, even after their PC retires (DECISIONS.md #35).
+Archived campaigns are read-only.
+
 ## Campaign files
 
 Tests: `supabase/tests/*_ext_campaign_files.sql`. How to use: `06-campaign-files.md`.

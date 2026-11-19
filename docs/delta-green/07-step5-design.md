@@ -2,7 +2,7 @@
 
 *Agreed with the owner on 2026-11-19. Decisions: DECISIONS.md #30–#32 (refining #10, #16 and #28).
 Order: **5a** calendar → **5b** activity log and notes → **5c** inline NPC tags; each step is tried
-and committed before the next. Progress: **5a built** (see `08-in-game-calendar.md`).*
+and committed before the next. Progress: **5a done** (`08-in-game-calendar.md`), **5b built** (`09-activity-log.md`).*
 
 ## 5a: In-game calendar
 

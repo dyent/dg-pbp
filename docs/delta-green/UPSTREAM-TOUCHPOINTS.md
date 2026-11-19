@@ -84,6 +84,12 @@ its clean-up are untouched.
 | `src/features/channels/ChannelView.test.tsx` | `vi.mock` of our `useCharacterList`; the NPCs test expects the *Characters* dialog instead of *Manage NPCs* | The NPCs button opens our panel |
 | Table `channel_npcs` (upstream) | `20261119103100_ext_npc_roster_merge.sql` adds a deferred trigger `ext_channel_npcs_to_character` (no column or policy change) | Every "Speak as" name becomes an NPC character |
 
+## Character activity (Phase 2a step 5b)
+
+| Upstream file | What we changed | Why |
+|---|---|---|
+| `src/features/channels/ChannelView.tsx` | Import our `pendingPost` helpers; `openPost` callback plus an effect (after `handleJumpToMessage`): remember the post, switch room if needed, wait until that room's messages are loaded, then call upstream's `handleJumpToMessage`. Passed as `onOpenPost` to both `CharactersEntry` items. The target is kept outside React state because switching between Main and a room mounts a fresh view | *Go to post* from a character's Activity tab |
+
 ## New files (no conflict risk)
 
 `CLAUDE.md`, `docs/delta-green/*`, `src/features/ext/**`, `src/features/dg/**`,
