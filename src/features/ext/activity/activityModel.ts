@@ -115,9 +115,3 @@ export function searchTerms(character: CharacterSummary, isGM: boolean): string[
   const names = [character.name, ...(isGM ? (character.aliases ?? []) : [])]
   return [...new Set(names.map(n => n.trim()).filter(n => n.length >= 2))]
 }
-
-/** First part of a post, on one line. */
-export function excerpt(text: string, max = 240): string {
-  const flat = text.replace(/\s+/g, ' ').trim()
-  return flat.length > max ? `${flat.slice(0, max - 1).trimEnd()}…` : flat
-}

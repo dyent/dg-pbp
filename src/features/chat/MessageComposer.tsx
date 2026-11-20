@@ -19,6 +19,8 @@ import { lastInputWasMouse } from '../../lib/inputModality'
 import { MarkdownToolbar } from './MarkdownToolbar'
 import { applyMarkdownFormat, type MarkdownFormat } from './markdownFormat'
 import { markdownAutoPair } from './markdownAutoPair'
+import { NpcMentionOptions, NpcTagButton, useComposerNpcTags } from '../ext/npcTags/NpcComposerParts' // FORK-EXT: inline NPC tags
+import { tagInsertion } from '../ext/npcTags/npcTagModel' // FORK-EXT: inline NPC tags
 
 type ChannelMember = Database['public']['Tables']['channel_members']['Row'] & {
   profile?: { display_name: string | null; avatar_url: string | null }
@@ -257,10 +259,14 @@ export const MessageComposer = forwardRef<MessageComposerHandle, MessageComposer
         .sort((a, b) => a.character_name.localeCompare(b.character_name, undefined, { sensitivity: 'base' }))
     : []
   const showAllMention = isGM && mentionState && 'all'.startsWith(mentionState.query.toLowerCase())
+  // FORK-EXT: NPCs the writer can tag follow the players in the @ list.
+  const npcTags = useComposerNpcTags()
+  const matchedNpcs = npcTags.match(mentionState ? mentionState.query : null, matchedMembers.map(m => m.character_name))
   // Flattened option list: @all first (GM only), then matching members.
   const mentionOptions = [
     ...(showAllMention ? ['all' as string] : []),
     ...matchedMembers.map(m => m.character_name),
+    ...matchedNpcs.map(n => n.text), // FORK-EXT: inline NPC tags
   ]
   const mentionOpen = mentionOptions.length > 0
   const memberStartIndex = showAllMention ? 1 : 0
@@ -471,7 +477,8 @@ export const MessageComposer = forwardRef<MessageComposerHandle, MessageComposer
     setIsSubmitting(true)
     setError(null)
     try {
-      const { content: mentionContent } = linkifyMentions(content, members, { allMentionEnabled: isGM })
+      const { content: playerMentionContent } = linkifyMentions(content, members, { allMentionEnabled: isGM })
+      const mentionContent = await npcTags.linkify(playerMentionContent) // FORK-EXT: @NPC → npc: tag
 
       const payload: MessageSendPayload = {
         content: mentionContent,
@@ -999,7 +1006,11 @@ export const MessageComposer = forwardRef<MessageComposerHandle, MessageComposer
               data-testid="composer-shell"
               className={`flex flex-col rounded-2xl border border-gray-300 dark:border-gray-600 shadow-sm transition-colors focus-within:border-indigo-500 focus-within:ring-1 focus-within:ring-indigo-500 ${isScene || isNpc ? 'bg-parchment dark:bg-parchment-dark' : whisperTo ? 'bg-purple-50 dark:bg-purple-950' : 'bg-white dark:bg-gray-800'}`}
             >
+              {/* FORK-EXT: NPC tag button beside upstream's formatting toolbar */}
+              <div className="flex items-center justify-between">
               <MarkdownToolbar onApply={applyFormat} />
+              <NpcTagButton onPick={name => insertAtCursor(tagInsertion(contentRef.current.slice(0, textareaRef.current?.selectionStart ?? contentRef.current.length), name))} />
+              </div>
               <textarea
                 ref={textareaRef}
                 value={content}
@@ -1041,7 +1052,7 @@ export const MessageComposer = forwardRef<MessageComposerHandle, MessageComposer
                 </button>
               </div>
             </div>
-            {(showAllMention || matchedMembers.length > 0) && (
+            {(showAllMention || matchedMembers.length > 0 || matchedNpcs.length > 0) && (
               <div id={listboxId} role="listbox" aria-label="Mention options" className="absolute bottom-full mb-1 left-0 right-0 z-20 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-48 overflow-y-auto">
                 {showAllMention && (
                   <button
@@ -1082,6 +1093,8 @@ export const MessageComposer = forwardRef<MessageComposerHandle, MessageComposer
                     </button>
                   )
                 })}
+                {/* FORK-EXT: inline NPC tags */}
+                <NpcMentionOptions terms={matchedNpcs} listboxId={listboxId} startIndex={memberStartIndex + matchedMembers.length} activeIndex={activeMentionIndex} onPick={selectMention} />
               </div>
             )}
           </div>

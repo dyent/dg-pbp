@@ -19,6 +19,7 @@ import { isNpcIconUrl } from './npcIcons'
 import { MAX_MESSAGE_LENGTH } from '../../constants'
 import { scrubSpoilers } from '../../lib/spoilerScrub'
 import { usePostAuthor } from '../ext/authorship/authorshipContext' // FORK-EXT: character post authorship
+import { NpcTagChip, isNpcTagHref } from '../ext/npcTags/NpcTags' // FORK-EXT: inline NPC tags
 
 type Message = ChatMessage
 
@@ -107,6 +108,7 @@ function formatTimestamp(createdAt: string): string {
 // Pure link sanitizer; hoisted so ReactMarkdown gets a stable reference.
 function urlTransform(url: string): string {
   if (url.startsWith('dice:') || url.startsWith('check:') || url.startsWith('user:')) return url
+  if (isNpcTagHref(url)) return url // FORK-EXT: inline NPC tags
   // Basic sanitization for other URLs, matching react-markdown defaults roughly
   const protocols = ['http', 'https', 'mailto', 'tel']
   try {
@@ -491,6 +493,8 @@ export const MessageItem = memo(function MessageItem({ message, currentUserId, i
           </button>
         )
       }
+      // FORK-EXT: inline NPC tags (name chips)
+      if (href && isNpcTagHref(href)) return <NpcTagChip href={href}>{children}</NpcTagChip>
       if (href?.startsWith('user:')) {
         return (
           <span className={`inline-flex items-center px-1.5 py-0.5 rounded bg-primary-50 dark:bg-primary-950 text-primary-700 dark:text-primary-300 font-medium ${MESSAGE_CHIP_TEXT} font-sans border border-primary-100 dark:border-primary-900`}>

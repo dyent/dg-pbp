@@ -23,15 +23,17 @@ export interface CharactersPanelProps {
   onClose: () => void
   /** Which list to start on (PCs unless opened from GM Tools → NPCs). */
   initialKind?: CharacterKind
+  /** Character to show first (a tag clicked in the chat). */
+  initialSelectedId?: string | null
 }
 
-export function CharactersPanel({ channelId, isGM, isArchived, myUserId, players, nameOf, onClose, initialKind = 'pc' }: CharactersPanelProps) {
+export function CharactersPanel({ channelId, isGM, isArchived, myUserId, players, nameOf, onClose, initialKind = 'pc', initialSelectedId = null }: CharactersPanelProps) {
   const dialogRef = useRef<HTMLDivElement>(null)
   const { addToast } = useToast()
   const { characters, tags, loading, error, reload } = useCharacterList(channelId, isGM, myUserId)
   const actions = useCharacterActions(channelId, myUserId)
   const [kind, setKind] = useState<CharacterKind>(initialKind)
-  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [selectedId, setSelectedId] = useState<string | null>(initialSelectedId)
   const [editing, setEditing] = useState(false)
 
   // Escape closes the panel, except while editing (it would lose the edits).

@@ -1382,6 +1382,45 @@ export type Database = {
           },
         ]
       }
+      ext_npc_alias_tags: {
+        Row: {
+          alias: string
+          channel_id: string
+          character_id: string
+          created_at: string
+          id: string
+        }
+        Insert: {
+          alias: string
+          channel_id: string
+          character_id: string
+          created_at?: string
+          id?: string
+        }
+        Update: {
+          alias?: string
+          channel_id?: string
+          character_id?: string
+          created_at?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ext_npc_alias_tags_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "channels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ext_npc_alias_tags_character_id_fkey"
+            columns: ["character_id"]
+            isOneToOne: false
+            referencedRelation: "ext_characters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ext_posting_periods: {
         Row: {
           channel_id: string
@@ -2592,6 +2631,18 @@ export type Database = {
           portrait_url: string
           status: string
           updated_at: string
+        }[]
+      }
+      ext_npc_alias_tag: {
+        Args: { p_alias: string; p_character_id: string }
+        Returns: string
+      }
+      ext_npc_tag_labels: {
+        Args: { p_channel_id: string; p_ids: string[] }
+        Returns: {
+          id: string
+          name: string
+          portrait_url: string
         }[]
       }
       ext_post_as: { Args: { p_character_id: string }; Returns: undefined }

@@ -74,6 +74,21 @@ Tests: `supabase/tests/*_ext_character_activity.sql`. How to use: `09-activity-l
 | Posts and mentions in the Activity tab | Everything in the campaign, aliases included | Only posts they can read in the chat; the name only | Same | Nothing |
 
 Notes belong to the player who wrote them, even after their PC retires (DECISIONS.md #35).
+
+## NPC tags in posts
+
+Tests: `supabase/tests/*_ext_npc_tags.sql`, `*_ext_npc_alias_tags.sql`. How to use: `10-npc-tags.md`.
+
+| What | GM | Player | Outsider |
+|---|---|---|---|
+| Tag an NPC when writing | Any NPC | NPCs they can see (revealed) | No |
+| Tag by alias | Yes (aliases are GM only) | No | No |
+| Which NPC an alias tag points to (`ext_npc_alias_tags`) | Yes | No: they see the alias as written, nothing else | No |
+| Name and portrait of an NPC tagged in a post | Yes | Yes, even for a hidden NPC (only the name and portrait, and only for NPC ids asked for, which they learn from posts) | No |
+| Open the profile from a tag | Yes, alias tags included | Only NPCs they can see, never from an alias tag | No |
+| Alias tags in the Activity tab | Yes (mentions) | No | No |
+
+Posts themselves keep upstream's rules: a tag only shows where the post is already readable.
 Archived campaigns are read-only.
 
 ## Campaign files

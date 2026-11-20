@@ -35,6 +35,13 @@ vi.mock('../ext/calendar/useCalendarChanges', () => ({
 vi.mock('../ext/characters/useCharacterList', () => ({
   useCharacterList: () => ({ characters: [], tags: [], loading: false, error: null, reload: () => {} })
 }))
+// FORK-EXT: and the NPC tag loader (names and portraits for tags in posts).
+vi.mock('../ext/npcTags/npcTagApi', () => ({
+  listTaggableNpcs: () => Promise.resolve([]),
+  fetchNpcLabels: () => Promise.resolve([]),
+  listAliasTags: () => Promise.resolve([]),
+  aliasTagId: () => Promise.reject(new Error('not in tests')),
+}))
 
 vi.mock('../chat/useMessages', () => ({
   useMessages: vi.fn()

@@ -12,7 +12,6 @@ import {
   FILTER_LABELS,
   NOTE_VISIBILITY_LABELS,
   buildActivity,
-  excerpt,
   noteChoices,
   searchTerms,
   type ActivityFilter,
@@ -21,6 +20,7 @@ import {
   type NoteVisibility,
 } from './activityModel'
 import { useOpenPost } from './openPostContext'
+import { PostBody, isLongPost } from './PostBody'
 import { useCharacterActivity } from './useCharacterActivity'
 
 interface CharacterActivityProps {
@@ -156,8 +156,7 @@ function PostEntry({
     post.type === 'npc'
       ? (post.npcName ?? 'An NPC')
       : (authorAt(post.senderId, post.createdAt)?.name ?? (post.senderId ? nameOf(post.senderId) : 'Someone'))
-  const short = excerpt(post.content)
-  const long = short !== post.content.replace(/\s+/g, ' ').trim()
+  const long = isLongPost(post.content)
 
   return (
     <>
@@ -165,7 +164,7 @@ function PostEntry({
         {post.kind === 'mentioned' ? `Mentioned by ${writer}` : `${character.name} ${POST_VERB[post.kind]}`} in {roomName}
         {post.whisper && <span className={`${BADGE} ml-1 bg-surface-100 dark:bg-surface-700`}>Whisper</span>}
       </p>
-      <p className="whitespace-pre-wrap break-words text-sm text-surface-900 dark:text-surface-100">“{expanded ? post.content : short}”</p>
+      <PostBody content={post.content} collapsed={long && !expanded} />
       <p className="mt-0.5 flex flex-wrap items-center gap-2 text-xs text-surface-500 dark:text-surface-400">
         <time dateTime={post.createdAt}>{dateFormat.format(new Date(post.createdAt))}</time>
         <InGame label={inGame} />

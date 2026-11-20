@@ -1,9 +1,11 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { CharactersPanel } from './CharactersPanel'
 import type { PlayerOption } from './GmControls'
 import type { CharacterKind } from './characterModel'
 import { OpenPostContext, type OpenPost } from '../activity/openPostContext'
+import { OpenCharacterContext, onCharacterRequest } from '../npcTags/characterOpener'
+import { useNpcTags } from '../npcTags/npcTagContext'
 
 /** The bits of an upstream channel_members row this feature needs. */
 export interface MemberLike {
@@ -30,6 +32,8 @@ interface CharactersEntryProps {
   onClosed?: () => void
   /** Shows a post in the chat (Activity tab's "Go to post"); the panel closes first. */
   onOpenPost?: OpenPost
+  /** This entry opens when a tag in the chat is clicked (only one entry should). */
+  opensFromChat?: boolean
 }
 
 /** Account name of a member (character names change as they switch PCs). */
@@ -47,12 +51,31 @@ export function withPlayerName(characterName: string, displayName: string | null
  * Fork hook point: the "Characters" item in the campaign sidebar plus the
  * panel it opens. ChannelView renders this one component (FORK-EXT).
  */
-export function CharactersEntry({ channelId, isGM, isArchived, gmId, myUserId, members, className, label = 'Characters', initialKind, onClosed, onOpenPost }: CharactersEntryProps) {
+export function CharactersEntry({ channelId, isGM, isArchived, gmId, myUserId, members, className, label = 'Characters', initialKind, onClosed, onOpenPost, opensFromChat = false }: CharactersEntryProps) {
   const [open, setOpen] = useState(false)
+  const [shown, setShown] = useState<{ id: string | null; kind: CharacterKind | undefined; n: number }>({ id: null, kind: initialKind, n: 0 })
+  const reloadTags = useNpcTags()?.reload
   const close = useCallback(() => {
     setOpen(false)
     onClosed?.()
-  }, [onClosed])
+    reloadTags?.()
+  }, [onClosed, reloadTags])
+
+  // A new key remounts an already open panel on this character.
+  const showCharacter = useCallback((id: string) => {
+    setShown(prev => ({ id, kind: 'npc', n: prev.n + 1 }))
+    setOpen(true)
+  }, [])
+
+  useEffect(() => {
+    if (!opensFromChat) return
+    return onCharacterRequest(showCharacter)
+  }, [opensFromChat, showCharacter])
+
+  const openFromMenu = () => {
+    setShown(prev => ({ id: null, kind: initialKind, n: prev.n + 1 }))
+    setOpen(true)
+  }
   const openPost = useMemo<OpenPost | null>(
     () =>
       onOpenPost
@@ -85,7 +108,7 @@ export function CharactersEntry({ channelId, isGM, isArchived, gmId, myUserId, m
 
   return (
     <>
-      <button type="button" onClick={() => setOpen(true)} className={className}>
+      <button type="button" onClick={openFromMenu} className={className}>
         {label}
       </button>
       {/* Portal: the sidebar is CSS-transformed, which would trap a fixed
@@ -93,16 +116,20 @@ export function CharactersEntry({ channelId, isGM, isArchived, gmId, myUserId, m
       {open &&
         createPortal(
           <OpenPostContext.Provider value={openPost}>
+            <OpenCharacterContext.Provider value={showCharacter}>
             <CharactersPanel
+              key={shown.n}
               channelId={channelId}
               isGM={isGM}
               isArchived={isArchived}
               myUserId={myUserId}
               players={players}
               nameOf={nameOf}
-              initialKind={initialKind}
+              initialKind={shown.kind}
+              initialSelectedId={shown.id}
               onClose={close}
             />
+            </OpenCharacterContext.Provider>
           </OpenPostContext.Provider>,
           document.body,
         )}

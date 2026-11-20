@@ -27,7 +27,7 @@ vi.mock('../calendar/calendarContext', () => ({
 const hale: CharacterSummary = { id: 'c1', kind: 'npc', inPlay: true, name: 'Dr Hale', portraitUrl: null, status: 'active', ownerId: null, isMine: false, updatedAt: 't', aliases: ['The Doctor'] }
 
 const posts: ActivityPost[] = [
-  { id: 'm2', kind: 'mentioned', senderId: 'u1', type: 'regular', content: 'I ask Dr Hale about the body. ' + 'x'.repeat(300), npcName: null, subChannelId: 'r1', whisper: true, createdAt: '2026-11-19T12:00:00Z' },
+  { id: 'm2', kind: 'mentioned', senderId: 'u1', type: 'regular', content: 'I ask Dr Hale about the body. ' + 'x'.repeat(400), npcName: null, subChannelId: 'r1', whisper: true, createdAt: '2026-11-19T12:00:00Z' },
   { id: 'm1', kind: 'spoke', senderId: 'gm', type: 'npc', content: 'The body was moved.', npcName: 'Dr Hale', subChannelId: null, whisper: false, createdAt: '2026-11-19T10:00:00Z' },
 ]
 const notes: ActivityNote[] = [

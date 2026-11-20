@@ -90,6 +90,15 @@ its clean-up are untouched.
 |---|---|---|
 | `src/features/channels/ChannelView.tsx` | Import our `pendingPost` helpers; `openPost` callback plus an effect (after `handleJumpToMessage`): remember the post, switch room if needed, wait until that room's messages are loaded, then call upstream's `handleJumpToMessage`. Passed as `onOpenPost` to both `CharactersEntry` items. The target is kept outside React state because switching between Main and a room mounts a fresh view | *Go to post* from a character's Activity tab |
 
+## Inline NPC tags (Phase 2a step 5c)
+
+| Upstream file | What we changed | Why |
+|---|---|---|
+| `src/features/chat/MessageItem.tsx` | Import `NpcTagChip`, `isNpcTagHref`; `urlTransform` keeps `npc:` and `npcalias:` links; the `a` renderer draws them as chips | Tags in posts. Without our provider (upstream tests) a chip just shows the written name |
+| `src/features/chat/MessageComposer.tsx` | Import our composer parts and `tagInsertion`; NPC matches appended to the `@` options and listed after the players; `npcTags.linkify` after upstream's `linkifyMentions` on send; the formatting toolbar wrapped in a flex row with our *Tag an NPC* button | Typing `@` or the button inserts a tag; `@Name` becomes `[Name](npc:id)` |
+| `src/features/channels/ChannelView.tsx` | Import `NpcTagProvider`; wrap the main return's root `<div>` in it (inside `InGameCalendarProvider`, not re-indented); `opensFromChat` on the sidebar *Characters* entry | Loads NPC names once per campaign; clicking a tag opens the NPC's profile |
+| `src/features/channels/ChannelView.test.tsx` | `vi.mock` of our `npcTagApi` (names, labels, alias tags) | Keeps the provider's loader off the network |
+
 ## New files (no conflict risk)
 
 `CLAUDE.md`, `docs/delta-green/*`, `src/features/ext/**`, `src/features/dg/**`,
@@ -97,4 +106,4 @@ its clean-up are untouched.
 `supabase/tests/*_ext_*.sql` and `*_dg_*.sql`.
 
 <!-- cspell:locale en-GB,en -->
-<!-- cspell:words Touchpoints TOUCHPOINTS -->
+<!-- cspell:words Touchpoints TOUCHPOINTS npcalias -->

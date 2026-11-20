@@ -14,12 +14,13 @@ Newest first, each entry with its real date and, where the in-game calendar has 
 | Entry | Example |
 |---|---|
 | **Posts** by the character: what an NPC said with *Speak as NPC*, or what a PC's player posted while that PC was active | *Dr Hale spoke in Morgue: "The body was moved…"* |
-| **Mentions**: other posts containing the character's name as a whole word (so "Hale" does not match "Haley"). For the GM the aliases count too; players search the name only, because aliases are GM secrets | *Mentioned by Agent Reyes in Main* |
+| **Mentions**: posts that tag the character (`10-npc-tags.md`; alias tags for the GM only), and other posts containing the character's name as a whole word (so "Hale" does not match "Haley"). For the GM the aliases count too; players search the name only, because aliases are GM secrets | *Mentioned by Agent Reyes in Main* |
 | **Notes** by the GM and players | *Note by Sam (as Agent Reyes): Has a limp* |
 | **Changes**: status, role, profile and sheet changes (the old history) | *Status: Active → Missing* |
 
 - The **All / Posts / Mentions / Notes / Changes** buttons filter the list.
-- Long posts show their start; **Show all** shows the rest. **Go to post** closes the panel and
+- Posts keep their formatting (bold, lists, tags, spoilers, images); clicking a tag switches the
+  panel to that character. Long posts start collapsed; **Show all** shows the rest. **Go to post** closes the panel and
   scrolls the chat to that post, switching room if needed.
 - 50 posts load at a time; **Load older posts** fetches more.
 - Everyone only ever sees posts they could already read in the chat: whispers to other people and

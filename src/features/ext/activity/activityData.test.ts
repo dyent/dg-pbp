@@ -3,7 +3,7 @@ import { act, renderHook, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { supabase } from '../../../lib/supabase'
 import * as api from './activityApi'
-import { buildActivity, excerpt, isNoteVisibility, noteChoices, searchTerms, type ActivityNote, type ActivityPost } from './activityModel'
+import { buildActivity, isNoteVisibility, noteChoices, searchTerms, type ActivityNote, type ActivityPost } from './activityModel'
 import { useCharacterActivity } from './useCharacterActivity'
 import type { CharacterEvent, CharacterSummary } from '../characters/characterModel'
 
@@ -115,13 +115,11 @@ describe('activityModel', () => {
     expect(searchTerms(c, false)).toEqual(['Dr Hale'])
   })
 
-  it('offers the right note audiences and shortens long posts', () => {
+  it('offers the right note audiences', () => {
     expect(noteChoices(true)).toEqual(['gm', 'everyone'])
     expect(noteChoices(false)).toEqual(['author', 'everyone'])
     expect(isNoteVisibility('author')).toBe(true)
     expect(isNoteVisibility(3)).toBe(false)
-    expect(excerpt('a\n\n b')).toBe('a b')
-    expect(excerpt('abcdefghij', 5)).toBe('abcd…')
   })
 })
 

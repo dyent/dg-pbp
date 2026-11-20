@@ -8,6 +8,7 @@ import { forgetPost, rememberPost, waitingPost } from '../ext/activity/pendingPo
 import { MySheetButton } from '../dg/sheet/MySheetButton' // FORK-EXT: "My sheet" pop-up
 import { FilesEntry } from '../ext/files/FilesEntry' // FORK-EXT: campaign files
 import { InGameCalendarProvider } from '../ext/calendar/calendarContext' // FORK-EXT: in-game calendar
+import { NpcTagProvider } from '../ext/npcTags/npcTagContext' // FORK-EXT: inline NPC tags
 import { InGameDateBar } from '../ext/calendar/InGameDateBar' // FORK-EXT: in-game calendar
 import { ChannelSettings } from './ChannelSettings'
 import { ChannelStatusBar } from './ChannelStatusBar'
@@ -592,6 +593,8 @@ export function ChannelView() {
     <PostAuthorshipProvider channelId={channel.id} playerNames={playerNames}>
     {/* FORK-EXT: in-game dates for the header bar and chat dividers */}
     <InGameCalendarProvider channelId={channel.id}>
+    {/* FORK-EXT: NPC names and portraits for tags in posts and the composer */}
+    <NpcTagProvider channelId={channel.id} isGM={isGM} myUserId={user?.id}>
     <div className="fixed inset-0 flex overflow-hidden bg-white dark:bg-surface-800">
       {/* Main Chat Area */}
       <div className="flex-1 flex flex-col min-w-0 bg-surface-50 dark:bg-surface-900 border-r border-surface-200 dark:border-surface-700">
@@ -962,7 +965,7 @@ export function ChannelView() {
           <p className="px-4 pt-3 pb-1 text-xs font-semibold uppercase tracking-wider text-surface-400 dark:text-surface-400">Table</p>
           <div className="divide-y divide-surface-100 dark:divide-surface-700 border-t border-surface-100 dark:border-surface-700">
             {/* FORK-EXT: characters panel (profiles, roles, posting as) */}
-            <CharactersEntry channelId={channel.id} isGM={isGM} isArchived={channel.is_archived} gmId={channel.gm_id} myUserId={user?.id} members={members} className={SIDEBAR_MENU_ITEM} onClosed={refetchNpcs} onOpenPost={openPost} />
+            <CharactersEntry channelId={channel.id} isGM={isGM} isArchived={channel.is_archived} gmId={channel.gm_id} myUserId={user?.id} members={members} className={SIDEBAR_MENU_ITEM} onClosed={refetchNpcs} onOpenPost={openPost} opensFromChat />
             {/* FORK-EXT: campaign files (handouts, case files, maps) */}
             <FilesEntry channelId={channel.id} isGM={isGM} isArchived={channel.is_archived} gmId={channel.gm_id} myUserId={user?.id} members={members} className={SIDEBAR_MENU_ITEM} />
             {channel.map_url && (
@@ -1259,6 +1262,7 @@ export function ChannelView() {
         />
       )}
     </div>
+    </NpcTagProvider>
     </InGameCalendarProvider>
     </PostAuthorshipProvider>
   )

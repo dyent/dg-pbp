@@ -2,7 +2,7 @@
 
 *Agreed with the owner on 2026-11-19. Decisions: DECISIONS.md #30–#32 (refining #10, #16 and #28).
 Order: **5a** calendar → **5b** activity log and notes → **5c** inline NPC tags; each step is tried
-and committed before the next. Progress: **5a done** (`08-in-game-calendar.md`), **5b built** (`09-activity-log.md`).*
+and committed before the next. Progress: **5a done** (`08-in-game-calendar.md`), **5b done** (`09-activity-log.md`), **5c built** (`10-npc-tags.md`).*
 
 ## 5a: In-game calendar
 
@@ -40,15 +40,49 @@ viewer's own access, so private posts are never copied anywhere:
 - **Players** see only revealed characters, and only posts they could already read (whispers and
   private rooms are left out automatically).
 
-## 5c: Inline NPC tags
+## 5c: Inline NPC tags (revised with the owner 2026-11-20, DECISIONS.md #36)
 
-- An **Insert NPC** button in the composer (GM only) picks an NPC and inserts a tag, e.g.
-  `[Dr Hale](npc:<id>)`, using the same link mechanism as upstream's dice links.
-- A tag **at the start of a paragraph** turns that paragraph into the NPC's **speech block**
-  (portrait and name beside it, slightly indented). A tag mid-sentence shows as a small name chip.
-  Clicking either opens the NPC's profile.
-- Several NPCs can speak in one post. Upstream's one-NPC *Speak as* mode stays.
-- Tagged posts feed the activity log (5b).
-- Needs small `FORK-EXT` hooks in upstream's post display (`MessageItem.tsx`) and composer.
+The GM writes one post in normal play-by-post style, with narration and several NPCs speaking in
+it, instead of using *Speak as* (which stays, but is no longer the main way).
+
+### Writing
+
+```text
+Hale looks up from the table.
+@Dr Hale The body was moved before you got here.
+She glances at @Kowalski, who shrugs.
+@Kowalski Not my shift.
+```
+
+- Typing `@` lists NPCs as well as players (marked *NPC*). An **NPC** button in the formatting
+  toolbar opens the same list. Tagging an NPC never sends a notification.
+- On sending, `@Dr Hale` is stored as a link `[Dr Hale](npc:<character id>)` (the same mechanism as
+  upstream's `@player` mentions and dice links), so a renamed NPC still points to the same character.
+
+### Display (revised after trying it, DECISIONS.md #37)
+
+- **Every tag is a name chip:** small portrait plus the name, wherever it sits. The first build
+  also had *speaker lines* (a GM line starting with a tag shown as that NPC's speech); the owner
+  preferred plain chips, so they were removed.
+- Clicking a chip opens the NPC's profile if the viewer can see that NPC; for a hidden NPC it is
+  just the name and portrait (from `ext_npc_tag_labels`, which gives nothing else away).
+- **Aliases (GM only):** typing `@` also lists the NPCs' aliases (*alias of Dr Hale*). An alias
+  tag shows the alias exactly as written, with an initial instead of the portrait, and links to a
+  random id in a GM-only table, so players can't tell which character it is. Only the GM can open
+  the NPC from it.
+
+### Activity (5b)
+
+- Every tag of the character counts as a **mention** (alias tags only in the GM's Activity).
+- Posts show with their formatting (bold, lists, tags, spoilers, images); long ones start
+  collapsed with **Show all**.
+
+### Upstream hooks (small `FORK-EXT` edits)
+
+- `MessageItem.tsx`: allow `npc:` and `npcalias:` links and draw them as our chips.
+- `MessageComposer.tsx`: add NPCs to the `@` list and convert NPC tags on send.
+- The **NPC** button sits beside upstream's formatting toolbar (in `MessageComposer.tsx`), so
+  `MarkdownToolbar.tsx` is unchanged.
 
 <!-- cspell:locale en-GB,en -->
+<!-- cspell:words npcalias -->
