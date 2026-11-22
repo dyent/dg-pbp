@@ -35,6 +35,11 @@ She glances at @The Stranger, who shrugs.
   tags appear only in your Activity, never in a player's. Posts there keep their formatting, and
   clicking a chip in the Activity tab switches the panel to that NPC.
 
+## Records too
+
+Campaign records (locations, organisations, clues, operations) can be tagged the same way, with an
+icon for their kind instead of a portrait. See `12-case-file.md`.
+
 ## Good to know
 
 - Editing a sent post shows the stored links (`[Dr Hale](npc:…)`); typing a new `@Name` while

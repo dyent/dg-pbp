@@ -1,5 +1,7 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
+import { useNpcTags } from '../npcTags/npcTagContext'
+import { onRecordRequest } from './recordOpener'
 import { memberName, type MemberLike } from '../characters/CharactersEntry'
 import type { PlayerOption } from '../characters/GmControls'
 import { CaseFilePanel } from './CaseFilePanel'
@@ -20,7 +22,18 @@ interface CaseFileEntryProps {
  * it opens. ChannelView renders this one component (FORK-EXT).
  */
 export function CaseFileEntry({ channelId, isGM, isArchived, gmId, myUserId, members, className }: CaseFileEntryProps) {
-  const [open, setOpen] = useState(false)
+  // `n` remounts the panel when a record tag in the chat asks for another record.
+  const [shown, setShown] = useState<{ id: string | null; n: number } | null>(null)
+  const tags = useNpcTags()
+  const reloadTags = tags?.reload
+
+  useEffect(() => onRecordRequest(id => setShown(s => ({ id, n: (s?.n ?? 0) + 1 }))), [])
+
+  const close = () => {
+    setShown(null)
+    // New records or aliases become taggable.
+    reloadTags?.()
+  }
 
   const players: PlayerOption[] = useMemo(
     () =>
@@ -38,20 +51,22 @@ export function CaseFileEntry({ channelId, isGM, isArchived, gmId, myUserId, mem
 
   return (
     <>
-      <button type="button" onClick={() => setOpen(true)} className={className}>
+      <button type="button" onClick={() => setShown(s => ({ id: null, n: (s?.n ?? 0) + 1 }))} className={className}>
         Case file
       </button>
       {/* Portal: the sidebar is CSS-transformed, which would trap a fixed overlay inside it. */}
-      {open &&
+      {shown &&
         createPortal(
           <CaseFilePanel
+            key={shown.n}
+            initialRecordId={shown.id}
             channelId={channelId}
             isGM={isGM}
             isArchived={isArchived}
             myUserId={myUserId}
             players={players}
             nameOf={nameOf}
-            onClose={() => setOpen(false)}
+            onClose={close}
           />,
           document.body,
         )}

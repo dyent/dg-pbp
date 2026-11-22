@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, type ReactNode } from 'react'
 import { useToast } from '../../../contexts/ToastContext'
 import { useAuthorLookup } from '../authorship/authorshipContext'
 import { useCalendar } from '../calendar/calendarContext'
@@ -14,6 +14,7 @@ import {
   buildActivity,
   noteChoices,
   searchTerms,
+  type ActivityChange,
   type ActivityFilter,
   type ActivityNote,
   type ActivityPost,
@@ -21,6 +22,7 @@ import {
 } from './activityModel'
 import { useOpenPost } from './openPostContext'
 import { PostBody, isLongPost } from './PostBody'
+import type { ActivityData } from './useActivity'
 import { useCharacterActivity } from './useCharacterActivity'
 
 interface CharacterActivityProps {
@@ -37,6 +39,13 @@ interface CharacterActivityProps {
 const dateFormat = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' })
 const ENTRY = 'border-l-2 pl-3'
 
+/** How notes are written for one subject (a character or a record). */
+export interface NoteActions {
+  add: (body: string, visibility: NoteVisibility, day: number | null) => Promise<void>
+  update: (noteId: string, body: string, visibility: NoteVisibility, day: number | null) => Promise<void>
+  remove: (noteId: string) => Promise<void>
+}
+
 /**
  * A character's Activity tab (step 5b): posts as or about them, notes and
  * history, newest first. Everything is loaded with the viewer's own access.
@@ -44,7 +53,64 @@ const ENTRY = 'border-l-2 pl-3'
 export function CharacterActivity({ channelId, character, isGM, isArchived, myUserId, events, nameOf }: CharacterActivityProps) {
   const terms = useMemo(() => searchTerms(character, isGM), [character, isGM])
   const npcName = character.kind === 'npc' ? character.name : null
-  const { posts, notes, rooms, morePosts, loading, loadingOlder, error, reload, loadOlder } = useCharacterActivity(channelId, character.id, npcName, terms)
+  const data = useCharacterActivity(channelId, character.id, npcName, terms)
+  const notes = useMemo<NoteActions>(
+    () => ({
+      add: (body, visibility, day) => api.addNote(character.id, body, visibility, day),
+      update: api.updateNote,
+      remove: api.deleteNote,
+    }),
+    [character.id],
+  )
+  return (
+    <ActivityLog
+      data={data}
+      events={events}
+      renderChange={(event, extra) => <HistoryEntry event={event} isGM={isGM} nameOf={nameOf} extra={extra} />}
+      subjectName={character.name}
+      subjectNoun="character"
+      isGM={isGM}
+      isArchived={isArchived}
+      myUserId={myUserId}
+      nameOf={nameOf}
+      notes={notes}
+    />
+  )
+}
+
+interface ActivityLogProps<E extends ActivityChange> {
+  data: ActivityData
+  /** History entries, drawn by `renderChange` (with the in-game date as `extra`). */
+  events: E[]
+  renderChange: (event: E, extra: ReactNode) => ReactNode
+  /** "Dr Hale spoke…" */
+  subjectName: string
+  /** Used in the note box: "Add a note about this character / record". */
+  subjectNoun: string
+  isGM: boolean
+  isArchived: boolean
+  myUserId: string | undefined
+  nameOf: (userId: string) => string
+  notes: NoteActions
+  /** Filter buttons to offer (records have no "Posts", only mentions). */
+  filters?: readonly ActivityFilter[]
+}
+
+/** The shared Activity list (characters and records): note box, filters, posts, notes and history. */
+export function ActivityLog<E extends ActivityChange>({
+  data,
+  events,
+  renderChange,
+  subjectName,
+  subjectNoun,
+  isGM,
+  isArchived,
+  myUserId,
+  nameOf,
+  notes: noteActions,
+  filters = FILTERS,
+}: ActivityLogProps<E>) {
+  const { posts, notes, rooms, morePosts, loading, loadingOlder, error, reload, loadOlder } = data
   const { changes } = useCalendar()
   const [filter, setFilter] = useState<ActivityFilter>('all')
   const entries = useMemo(() => buildActivity(posts, notes, events, filter, morePosts), [posts, notes, events, filter, morePosts])
@@ -59,16 +125,17 @@ export function CharacterActivity({ channelId, character, isGM, isArchived, myUs
       {!isArchived && (
         <NoteForm
           isGM={isGM}
+          subjectNoun={subjectNoun}
           defaultDay={dateAt(changes, null)?.day ?? null}
           onSave={async (body, visibility, day) => {
-            await api.addNote(character.id, body, visibility, day)
+            await noteActions.add(body, visibility, day)
             reload()
           }}
         />
       )}
 
       <div role="group" aria-label="Show" className="flex flex-wrap gap-1">
-        {FILTERS.map(f => (
+        {filters.map(f => (
           <button
             key={f}
             type="button"
@@ -106,15 +173,15 @@ export function CharacterActivity({ channelId, character, isGM, isArchived, myUs
           {entries.map(entry =>
             entry.kind === 'post' ? (
               <li key={`p-${entry.post.id}`} className={`${ENTRY} border-primary-300 dark:border-primary-700`}>
-                <PostEntry post={entry.post} character={character} roomName={entry.post.subChannelId ? (rooms.get(entry.post.subChannelId) ?? 'a room') : 'Main'} inGame={inGameAt(entry.at, entry.post.subChannelId)} nameOf={nameOf} />
+                <PostEntry post={entry.post} subjectName={subjectName} roomName={entry.post.subChannelId ? (rooms.get(entry.post.subChannelId) ?? 'a room') : 'Main'} inGame={inGameAt(entry.at, entry.post.subChannelId)} nameOf={nameOf} />
               </li>
             ) : entry.kind === 'note' ? (
               <li key={`n-${entry.note.id}`} className={`${ENTRY} border-amber-300 dark:border-amber-700`}>
-                <NoteEntry note={entry.note} isGM={isGM} mine={!!myUserId && entry.note.authorId === myUserId} canChange={!isArchived} nameOf={nameOf} onChanged={reload} />
+                <NoteEntry note={entry.note} isGM={isGM} subjectNoun={subjectNoun} mine={!!myUserId && entry.note.authorId === myUserId} canChange={!isArchived} nameOf={nameOf} actions={noteActions} onChanged={reload} />
               </li>
             ) : (
               <li key={`c-${entry.event.id}`} className={`${ENTRY} border-surface-200 dark:border-surface-700`}>
-                <HistoryEntry event={entry.event} isGM={isGM} nameOf={nameOf} extra={<InGame label={inGameAt(entry.at, null)} />} />
+                {renderChange(entry.event, <InGame label={inGameAt(entry.at, null)} />)}
               </li>
             ),
           )}
@@ -130,7 +197,7 @@ export function CharacterActivity({ channelId, character, isGM, isArchived, myUs
   )
 }
 
-function InGame({ label }: { label: string | null }) {
+export function InGame({ label }: { label: string | null }) {
   return label ? <span>· In game: {label}</span> : null
 }
 
@@ -138,13 +205,13 @@ const POST_VERB: Record<ActivityPost['kind'], string> = { spoke: 'spoke', posted
 
 function PostEntry({
   post,
-  character,
+  subjectName,
   roomName,
   inGame,
   nameOf,
 }: {
   post: ActivityPost
-  character: CharacterSummary
+  subjectName: string
   roomName: string
   inGame: string | null
   nameOf: (userId: string) => string
@@ -161,7 +228,7 @@ function PostEntry({
   return (
     <>
       <p className="text-xs font-medium text-surface-600 dark:text-surface-300">
-        {post.kind === 'mentioned' ? `Mentioned by ${writer}` : `${character.name} ${POST_VERB[post.kind]}`} in {roomName}
+        {post.kind === 'mentioned' ? `Mentioned by ${writer}` : `${subjectName} ${POST_VERB[post.kind]}`} in {roomName}
         {post.whisper && <span className={`${BADGE} ml-1 bg-surface-100 dark:bg-surface-700`}>Whisper</span>}
       </p>
       <PostBody content={post.content} collapsed={long && !expanded} />
@@ -186,16 +253,20 @@ function PostEntry({
 function NoteEntry({
   note,
   isGM,
+  subjectNoun,
   mine,
   canChange,
   nameOf,
+  actions,
   onChanged,
 }: {
   note: ActivityNote
   isGM: boolean
+  subjectNoun: string
   mine: boolean
   canChange: boolean
   nameOf: (userId: string) => string
+  actions: NoteActions
   onChanged: () => void
 }) {
   const { addToast } = useToast()
@@ -208,11 +279,12 @@ function NoteEntry({
     return (
       <NoteForm
         isGM={isGM}
+        subjectNoun={subjectNoun}
         initial={note}
         defaultDay={note.inGameDay}
         onCancel={() => setEditing(false)}
         onSave={async (body, visibility, day) => {
-          await api.updateNote(note.id, body, visibility, day)
+          await actions.update(note.id, body, visibility, day)
           setEditing(false)
           onChanged()
         }}
@@ -222,7 +294,7 @@ function NoteEntry({
 
   const remove = async () => {
     try {
-      await api.deleteNote(note.id)
+      await actions.remove(note.id)
       addToast('Note deleted.', 'success')
       onChanged()
     } catch (err) {
@@ -269,12 +341,14 @@ function NoteEntry({
 
 function NoteForm({
   isGM,
+  subjectNoun,
   initial,
   defaultDay,
   onSave,
   onCancel,
 }: {
   isGM: boolean
+  subjectNoun: string
   initial?: ActivityNote
   defaultDay: number | null
   onSave: (body: string, visibility: NoteVisibility, day: number | null) => Promise<void>
@@ -313,7 +387,7 @@ function NoteForm({
         onChange={e => setBody(e.target.value)}
         maxLength={2000}
         rows={2}
-        placeholder={isGM ? 'Add a note about this character' : 'Note what your character learned'}
+        placeholder={isGM ? `Add a note about this ${subjectNoun}` : 'Note what your character learned'}
         aria-label={initial ? 'Note text' : 'New note'}
         className={INPUT}
       />

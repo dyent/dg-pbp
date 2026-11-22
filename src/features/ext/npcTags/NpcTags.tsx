@@ -2,6 +2,9 @@ import { isValidElement, useContext, useEffect, type ReactNode } from 'react'
 import { Avatar } from '../../../components/Avatar'
 import { isNpcIconUrl } from '../../chat/npcIcons'
 import { OpenCharacterContext } from './characterOpener'
+import { OpenRecordContext } from '../records/recordOpener'
+import { KIND_ICONS } from '../records/RecordIcon'
+import type { RecordKind } from '../records/recordModel'
 import { useNpcTags } from './npcTagContext'
 import { isNpcTagHref, parseNpcTag, type NpcTagOption } from './npcTagModel'
 
@@ -32,8 +35,19 @@ export function NpcFace({ npc, className = 'h-5 w-5' }: { npc: Pick<NpcTagOption
   )
 }
 
-/** What a tag shows: name, portrait, and the character it opens (if the viewer may). */
-function useTagDisplay(href: string, written: string): { name: string; portraitUrl: string | null; opens: string | null; title?: string } {
+interface TagDisplay {
+  name: string
+  portraitUrl: string | null
+  /** Set when the tag is a campaign record: its icon replaces the portrait. */
+  recordKind?: RecordKind
+  opens: string | null
+  title?: string
+  /** A record the viewer can't see: shown as the plain text that was written. */
+  plain?: boolean
+}
+
+/** What a tag shows: name, portrait or icon, and what it opens (if the viewer may). */
+function useTagDisplay(href: string, written: string): TagDisplay {
   const tags = useNpcTags()
   const tag = parseNpcTag(href)
   const need = tags?.need
@@ -41,6 +55,15 @@ function useTagDisplay(href: string, written: string): { name: string; portraitU
   useEffect(() => {
     if (npcId && need) need(npcId)
   }, [npcId, need])
+  if (tag?.kind === 'record' || tag?.kind === 'recordAlias') {
+    // Records the viewer can't see (and every record alias, for players) stay
+    // plain text: the name was written in the post anyway.
+    const record = tag.kind === 'record' ? tags?.labelOf(tag.id) : tags?.aliasOf(tag.id)
+    if (!record?.recordKind) return { name: written, portraitUrl: null, opens: null, plain: true }
+    return tag.kind === 'record'
+      ? { name: record.name, portraitUrl: null, recordKind: record.recordKind, opens: record.id }
+      : { name: written, portraitUrl: null, recordKind: record.recordKind, opens: record.id, title: `Alias of ${record.name}` }
+  }
   if (tag?.kind === 'alias') {
     // Shown exactly as written; only the GM knows (and can open) who it is.
     const npc = tags?.aliasOf(tag.id)
@@ -57,14 +80,26 @@ function useTagDisplay(href: string, written: string): { name: string; portraitU
 const CHIP_CLASS =
   'inline-flex items-center gap-1 rounded bg-teal-50 px-1.5 py-0.5 align-baseline font-sans text-[0.9em] font-medium text-teal-800 dark:bg-teal-950 dark:text-teal-200'
 
-/** An NPC tag in a post: a small name chip that opens the NPC's profile when the viewer can see it. */
+function TagIcon({ display }: { display: TagDisplay }) {
+  if (!display.recordKind) return <NpcFace npc={display} className="h-4 w-4" />
+  const Icon = KIND_ICONS[display.recordKind]
+  return <Icon aria-hidden="true" className="h-3.5 w-3.5 flex-shrink-0" />
+}
+
+/**
+ * An NPC or record tag in a post: a small name chip that opens the NPC's
+ * profile (or the record in the Case file) when the viewer can see it.
+ */
 export function NpcTagChip({ href, children }: { href: string; children?: ReactNode }) {
   const tags = useNpcTags()
-  const openInPanel = useContext(OpenCharacterContext)
+  const openCharacterInPanel = useContext(OpenCharacterContext)
+  const openRecordInPanel = useContext(OpenRecordContext)
   const npc = useTagDisplay(href, textOf(children).trim() || 'NPC')
+  if (npc.plain) return <>{npc.name}</>
+  const openInPanel = npc.recordKind ? openRecordInPanel : openCharacterInPanel
   const content = (
     <>
-      <NpcFace npc={npc} className="h-4 w-4" />
+      <TagIcon display={npc} />
       {npc.name}
     </>
   )

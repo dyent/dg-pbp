@@ -1,14 +1,15 @@
-// cspell:words npcalias
+// cspell:words npcalias recalias
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import type { ReactNode } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { MessageComposer } from '../../chat/MessageComposer'
 import { PostBody, isLongPost } from '../activity/PostBody'
-import { aliasTagId, fetchNpcLabels, listAliasTags, listTaggableNpcs } from './npcTagApi'
+import { aliasTagId, fetchNpcLabels, listAliasTags, listTaggableNpcs, listTaggableRecords } from './npcTagApi'
 import { NpcTagProvider, useNpcTags } from './npcTagContext'
 import { NpcTagChip } from './NpcTags'
 import { NpcTagButton } from './NpcComposerParts'
 import { onCharacterRequest } from './characterOpener'
+import { onRecordRequest } from '../records/recordOpener'
 import type { NpcTagOption } from './npcTagModel'
 
 // The composer needs the same stubs as upstream's own composer tests.
@@ -42,6 +43,7 @@ vi.mock('../characters/CharactersPanel', async () => {
 
 vi.mock('./npcTagApi', () => ({
   listTaggableNpcs: vi.fn(),
+  listTaggableRecords: vi.fn(),
   fetchNpcLabels: vi.fn(),
   listAliasTags: vi.fn(),
   aliasTagId: vi.fn(),
@@ -73,8 +75,9 @@ function Post({ text, isGM = true }: { text: string; isGM?: boolean }) {
 
 beforeEach(() => {
   vi.mocked(listTaggableNpcs).mockResolvedValue(visible)
+  vi.mocked(listTaggableRecords).mockResolvedValue([])
   vi.mocked(fetchNpcLabels).mockResolvedValue([])
-  vi.mocked(listAliasTags).mockResolvedValue([{ id: TAG, characterId: HALE, alias: 'The Stranger' }])
+  vi.mocked(listAliasTags).mockResolvedValue([{ id: TAG, targetId: HALE, alias: 'The Stranger' }])
   vi.mocked(aliasTagId).mockResolvedValue(TAG)
 })
 
@@ -141,6 +144,77 @@ describe('NPC tags in posts', () => {
   })
 })
 
+describe('record tags', () => {
+  const MORGUE = '00000000-0000-0000-0000-00000000c001'
+  const GLOVE = '00000000-0000-0000-0000-00000000c002'
+  const REC_TAG = '00000000-0000-0000-0000-00000000b002'
+  const morgue: NpcTagOption = { id: MORGUE, name: 'County morgue', portraitUrl: null, recordKind: 'location', aliases: ['The Slab'] }
+
+  beforeEach(() => {
+    vi.mocked(listTaggableRecords).mockResolvedValue([morgue])
+    vi.mocked(listAliasTags).mockResolvedValue([{ id: REC_TAG, targetId: MORGUE, alias: 'The Slab' }])
+  })
+
+  it('shows a record the viewer can see as a chip with its current name, and opens it in the Case file', async () => {
+    const listener = vi.fn()
+    const stop = onRecordRequest(listener)
+    const opened = vi.fn()
+    const stopCharacters = onCharacterRequest(opened)
+    render(<Post text={`At the [Morgue](rec:${MORGUE}).`} />)
+    fireEvent.click(await screen.findByRole('button', { name: 'County morgue' }))
+    stop()
+    stopCharacters()
+    expect(listener).toHaveBeenCalledWith(MORGUE)
+    expect(opened).not.toHaveBeenCalled()
+  })
+
+  it('leaves records the viewer cannot see as plain text, without asking for labels', async () => {
+    render(<Post isGM={false} text={`Found a [Bloody glove](rec:${GLOVE}) and [The Slab](recalias:${REC_TAG}).`} />)
+    await waitFor(() => expect(listTaggableRecords).toHaveBeenCalled())
+    expect(screen.getByText(/Found a Bloody glove and The Slab\./)).toBeInTheDocument()
+    expect(screen.queryByRole('button')).toBeNull()
+    expect(fetchNpcLabels).not.toHaveBeenCalled()
+  })
+
+  it('shows a record alias as written; the GM can open the record behind it', async () => {
+    render(<Post text={`The [The Slab](recalias:${REC_TAG}) is cold.`} />)
+    const chip = await screen.findByRole('button', { name: 'The Slab' })
+    expect(chip).toHaveAttribute('title', 'Alias of County morgue')
+  })
+
+  it('keeps NPC tags working when records fail to load', async () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {})
+    vi.mocked(listTaggableRecords).mockRejectedValue(new Error('offline'))
+    render(<Post text={`[Dr Hale](npc:${HALE}) Hello.`} />)
+    expect(await screen.findByRole('button', { name: 'Dr Hale' })).toBeInTheDocument()
+    expect(error).toHaveBeenCalledWith('Failed to load record tags:', expect.any(Error))
+    error.mockRestore()
+  })
+
+  it('lists records in the composer with their kind and sends rec: and recalias: links', async () => {
+    vi.mocked(listAliasTags).mockResolvedValue([])
+    vi.mocked(aliasTagId).mockResolvedValue(REC_TAG)
+    const onSend = vi.fn().mockResolvedValue(undefined)
+    render(
+      <Provider>
+        <MessageComposer channelId="c1" isGM members={[]} onSendMessage={onSend} />
+      </Provider>,
+    )
+    const box = screen.getByRole('combobox', { name: 'Message' })
+    await waitFor(() => expect(listTaggableRecords).toHaveBeenCalled())
+    fireEvent.change(box, { target: { value: 'At the @Cou' } })
+    fireEvent.mouseDown(screen.getByRole('option', { name: /County morgue\s*Location/ }))
+    expect(box).toHaveValue('At the @County morgue ')
+    fireEvent.change(box, { target: { value: '@County morgue, the @Th' } })
+    expect(screen.getByRole('option', { name: /The Slab\s*alias of County morgue/ })).toBeInTheDocument()
+    fireEvent.change(box, { target: { value: '@County morgue, aka @The Slab' } })
+    fireEvent.click(screen.getByRole('button', { name: /Send/i }))
+    await waitFor(() => expect(onSend).toHaveBeenCalled())
+    expect(aliasTagId).toHaveBeenCalledWith(morgue, 'The Slab')
+    expect(onSend.mock.calls[0][0].content).toBe(`[County morgue](rec:${MORGUE}), aka [The Slab](recalias:${REC_TAG})`)
+  })
+})
+
 describe('Activity post body', () => {
   it('keeps the formatting and turns chat-only links into words', async () => {
     const { container } = render(
@@ -198,7 +272,7 @@ describe('composer', () => {
     const onSend = vi.fn().mockResolvedValue(undefined)
     render(<Composer onSend={onSend} />)
     const box = screen.getByRole('combobox', { name: 'Message' })
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Tag an NPC' })).toBeInTheDocument())
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Tag an NPC or record' })).toBeInTheDocument())
     fireEvent.change(box, { target: { value: 'Hi @Dr' } })
     const option = screen.getByRole('option', { name: /Dr Hale\s*NPC/ })
     fireEvent.mouseDown(option)
@@ -212,7 +286,7 @@ describe('composer', () => {
     render(<Composer onSend={vi.fn()} />)
     const box = screen.getByRole('combobox', { name: 'Message' })
     fireEvent.change(box, { target: { value: 'Hello' } })
-    fireEvent.click(await screen.findByRole('button', { name: 'Tag an NPC' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Tag an NPC or record' }))
     fireEvent.click(screen.getByRole('option', { name: /Dr Hale\s*NPC/ }))
     expect(box).toHaveValue('Hello @Dr Hale ')
   })
@@ -227,7 +301,7 @@ describe('composer', () => {
     fireEvent.mouseDown(screen.getByRole('option', { name: /The Stranger\s*alias of Dr Hale/ }))
     fireEvent.click(screen.getByRole('button', { name: /Send/i }))
     await waitFor(() => expect(onSend).toHaveBeenCalled())
-    expect(aliasTagId).toHaveBeenCalledWith(HALE, 'The Stranger')
+    expect(aliasTagId).toHaveBeenCalledWith(expect.objectContaining({ id: HALE }), 'The Stranger')
     expect(onSend.mock.calls[0][0].content).toBe(`[The Stranger](npcalias:${TAG}) `)
     // The new id is remembered: the next post needs no lookup.
     fireEvent.change(box, { target: { value: '@The Stranger again' } })
@@ -258,7 +332,7 @@ describe('NpcTagButton', () => {
       </Provider>,
     )
     await waitFor(() => expect(listTaggableNpcs).toHaveBeenCalled())
-    expect(screen.queryByRole('button', { name: 'Tag an NPC' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Tag an NPC or record' })).toBeNull()
   })
 
   it('offers a search box for long lists', async () => {
@@ -270,18 +344,18 @@ describe('NpcTagButton', () => {
         <NpcTagButton onPick={onPick} />
       </Provider>,
     )
-    fireEvent.click(await screen.findByRole('button', { name: 'Tag an NPC' }))
-    const search = screen.getByRole('textbox', { name: 'Find an NPC' })
+    fireEvent.click(await screen.findByRole('button', { name: 'Tag an NPC or record' }))
+    const search = screen.getByRole('textbox', { name: 'Find an NPC or record' })
     fireEvent.change(search, { target: { value: 'NPC C' } })
     expect(screen.getAllByRole('option')).toHaveLength(1)
     fireEvent.change(search, { target: { value: 'zzz' } })
-    expect(screen.getByText('No NPCs match.')).toBeInTheDocument()
+    expect(screen.getByText('Nothing matches.')).toBeInTheDocument()
     fireEvent.change(search, { target: { value: 'npc b' } })
     fireEvent.keyDown(search, { key: 'Enter' })
     expect(onPick).toHaveBeenCalledWith('NPC B')
-    fireEvent.click(screen.getByRole('button', { name: 'Tag an NPC' }))
-    fireEvent.keyDown(screen.getByRole('textbox', { name: 'Find an NPC' }), { key: 'Escape' })
-    expect(screen.queryByRole('listbox', { name: 'NPCs to tag' })).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'Tag an NPC or record' }))
+    fireEvent.keyDown(screen.getByRole('textbox', { name: 'Find an NPC or record' }), { key: 'Escape' })
+    expect(screen.queryByRole('listbox', { name: 'NPCs and records to tag' })).toBeNull()
   })
 })
 

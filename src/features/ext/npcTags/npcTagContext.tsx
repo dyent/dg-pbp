@@ -1,24 +1,25 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
-import { aliasTagId, fetchNpcLabels, listAliasTags, listTaggableNpcs, type AliasTag } from './npcTagApi'
+import { aliasTagId, fetchNpcLabels, listAliasTags, listTaggableNpcs, listTaggableRecords, type AliasTag } from './npcTagApi'
 import { aliasKey, findAliasUses, linkifyNpcTags, type NpcTagOption } from './npcTagModel'
 import { requestCharacter } from './characterOpener'
+import { requestRecord } from '../records/recordOpener'
 
 export interface NpcTagsValue {
   isGM: boolean
-  /** NPCs the viewer can tag (and open); aliases for the GM only. */
+  /** NPCs and campaign records the viewer can tag (and open); aliases for the GM only. */
   options: NpcTagOption[]
   /** Current name and portrait for a tag, once loaded. */
   labelOf: (id: string) => NpcTagOption | undefined
-  /** The NPC behind an alias tag (GM only; undefined for players). */
+  /** The NPC or record behind an alias tag (GM only; undefined for players). */
   aliasOf: (tagId: string) => NpcTagOption | undefined
   /** Asks for a label the viewer doesn't have yet (hidden NPCs). */
   need: (id: string) => void
-  /** Whether the viewer can open this NPC's profile. */
+  /** Whether the viewer can open this NPC or record. */
   canOpen: (id: string) => boolean
   open: (id: string) => void
   /** `@Name` / `@Alias` → tag links (asks the database for alias tag ids). */
   linkify: (content: string) => Promise<string>
-  /** Reloads names and portraits (after the Characters panel closes). */
+  /** Reloads names and portraits (after the Characters panel or Case file closes). */
   reload: () => void
 }
 
@@ -52,10 +53,18 @@ export function NpcTagProvider({ channelId, isGM, myUserId, children }: NpcTagPr
 
   useEffect(() => {
     let mounted = true
-    Promise.all([listTaggableNpcs(channelId, isGM, myUserId), isGM ? listAliasTags(channelId) : Promise.resolve([])])
-      .then(([list, aliases]) => {
+    Promise.all([
+      listTaggableNpcs(channelId, isGM, myUserId),
+      // Records load on their own, so a failure there never hides the NPCs.
+      listTaggableRecords(channelId, isGM).catch(err => {
+        console.error('Failed to load record tags:', err)
+        return []
+      }),
+      isGM ? listAliasTags(channelId) : Promise.resolve([]),
+    ])
+      .then(([list, records, aliases]) => {
         if (!mounted) return
-        setOptions(list)
+        setOptions([...list, ...records])
         setAliasTags(aliases)
       })
       .catch(err => console.error('Failed to load NPC tags:', err))
@@ -99,17 +108,17 @@ export function NpcTagProvider({ channelId, isGM, myUserId, children }: NpcTagPr
 
   const linkify = useCallback(
     async (content: string) => {
-      const ids = new Map(aliasTags.map(a => [aliasKey(a.characterId, a.alias), a.id]))
-      const missing = findAliasUses(content, options).filter(u => !ids.has(aliasKey(u.characterId, u.alias)))
+      const ids = new Map(aliasTags.map(a => [aliasKey(a.targetId, a.alias), a.id]))
+      const missing = findAliasUses(content, options).filter(u => !ids.has(aliasKey(u.target.id, u.alias)))
       if (missing.length > 0) {
         const created = await Promise.all(
-          missing.map(async u => ({ ...u, id: await aliasTagId(u.characterId, u.alias).catch(() => null) })),
+          missing.map(async u => ({ ...u, id: await aliasTagId(u.target, u.alias).catch(() => null) })),
         )
         const added: AliasTag[] = []
         for (const c of created) {
           if (!c.id) continue
-          ids.set(aliasKey(c.characterId, c.alias), c.id)
-          added.push({ id: c.id, characterId: c.characterId, alias: c.alias })
+          ids.set(aliasKey(c.target.id, c.alias), c.id)
+          added.push({ id: c.id, targetId: c.target.id, alias: c.alias })
         }
         if (added.length > 0) setAliasTags(prev => [...prev, ...added])
       }
@@ -131,11 +140,11 @@ export function NpcTagProvider({ channelId, isGM, myUserId, children }: NpcTagPr
       labelOf: id => byId.get(id) ?? extra.get(id),
       aliasOf: tagId => {
         const tag = aliasById.get(tagId)
-        return tag ? byId.get(tag.characterId) : undefined
+        return tag ? byId.get(tag.targetId) : undefined
       },
       need,
       canOpen: id => byId.has(id),
-      open: id => requestCharacter(id),
+      open: id => (byId.get(id)?.recordKind ? requestRecord(id) : requestCharacter(id)),
       linkify,
       reload,
     }),

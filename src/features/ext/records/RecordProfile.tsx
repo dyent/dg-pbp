@@ -8,7 +8,9 @@ import * as api from './recordApi'
 import { RecordEditor, type RecordSave } from './RecordEditor'
 import { RecordGmControls, type RecordGmActions } from './RecordGmControls'
 import { KindBadge, RecordIcon } from './RecordIcon'
-import { RECORD_COLUMNS, describeRecordEvent, sharingLabel, type CampaignRecord, type RecordField } from './recordModel'
+import { RecordActivity } from './RecordActivity'
+import { setRecordAliases } from './recordActivityApi'
+import { RECORD_COLUMNS, sharingLabel, type CampaignRecord, type RecordField } from './recordModel'
 import { useRecordProfile } from './useRecords'
 
 interface RecordProfileProps {
@@ -22,7 +24,11 @@ interface RecordProfileProps {
   onChanged: () => void
   onDeleted: () => void
   onEditingChange: (editing: boolean) => void
+  /** The viewer, to offer Edit on their own notes. */
+  myUserId?: string
 }
+
+type RecordTab = 'profile' | 'activity'
 
 export function RecordProfile({
   channelId,
@@ -35,9 +41,11 @@ export function RecordProfile({
   onChanged,
   onDeleted,
   onEditingChange,
+  myUserId,
 }: RecordProfileProps) {
-  const { fields, events, loading, error, reload } = useRecordProfile(record.id, isGM)
+  const { fields, events, aliases, loading, error, reload } = useRecordProfile(record.id, isGM)
   const { addToast } = useToast()
+  const [tab, setTab] = useState<RecordTab>('profile')
   const [editing, setEditing] = useState(false)
   const [saving, setSaving] = useState(false)
   const canManage = isGM && !isArchived
@@ -73,6 +81,7 @@ export function RecordProfile({
 
   const gmActions: RecordGmActions = {
     setVisibility: (visibility, playerIds) => run(() => api.setRecordVisibility(record.id, visibility, playerIds), 'Sharing saved.'),
+    setAliases: list => run(() => setRecordAliases(record.id, list), 'Aliases saved.'),
     setTags: (add, remove, success) => run(() => api.setRecordTags(record.id, add, remove), success),
     createTag: async name => {
       try {
@@ -108,7 +117,7 @@ export function RecordProfile({
             {isGM && <SharingBadge record={record} nameOf={nameOf} />}
           </div>
         </div>
-        {canManage && !editing && (
+        {canManage && !editing && tab === 'profile' && (
           <button type="button" className={BTN_PRIMARY} onClick={() => setEditing(true)} disabled={loading || !!error}>
             Edit
           </button>
@@ -131,7 +140,37 @@ export function RecordProfile({
         </div>
       ) : (
         <>
-          {canManage && <RecordGmControls record={record} players={players} tags={tags} actions={gmActions} />}
+          {canManage && <RecordGmControls record={record} players={players} tags={tags} aliases={aliases} actions={gmActions} />}
+          <div role="tablist" aria-label="Record sections" className="flex gap-4 border-b border-surface-200 dark:border-surface-700">
+            {(['profile', 'activity'] as const).map(t => (
+              <button
+                key={t}
+                type="button"
+                role="tab"
+                aria-selected={tab === t}
+                onClick={() => setTab(t)}
+                className={`-mb-px border-b-2 px-1 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary-500 ${
+                  tab === t
+                    ? 'border-primary-600 text-primary-700 dark:text-primary-300'
+                    : 'border-transparent text-surface-500 hover:text-surface-800 dark:text-surface-400 dark:hover:text-surface-200'
+                }`}
+              >
+                {t === 'profile' ? 'Profile' : 'Activity'}
+              </button>
+            ))}
+          </div>
+          {tab === 'activity' ? (
+            <RecordActivity
+              channelId={channelId}
+              record={record}
+              aliases={aliases}
+              isGM={isGM}
+              isArchived={isArchived}
+              myUserId={myUserId}
+              events={events}
+              nameOf={nameOf}
+            />
+          ) : (
           <div className={`grid gap-4 ${columns.length === 2 ? 'lg:grid-cols-2' : ''}`}>
             {columns.map(column => (
               <section key={column} aria-label={`${VISIBILITY_LABELS[column]} fields`}>
@@ -147,20 +186,6 @@ export function RecordProfile({
               </section>
             ))}
           </div>
-          {isGM && events.length > 0 && (
-            <section aria-label="History">
-              <h4 className={SECTION_TITLE}>History (GM only)</h4>
-              <ul className="mt-2 space-y-1 text-sm">
-                {events.map(e => (
-                  <li key={e.id} className="flex flex-wrap gap-x-2 text-surface-800 dark:text-surface-200">
-                    <time dateTime={e.createdAt} className="text-xs text-surface-500 dark:text-surface-400">
-                      {new Date(e.createdAt).toLocaleString()}
-                    </time>
-                    <span>{describeRecordEvent(e, nameOf)}</span>
-                  </li>
-                ))}
-              </ul>
-            </section>
           )}
         </>
       )}

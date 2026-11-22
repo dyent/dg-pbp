@@ -20,6 +20,16 @@ vi.mock('./recordApi', () => ({
   setRecordTags: vi.fn(),
 }))
 vi.mock('../characters/characterApi', () => ({ listTags: vi.fn(), createTag: vi.fn() }))
+vi.mock('../activity/activityApi', () => ({ POSTS_PAGE: 50, listRoomNames: vi.fn(async () => new Map()) }))
+vi.mock('./recordActivityApi', () => ({
+  listRecordAliases: vi.fn(async () => []),
+  setRecordAliases: vi.fn(async () => undefined),
+  listRecordPosts: vi.fn(async () => []),
+  listRecordNotes: vi.fn(async () => []),
+  addRecordNote: vi.fn(async () => undefined),
+  updateRecordNote: vi.fn(async () => undefined),
+  deleteRecordNote: vi.fn(async () => undefined),
+}))
 vi.mock('../../../hooks/useImageUpload', () => ({
   useImageUpload: () => ({ uploadEnabled: true, settingsLoading: false, uploading: false, uploadImage: vi.fn() }),
 }))
@@ -73,8 +83,9 @@ describe('Case file', () => {
     fireEvent.click(screen.getByText('Morgue'))
     expect(await screen.findByText('Pete takes bribes.')).toBeInTheDocument()
     expect(screen.getByText('Cold and tiled.')).toBeInTheDocument()
-    expect(screen.getByText('Shared: GM only → Chosen players; added Sam.')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Hollow Creek' })).toHaveAttribute('aria-pressed', 'true')
+    fireEvent.click(screen.getByRole('tab', { name: 'Activity' }))
+    expect(await screen.findByText('Shared: GM only → Chosen players; added Sam.')).toBeInTheDocument()
   })
 
   it('filters by search, kind and tag', async () => {

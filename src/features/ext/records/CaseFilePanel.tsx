@@ -6,6 +6,7 @@ import { useToast } from '../../../contexts/ToastContext'
 import type { PlayerOption } from '../characters/GmControls'
 import { BTN_PRIMARY, BTN_SECONDARY, INPUT, LABEL, SECTION_TITLE } from '../characters/ui'
 import { createRecord } from './recordApi'
+import { OpenRecordContext } from './recordOpener'
 import { RecordIcon } from './RecordIcon'
 import { RecordProfile, SharingBadge } from './RecordProfile'
 import {
@@ -30,14 +31,16 @@ export interface CaseFilePanelProps {
   players: PlayerOption[]
   nameOf: (userId: string) => string
   onClose: () => void
+  /** Open on this record (a record tag in the chat was clicked). */
+  initialRecordId?: string | null
 }
 
 type View = { mode: 'none' } | { mode: 'record'; id: string } | { mode: 'new' }
 
-export function CaseFilePanel({ channelId, isGM, isArchived, myUserId, players, nameOf, onClose }: CaseFilePanelProps) {
+export function CaseFilePanel({ channelId, isGM, isArchived, myUserId, players, nameOf, onClose, initialRecordId }: CaseFilePanelProps) {
   const dialogRef = useRef<HTMLDivElement>(null)
   const { records, tags, loading, error, reload } = useRecords(channelId, isGM)
-  const [view, setView] = useState<View>({ mode: 'none' })
+  const [view, setView] = useState<View>(initialRecordId ? { mode: 'record', id: initialRecordId } : { mode: 'none' })
   const [filter, setFilter] = useState<RecordFilter>({ search: '', kind: 'all', tagId: null })
   const [editing, setEditing] = useState(false)
   const busy = editing || view.mode === 'new'
@@ -53,8 +56,13 @@ export function CaseFilePanel({ channelId, isGM, isArchived, myUserId, players, 
   const selected = records.find(r => r.id === selectedId) ?? null
   const onEditingChange = useCallback((value: boolean) => setEditing(value), [])
   const showingDetail = view.mode !== 'none'
+  // A record tag inside this panel (e.g. in Activity) switches to that record.
+  const openRecord = useCallback((id: string) => {
+    if (!busy) setView({ mode: 'record', id })
+  }, [busy])
 
   return (
+    <OpenRecordContext.Provider value={openRecord}>
     <div className="fixed inset-0 z-50 flex items-stretch justify-center bg-surface-600 bg-opacity-75 sm:items-center dark:bg-surface-900 dark:bg-opacity-80">
       <div className="fixed inset-0" aria-hidden="true" onClick={() => !busy && onClose()} />
       <div
@@ -183,6 +191,7 @@ export function CaseFilePanel({ channelId, isGM, isArchived, myUserId, players, 
                       reload()
                     }}
                     onEditingChange={onEditingChange}
+                    myUserId={myUserId}
                   />
                 ) : (
                   <p className="py-8 text-center text-sm text-surface-500 dark:text-surface-400">
@@ -195,6 +204,7 @@ export function CaseFilePanel({ channelId, isGM, isArchived, myUserId, players, 
         </div>
       </div>
     </div>
+    </OpenRecordContext.Provider>
   )
 }
 

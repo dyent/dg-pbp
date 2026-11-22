@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { listTags } from '../characters/characterApi'
 import type { Tag } from '../characters/characterModel'
 import { listRecordEvents, listRecordFields, listRecords } from './recordApi'
+import { listRecordAliases } from './recordActivityApi'
 import type { CampaignRecord, RecordEvent, RecordField } from './recordModel'
 
 /** The campaign's records the caller may see, and (GM only) the campaign tag list. */
@@ -36,10 +37,11 @@ export function useRecords(channelId: string, isGM: boolean) {
   return { records, tags, loading, error, reload }
 }
 
-/** One record's fields and (GM only) history. */
+/** One record's fields and (GM only) history and aliases. */
 export function useRecordProfile(recordId: string, isGM: boolean) {
   const [fields, setFields] = useState<RecordField[]>([])
   const [events, setEvents] = useState<RecordEvent[]>([])
+  const [aliases, setAliases] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [version, setVersion] = useState(0)
@@ -50,13 +52,15 @@ export function useRecordProfile(recordId: string, isGM: boolean) {
     setLoading(true)
     ;(async () => {
       try {
-        const [fieldList, eventList] = await Promise.all([
+        const [fieldList, eventList, aliasList] = await Promise.all([
           listRecordFields(recordId),
           isGM ? listRecordEvents(recordId) : Promise.resolve([]),
+          isGM ? listRecordAliases(recordId) : Promise.resolve([]),
         ])
         if (cancelled) return
         setFields(fieldList)
         setEvents(eventList)
+        setAliases(aliasList)
         setError(null)
       } catch (err) {
         if (!cancelled) setError(err instanceof Error ? err.message : 'Could not load this record.')
@@ -69,5 +73,5 @@ export function useRecordProfile(recordId: string, isGM: boolean) {
     }
   }, [recordId, isGM, version])
 
-  return { fields, events, loading, error, reload }
+  return { fields, events, aliases, loading, error, reload }
 }

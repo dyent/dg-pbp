@@ -97,7 +97,10 @@ its clean-up are untouched.
 | `src/features/chat/MessageItem.tsx` | Import `NpcTagChip`, `isNpcTagHref`; `urlTransform` keeps `npc:` and `npcalias:` links; the `a` renderer draws them as chips | Tags in posts. Without our provider (upstream tests) a chip just shows the written name |
 | `src/features/chat/MessageComposer.tsx` | Import our composer parts and `tagInsertion`; NPC matches appended to the `@` options and listed after the players; `npcTags.linkify` after upstream's `linkifyMentions` on send; the formatting toolbar wrapped in a flex row with our *Tag an NPC* button | Typing `@` or the button inserts a tag; `@Name` becomes `[Name](npc:id)` |
 | `src/features/channels/ChannelView.tsx` | Import `NpcTagProvider`; wrap the main return's root `<div>` in it (inside `InGameCalendarProvider`, not re-indented); `opensFromChat` on the sidebar *Characters* entry | Loads NPC names once per campaign; clicking a tag opens the NPC's profile |
-| `src/features/channels/ChannelView.test.tsx` | `vi.mock` of our `npcTagApi` (names, labels, alias tags) | Keeps the provider's loader off the network |
+| `src/features/channels/ChannelView.test.tsx` | `vi.mock` of our `npcTagApi` (names, records, labels, alias tags) | Keeps the provider's loader off the network |
+
+Record tags (Phase 2b step 2: `rec:` and `recalias:` links) go through the same hooks: our
+`isNpcTagHref` and `NpcTagChip` recognise them, so no further upstream change was needed.
 
 ## Campaign records: the Case file (Phase 2b step 1)
 
@@ -116,4 +119,4 @@ Record pictures are uploaded through upstream's `upload-image` function into its
 `supabase/tests/*_ext_*.sql` and `*_dg_*.sql`.
 
 <!-- cspell:locale en-GB,en -->
-<!-- cspell:words Touchpoints TOUCHPOINTS npcalias -->
+<!-- cspell:words Touchpoints TOUCHPOINTS npcalias recalias -->

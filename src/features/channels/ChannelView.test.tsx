@@ -38,6 +38,7 @@ vi.mock('../ext/characters/useCharacterList', () => ({
 // FORK-EXT: and the NPC tag loader (names and portraits for tags in posts).
 vi.mock('../ext/npcTags/npcTagApi', () => ({
   listTaggableNpcs: () => Promise.resolve([]),
+  listTaggableRecords: () => Promise.resolve([]),
   fetchNpcLabels: () => Promise.resolve([]),
   listAliasTags: () => Promise.resolve([]),
   aliasTagId: () => Promise.reject(new Error('not in tests')),

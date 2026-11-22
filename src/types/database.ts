@@ -1470,6 +1470,87 @@ export type Database = {
           },
         ]
       }
+      ext_record_alias_tags: {
+        Row: {
+          alias: string
+          channel_id: string
+          created_at: string
+          id: string
+          record_id: string
+        }
+        Insert: {
+          alias: string
+          channel_id: string
+          created_at?: string
+          id?: string
+          record_id: string
+        }
+        Update: {
+          alias?: string
+          channel_id?: string
+          created_at?: string
+          id?: string
+          record_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ext_record_alias_tags_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "channels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ext_record_alias_tags_record_id_fkey"
+            columns: ["record_id"]
+            isOneToOne: false
+            referencedRelation: "ext_records"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ext_record_aliases: {
+        Row: {
+          alias: string
+          channel_id: string
+          created_at: string
+          id: string
+          record_id: string
+          sort_order: number
+        }
+        Insert: {
+          alias: string
+          channel_id: string
+          created_at?: string
+          id?: string
+          record_id: string
+          sort_order?: number
+        }
+        Update: {
+          alias?: string
+          channel_id?: string
+          created_at?: string
+          id?: string
+          record_id?: string
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ext_record_aliases_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "channels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ext_record_aliases_record_id_fkey"
+            columns: ["record_id"]
+            isOneToOne: false
+            referencedRelation: "ext_records"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ext_record_events: {
         Row: {
           actor_id: string | null
@@ -1572,6 +1653,80 @@ export type Database = {
           },
           {
             foreignKeyName: "ext_record_fields_record_id_fkey"
+            columns: ["record_id"]
+            isOneToOne: false
+            referencedRelation: "ext_records"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ext_record_notes: {
+        Row: {
+          author_character_id: string | null
+          author_character_name: string | null
+          author_id: string | null
+          body: string
+          calendar: string
+          channel_id: string
+          created_at: string
+          id: string
+          in_game_day: number | null
+          record_id: string
+          updated_at: string
+          visibility: string
+        }
+        Insert: {
+          author_character_id?: string | null
+          author_character_name?: string | null
+          author_id?: string | null
+          body: string
+          calendar?: string
+          channel_id: string
+          created_at?: string
+          id?: string
+          in_game_day?: number | null
+          record_id: string
+          updated_at?: string
+          visibility: string
+        }
+        Update: {
+          author_character_id?: string | null
+          author_character_name?: string | null
+          author_id?: string | null
+          body?: string
+          calendar?: string
+          channel_id?: string
+          created_at?: string
+          id?: string
+          in_game_day?: number | null
+          record_id?: string
+          updated_at?: string
+          visibility?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ext_record_notes_author_character_id_fkey"
+            columns: ["author_character_id"]
+            isOneToOne: false
+            referencedRelation: "ext_characters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ext_record_notes_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ext_record_notes_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "channels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ext_record_notes_record_id_fkey"
             columns: ["record_id"]
             isOneToOne: false
             referencedRelation: "ext_records"
@@ -2711,6 +2866,15 @@ export type Database = {
         }
         Returns: string[]
       }
+      ext__check_record_note: {
+        Args: {
+          p_body: string
+          p_in_game_day: number
+          p_record_id: string
+          p_visibility: string
+        }
+        Returns: string
+      }
       ext__current_day: {
         Args: { p_channel_id: string; p_sub_channel_id: string }
         Returns: number
@@ -2781,6 +2945,15 @@ export type Database = {
         }
         Returns: string
       }
+      ext_add_record_note: {
+        Args: {
+          p_body: string
+          p_in_game_day?: number
+          p_record_id: string
+          p_visibility: string
+        }
+        Returns: string
+      }
       ext_campaign_file_path_channel: {
         Args: { p_name: string }
         Returns: string
@@ -2843,6 +3016,10 @@ export type Database = {
         Args: { p_note_id: string }
         Returns: undefined
       }
+      ext_delete_record_note: {
+        Args: { p_note_id: string }
+        Returns: undefined
+      }
       ext_is_character_owner: {
         Args: { p_character_id: string }
         Returns: boolean
@@ -2887,6 +3064,30 @@ export type Database = {
           user_id: string
         }[]
       }
+      ext_record_alias_tag: {
+        Args: { p_alias: string; p_record_id: string }
+        Returns: string
+      }
+      ext_record_posts: {
+        Args: {
+          p_before?: string
+          p_channel_id: string
+          p_limit?: number
+          p_record_id: string
+          p_terms: string[]
+        }
+        Returns: {
+          content: string
+          created_at: string
+          id: string
+          kind: string
+          npc_name: string
+          sender_id: string
+          sub_channel_id: string
+          type: string
+          whisper_to: string
+        }[]
+      }
       ext_replace_campaign_file: {
         Args: { p_file_id: string; p_file_name: string; p_object_path: string }
         Returns: number
@@ -2901,6 +3102,10 @@ export type Database = {
       }
       ext_set_my_status: {
         Args: { p_character_id: string; p_status: string }
+        Returns: undefined
+      }
+      ext_set_record_aliases: {
+        Args: { p_aliases: string[]; p_record_id: string }
         Returns: undefined
       }
       ext_set_record_visibility: {
@@ -2957,6 +3162,15 @@ export type Database = {
       }
       ext_update_my_character: {
         Args: { p_character_id: string; p_name: string; p_portrait_url: string }
+        Returns: undefined
+      }
+      ext_update_record_note: {
+        Args: {
+          p_body: string
+          p_in_game_day?: number
+          p_note_id: string
+          p_visibility: string
+        }
         Returns: undefined
       }
       get_admin_unread_count: { Args: { p_user_id: string }; Returns: number }

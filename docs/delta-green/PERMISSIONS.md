@@ -117,6 +117,13 @@ Tests: `supabase/tests/*_ext_campaign_records.sql`. How to use: `12-case-file.md
 | Read *GM only* fields (GM notes always) | Yes | No | No | No |
 | Who a record is shown to; tags; history | Yes | No | No | No |
 | Create, edit, share, tag, delete | Yes (not in archived campaigns) | No | No | No |
+| Aliases and alias tags | Yes | No | No | No |
+| Tag the record in a post (`@Name`) | Yes (also by alias) | Yes | Only if shown to everyone | No |
+| See a record tag in a post as a chip that opens it | Yes | Yes | Plain text unless shown to everyone | No |
+| See a record alias tag | As a chip (*Alias of …*) | Plain text | Plain text | No |
+| Activity: posts that tag or mention it | All | Posts they can read (tags and name only) | Same, if shown to everyone | No |
+| Read notes | All | Their own, and *Everyone* notes | *Everyone* notes, if shown to everyone | No |
+| Add notes; edit own; delete own | Yes (GM only / Everyone; may delete any) | Yes (Me and the GM / Everyone) | If shown to everyone | No |
 
 ## In-game calendar
 

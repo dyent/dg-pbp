@@ -153,6 +153,10 @@ export function describeRecordEvent(event: RecordEvent, nameOf: (userId: string)
       if (removed.length) parts.push(`removed ${removed.join(', ')}`)
       return `${parts.join('; ')}.`
     }
+    case 'aliases_changed': {
+      const to = Array.isArray(d.to) ? d.to.filter((a): a is string => typeof a === 'string') : []
+      return to.length ? `Aliases set to ${to.join(', ')}.` : 'Aliases removed.'
+    }
     case 'field_visibility_changed': {
       const label = (v: unknown) => (v === 'players' ? 'Everyone' : v === 'gm' ? 'GM only' : str(v))
       return `"${str(d.label)}" moved from ${label(d.from)} to ${label(d.to)}.`

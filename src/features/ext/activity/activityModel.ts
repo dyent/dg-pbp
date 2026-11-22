@@ -51,10 +51,16 @@ export interface ActivityNote {
   edited: boolean
 }
 
-export type ActivityEntry =
+/** A history entry of a character (or, for records, a record): anything with an id and a time. */
+export interface ActivityChange {
+  id: string
+  createdAt: string
+}
+
+export type ActivityEntry<E extends ActivityChange = CharacterEvent> =
   | { kind: 'post'; at: string; post: ActivityPost }
   | { kind: 'note'; at: string; note: ActivityNote }
-  | { kind: 'change'; at: string; event: CharacterEvent }
+  | { kind: 'change'; at: string; event: E }
 
 export const FILTERS = ['all', 'posts', 'mentions', 'notes', 'changes'] as const
 export type ActivityFilter = (typeof FILTERS)[number]
@@ -67,7 +73,7 @@ export const FILTER_LABELS: Record<ActivityFilter, string> = {
   changes: 'Changes',
 }
 
-function matches(entry: ActivityEntry, filter: ActivityFilter): boolean {
+function matches<E extends ActivityChange>(entry: ActivityEntry<E>, filter: ActivityFilter): boolean {
   switch (filter) {
     case 'all':
       return true
@@ -87,16 +93,16 @@ function matches(entry: ActivityEntry, filter: ActivityFilter): boolean {
  * loaded post are held back while older posts remain to be loaded, so the list
  * never shows a gap that "Load older posts" would later fill in the middle.
  */
-export function buildActivity(
+export function buildActivity<E extends ActivityChange = CharacterEvent>(
   posts: ActivityPost[],
   notes: ActivityNote[],
-  events: CharacterEvent[],
+  events: E[],
   filter: ActivityFilter,
   morePosts: boolean,
-): ActivityEntry[] {
+): ActivityEntry<E>[] {
   const oldestPost = posts.length > 0 ? posts[posts.length - 1].createdAt : null
   const cutoff = morePosts && oldestPost ? Date.parse(oldestPost) : null
-  const all: ActivityEntry[] = [
+  const all: ActivityEntry<E>[] = [
     ...posts.map(post => ({ kind: 'post' as const, at: post.createdAt, post })),
     ...notes.map(note => ({ kind: 'note' as const, at: note.createdAt, note })),
     ...events.map(event => ({ kind: 'change' as const, at: event.createdAt, event })),
@@ -111,7 +117,7 @@ export function buildActivity(
  * Words to look for in posts: the name, and for the GM the aliases (which are
  * GM secrets, so players never search for them). Very short names are skipped.
  */
-export function searchTerms(character: CharacterSummary, isGM: boolean): string[] {
-  const names = [character.name, ...(isGM ? (character.aliases ?? []) : [])]
+export function searchTerms(subject: Pick<CharacterSummary, 'name' | 'aliases'>, isGM: boolean): string[] {
+  const names = [subject.name, ...(isGM ? (subject.aliases ?? []) : [])]
   return [...new Set(names.map(n => n.trim()).filter(n => n.length >= 2))]
 }

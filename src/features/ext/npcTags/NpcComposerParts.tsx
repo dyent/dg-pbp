@@ -1,10 +1,12 @@
-// cspell:words npcalias
+// cspell:words npcalias recalias
 import { useState } from 'react'
 import { UserRound } from 'lucide-react'
 import { useClickOutside } from '../../../hooks/useClickOutside'
 import { useNpcTags } from './npcTagContext'
 import { NpcFace } from './NpcTags'
 import { matchTagTerms, type TagTerm } from './npcTagModel'
+import { KIND_ICONS } from '../records/RecordIcon'
+import { KIND_LABELS } from '../records/recordModel'
 
 /** Composer hook (FORK-EXT): NPCs for the `@` list and the send-time conversion. */
 export function useComposerNpcTags() {
@@ -20,13 +22,26 @@ export function useComposerNpcTags() {
   }
 }
 
-/** "Dr Hale  NPC", or for the GM's aliases "The Stranger  alias of Dr Hale" (no portrait). */
+/**
+ * "Dr Hale  NPC" / "Morgue  Location", or for the GM's aliases
+ * "The Stranger  alias of Dr Hale" (no portrait).
+ */
 function TermLabel({ term }: { term: TagTerm }) {
+  const kind = term.npc.recordKind
+  const Icon = kind ? KIND_ICONS[kind] : null
   return (
     <>
-      <NpcFace npc={term.alias ? { name: term.text, portraitUrl: null } : term.npc} />
+      {Icon ? (
+        <span aria-hidden="true" className="inline-flex h-5 w-5 flex-shrink-0 items-center justify-center rounded bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-200">
+          <Icon className="h-3.5 w-3.5" />
+        </span>
+      ) : (
+        <NpcFace npc={term.alias ? { name: term.text, portraitUrl: null } : term.npc} />
+      )}
       <span className="font-medium text-surface-900 dark:text-surface-100">{term.text}</span>
-      <span className="text-xs text-surface-500 dark:text-surface-400">{term.alias ? `alias of ${term.npc.name}` : 'NPC'}</span>
+      <span className="text-xs text-surface-500 dark:text-surface-400">
+        {term.alias ? `alias of ${term.npc.name}` : kind ? KIND_LABELS[kind] : 'NPC'}
+      </span>
     </>
   )
 }
@@ -85,8 +100,8 @@ export function NpcTagButton({ onPick }: { onPick: (name: string) => void }) {
     <div ref={ref} className="relative">
       <button
         type="button"
-        aria-label="Tag an NPC"
-        title="Tag an NPC (@Name)"
+        aria-label="Tag an NPC or record"
+        title="Tag an NPC or record (@Name)"
         aria-haspopup="listbox"
         aria-expanded={open}
         onMouseDown={e => e.preventDefault()}
@@ -112,15 +127,15 @@ export function NpcTagButton({ onPick }: { onPick: (name: string) => void }) {
                   pick(list[0].text)
                 }
               }}
-              placeholder="Find an NPC"
-              aria-label="Find an NPC"
+              placeholder="Find an NPC or record"
+              aria-label="Find an NPC or record"
               ref={focusOnOpen}
               className="w-full rounded-t-lg border-b border-surface-200 bg-transparent px-3 py-2 text-sm text-surface-900 focus:outline-none dark:border-surface-700 dark:text-surface-100"
             />
           )}
-          <div role="listbox" aria-label="NPCs to tag" className="max-h-56 overflow-y-auto py-1">
+          <div role="listbox" aria-label="NPCs and records to tag" className="max-h-56 overflow-y-auto py-1">
             {list.length === 0 ? (
-              <p className="px-3 py-2 text-sm text-surface-500">No NPCs match.</p>
+              <p className="px-3 py-2 text-sm text-surface-500">Nothing matches.</p>
             ) : (
               list.map(term => (
                 <button

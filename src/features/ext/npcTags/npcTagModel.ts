@@ -1,4 +1,4 @@
-// cspell:words npcalias
+// cspell:words npcalias recalias
 // Inline NPC tags (Phase 2a step 5c, DECISIONS.md #36 and #37).
 //
 // A tag is stored in the post as a Markdown link:
@@ -7,9 +7,16 @@
 //                                             only the GM can tell which character it is
 // The composer turns `@Dr Hale` / `@The Stranger` into those links when the post is sent, the
 // same way upstream turns `@Player` into a `user:` link.
+//
+// Campaign records (Phase 2b step 2) are tagged the same way:
+//   `[Morgue](rec:<record id>)`, `[The Hollow](recalias:<alias tag id>)`
+
+import type { RecordKind } from '../records/recordModel'
 
 export const NPC_LINK_PREFIX = 'npc:'
 export const NPC_ALIAS_PREFIX = 'npcalias:'
+export const REC_LINK_PREFIX = 'rec:'
+export const REC_ALIAS_PREFIX = 'recalias:'
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
@@ -19,21 +26,31 @@ export interface NpcTagOption {
   portraitUrl: string | null
   /** GM-only other names (empty for players). */
   aliases?: string[]
+  /** Set for a campaign record (location, clue…); absent for an NPC. */
+  recordKind?: RecordKind
 }
 
-export type ParsedTag = { kind: 'npc' | 'alias'; id: string }
+export type ParsedTag = { kind: 'npc' | 'alias' | 'record' | 'recordAlias'; id: string }
 
-/** What an `npc:` or `npcalias:` link points to, or null when it is not a valid tag. */
+const PREFIXES: [string, ParsedTag['kind']][] = [
+  [NPC_ALIAS_PREFIX, 'alias'],
+  [NPC_LINK_PREFIX, 'npc'],
+  [REC_ALIAS_PREFIX, 'recordAlias'],
+  [REC_LINK_PREFIX, 'record'],
+]
+
+/** What an `npc:`, `npcalias:`, `rec:` or `recalias:` link points to, or null when it is not a valid tag. */
 export function parseNpcTag(href: string | null | undefined): ParsedTag | null {
   if (!href) return null
-  const kind = href.startsWith(NPC_ALIAS_PREFIX) ? 'alias' : href.startsWith(NPC_LINK_PREFIX) ? 'npc' : null
-  if (!kind) return null
-  const id = href.slice(kind === 'alias' ? NPC_ALIAS_PREFIX.length : NPC_LINK_PREFIX.length)
-  return UUID_RE.test(id) ? { kind, id: id.toLowerCase() } : null
+  const match = PREFIXES.find(([prefix]) => href.startsWith(prefix))
+  if (!match) return null
+  const id = href.slice(match[0].length)
+  return UUID_RE.test(id) ? { kind: match[1], id: id.toLowerCase() } : null
 }
 
+/** Is this link one of our tags (NPC or record)? Used by upstream's post renderer. */
 export function isNpcTagHref(href: string | null | undefined): boolean {
-  return !!href && (href.startsWith(NPC_LINK_PREFIX) || href.startsWith(NPC_ALIAS_PREFIX))
+  return !!href && PREFIXES.some(([prefix]) => href.startsWith(prefix))
 }
 
 /** A name or alias that can follow `@`. */
@@ -69,19 +86,25 @@ function termPattern(text: string): RegExp {
   return new RegExp(`(^|\\s)@${escaped}(?=\\s|[.,;:!?)\\]'"]|$)`, 'gi')
 }
 
-/** Key for an alias tag id: character + alias, ignoring case. */
-export function aliasKey(characterId: string, alias: string): string {
-  return `${characterId}|${alias.toLowerCase()}`
+/** Key for an alias tag id: NPC or record + alias, ignoring case. */
+export function aliasKey(targetId: string, alias: string): string {
+  return `${targetId}|${alias.toLowerCase()}`
+}
+
+/** An alias used in a post: which NPC or record, and the alias as written in the list. */
+export interface AliasUse {
+  target: NpcTagOption
+  alias: string
 }
 
 /** Aliases used as `@Alias` in the text (the composer needs an alias tag id for each). */
-export function findAliasUses(text: string, npcs: readonly NpcTagOption[]): { characterId: string; alias: string }[] {
-  const found = new Map<string, { characterId: string; alias: string }>()
+export function findAliasUses(text: string, npcs: readonly NpcTagOption[]): AliasUse[] {
+  const found = new Map<string, AliasUse>()
   let rest = text
   for (const term of tagTerms(npcs)) {
     const re = termPattern(term.text)
     if (!re.test(rest)) continue
-    if (term.alias) found.set(aliasKey(term.npc.id, term.text), { characterId: term.npc.id, alias: term.text })
+    if (term.alias) found.set(aliasKey(term.npc.id, term.text), { target: term.npc, alias: term.text })
     // Blank out what this term took, so a shorter term can't match inside it.
     rest = rest.replace(termPattern(term.text), m => ' '.repeat(m.length))
   }
@@ -97,12 +120,13 @@ export function findAliasUses(text: string, npcs: readonly NpcTagOption[]): { ch
 export function linkifyNpcTags(text: string, npcs: readonly NpcTagOption[], aliasTagIds: ReadonlyMap<string, string> = new Map()): string {
   let content = text
   for (const term of tagTerms(npcs)) {
+    const record = !!term.npc.recordKind
     if (term.alias) {
       const tagId = aliasTagIds.get(aliasKey(term.npc.id, term.text))
       if (!tagId) continue
-      content = content.replace(termPattern(term.text), `$1[${term.text}](${NPC_ALIAS_PREFIX}${tagId})`)
+      content = content.replace(termPattern(term.text), `$1[${term.text}](${record ? REC_ALIAS_PREFIX : NPC_ALIAS_PREFIX}${tagId})`)
     } else {
-      content = content.replace(termPattern(term.text), `$1[${term.text}](${NPC_LINK_PREFIX}${term.npc.id})`)
+      content = content.replace(termPattern(term.text), `$1[${term.text}](${record ? REC_LINK_PREFIX : NPC_LINK_PREFIX}${term.npc.id})`)
     }
   }
   return content

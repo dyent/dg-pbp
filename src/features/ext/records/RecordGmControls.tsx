@@ -13,6 +13,7 @@ import {
 
 export interface RecordGmActions {
   setVisibility: (visibility: RecordVisibility, playerIds: string[]) => Promise<boolean>
+  setAliases: (aliases: string[]) => Promise<boolean>
   setTags: (add: string[], remove: string[], success: string) => Promise<boolean>
   createTag: (name: string) => Promise<Tag>
   remove: () => Promise<boolean>
@@ -22,21 +23,24 @@ interface RecordGmControlsProps {
   record: CampaignRecord
   players: PlayerOption[]
   tags: Tag[]
+  /** GM-only other names. */
+  aliases: string[]
   actions: RecordGmActions
 }
 
-/** GM-only settings shown above a record's profile: sharing, tags, delete. */
-export function RecordGmControls({ record, players, tags, actions }: RecordGmControlsProps) {
+/** GM-only settings shown above a record's profile: sharing, aliases, tags, delete. */
+export function RecordGmControls({ record, players, tags, aliases, actions }: RecordGmControlsProps) {
   return (
     <div className="space-y-4 rounded-md border border-surface-200 p-3 dark:border-surface-700">
       <SharingSection key={`${record.id}-${record.visibility}-${record.sharedWith.join()}`} record={record} players={players} actions={actions} />
+      <AliasSection key={`${record.id}-${aliases.join('|')}`} aliases={aliases} actions={actions} />
       <TagSection record={record} tags={tags} actions={actions} />
       <DeleteSection record={record} actions={actions} />
     </div>
   )
 }
 
-function SharingSection({ record, players, actions }: Omit<RecordGmControlsProps, 'tags'>) {
+function SharingSection({ record, players, actions }: Pick<RecordGmControlsProps, 'record' | 'players' | 'actions'>) {
   const id = useId()
   const [visibility, setVisibility] = useState<RecordVisibility>(record.visibility)
   const [playerIds, setPlayerIds] = useState<string[]>(record.sharedWith)
@@ -114,6 +118,51 @@ function SharingSection({ record, players, actions }: Omit<RecordGmControlsProps
         </button>
       )}
     </fieldset>
+  )
+}
+
+/** Other names, comma-separated: findable in posts and taggable with `@` (GM only). */
+function AliasSection({ aliases, actions }: { aliases: string[]; actions: RecordGmActions }) {
+  const id = useId()
+  const [text, setText] = useState(aliases.join(', '))
+  const [busy, setBusy] = useState(false)
+  const list = text.split(',').map(a => a.trim()).filter(Boolean)
+  const problem =
+    list.length > LIMITS.aliases
+      ? `At most ${LIMITS.aliases} aliases.`
+      : list.some(a => a.length > LIMITS.alias)
+        ? `Aliases can be at most ${LIMITS.alias} characters.`
+        : null
+  const changed = list.join('|') !== aliases.join('|')
+
+  const save = async () => {
+    setBusy(true)
+    await actions.setAliases(list)
+    setBusy(false)
+  }
+
+  return (
+    <div className="space-y-1">
+      <label htmlFor={`${id}-aliases`} className="text-sm font-medium text-surface-900 dark:text-surface-100">
+        Aliases (GM only)
+      </label>
+      <p className="text-xs text-surface-500 dark:text-surface-400">
+        Other names, separated by commas, e.g. The Hollow, the Choir. You can tag them with @ in posts; players see only the alias.
+      </p>
+      <div className="flex gap-2">
+        <input id={`${id}-aliases`} value={text} onChange={e => setText(e.target.value)} className={`${INPUT} min-w-0 flex-1`} />
+        {changed && (
+          <button type="button" className={BTN_SECONDARY} onClick={() => void save()} disabled={busy || !!problem}>
+            {busy ? 'Saving…' : 'Save aliases'}
+          </button>
+        )}
+      </div>
+      {problem && (
+        <p role="alert" className="text-xs text-red-600 dark:text-red-400">
+          {problem}
+        </p>
+      )}
+    </div>
   )
 }
 

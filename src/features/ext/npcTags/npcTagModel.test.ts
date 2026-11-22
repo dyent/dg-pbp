@@ -1,4 +1,4 @@
-// cspell:words Kowalski Kowalskis npcalias
+// cspell:words Kowalski Kowalskis npcalias recalias
 import { describe, expect, it, vi } from 'vitest'
 import {
   aliasKey,
@@ -78,11 +78,32 @@ describe('linkifyNpcTags', () => {
   })
 })
 
+describe('record tags', () => {
+  const MORGUE = '00000000-0000-0000-0000-00000000c001'
+  const records: NpcTagOption[] = [{ id: MORGUE, name: 'Morgue', portraitUrl: null, recordKind: 'location', aliases: ['The Slab'] }]
+
+  it('reads rec: and recalias: links', () => {
+    expect(parseNpcTag(`rec:${MORGUE}`)).toEqual({ kind: 'record', id: MORGUE })
+    expect(parseNpcTag(`recalias:${TAG}`)).toEqual({ kind: 'recordAlias', id: TAG })
+    expect(isNpcTagHref(`rec:${MORGUE}`)).toBe(true)
+    expect(isNpcTagHref(`recalias:${TAG}`)).toBe(true)
+    expect(parseNpcTag('rec:nope')).toBeNull()
+  })
+
+  it('links records with their own prefixes, next to NPCs', () => {
+    const ids = new Map([[aliasKey(MORGUE, 'The Slab'), TAG]])
+    expect(linkifyNpcTags('@Dr Hale at the @Morgue, aka @the slab.', [...npcs, ...records], ids)).toBe(
+      `[Dr Hale](npc:${HALE}) at the [Morgue](rec:${MORGUE}), aka [The Slab](recalias:${TAG}).`,
+    )
+    expect(findAliasUses('@The Slab', records)).toEqual([{ target: records[0], alias: 'The Slab' }])
+  })
+})
+
 describe('findAliasUses', () => {
   it('lists each alias used once, ignoring names and longer matches', () => {
     expect(findAliasUses('@Doc and @doc, then @Dr Hale and @The Stranger', npcs)).toEqual([
-      { characterId: HALE, alias: 'The Stranger' },
-      { characterId: HALE, alias: 'Doc' },
+      { target: npcs[0], alias: 'The Stranger' },
+      { target: npcs[0], alias: 'Doc' },
     ])
     expect(findAliasUses('@Dr Hale Junior', npcs)).toEqual([])
   })
