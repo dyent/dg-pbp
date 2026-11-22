@@ -7,6 +7,7 @@ import { NoActiveCharacterBanner } from '../ext/characters/NoActiveCharacterBann
 import { forgetPost, rememberPost, waitingPost } from '../ext/activity/pendingPost' // FORK-EXT: Go to post
 import { MySheetButton } from '../dg/sheet/MySheetButton' // FORK-EXT: "My sheet" pop-up
 import { FilesEntry } from '../ext/files/FilesEntry' // FORK-EXT: campaign files
+import { CaseFileEntry } from '../ext/records/CaseFileEntry' // FORK-EXT: campaign records (Case file)
 import { InGameCalendarProvider } from '../ext/calendar/calendarContext' // FORK-EXT: in-game calendar
 import { NpcTagProvider } from '../ext/npcTags/npcTagContext' // FORK-EXT: inline NPC tags
 import { InGameDateBar } from '../ext/calendar/InGameDateBar' // FORK-EXT: in-game calendar
@@ -968,6 +969,8 @@ export function ChannelView() {
             <CharactersEntry channelId={channel.id} isGM={isGM} isArchived={channel.is_archived} gmId={channel.gm_id} myUserId={user?.id} members={members} className={SIDEBAR_MENU_ITEM} onClosed={refetchNpcs} onOpenPost={openPost} opensFromChat />
             {/* FORK-EXT: campaign files (handouts, case files, maps) */}
             <FilesEntry channelId={channel.id} isGM={isGM} isArchived={channel.is_archived} gmId={channel.gm_id} myUserId={user?.id} members={members} className={SIDEBAR_MENU_ITEM} />
+            {/* FORK-EXT: campaign records (operations, locations, groups, clues) */}
+            <CaseFileEntry channelId={channel.id} isGM={isGM} isArchived={channel.is_archived} gmId={channel.gm_id} myUserId={user?.id} members={members} className={SIDEBAR_MENU_ITEM} />
             {channel.map_url && (
               <a
                 href={channel.map_url}

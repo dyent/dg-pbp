@@ -104,6 +104,20 @@ Tests: `supabase/tests/*_ext_campaign_files.sql`. How to use: `06-campaign-files
 | Who a file is shared with; file history | Yes | No | No | No |
 | Add, replace, edit, share, delete | Yes (not in archived campaigns) | No | No | No |
 
+## Campaign records (Case file)
+
+Tests: `supabase/tests/*_ext_campaign_records.sql`. How to use: `12-case-file.md`.
+
+| What | GM | Player the record is shown to | Other player | Outsider |
+|---|---|---|---|---|
+| See a **GM only** record (the default for new records) | Yes | No | No | No |
+| See an **All players** record | Yes | Yes | Yes | No |
+| See a **Chosen players** record | Yes | Yes | No | No |
+| Read *Everyone* fields | Yes | Yes | Only of *All players* records | No |
+| Read *GM only* fields (GM notes always) | Yes | No | No | No |
+| Who a record is shown to; tags; history | Yes | No | No | No |
+| Create, edit, share, tag, delete | Yes (not in archived campaigns) | No | No | No |
+
 ## In-game calendar
 
 Tests: `supabase/tests/*_ext_in_game_calendar.sql`. How to use: `08-in-game-calendar.md`.

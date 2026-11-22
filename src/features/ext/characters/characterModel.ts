@@ -196,7 +196,10 @@ export interface DraftItem {
   private: boolean
 }
 
-export function toDraft(fields: CharacterField[]): DraftItem[] {
+/** What the editing helpers need from a field (character or campaign record fields). */
+export type FieldLike = Pick<CharacterField, 'id' | 'itemType' | 'fieldKey' | 'label' | 'body' | 'visibility' | 'private' | 'sortOrder'>
+
+export function toDraft(fields: FieldLike[]): DraftItem[] {
   return [...fields]
     .sort((a, b) => a.sortOrder - b.sortOrder)
     .map(f => ({
@@ -297,7 +300,7 @@ function sortOrders(draft: DraftItem[]): Map<string, number> {
  * Work out the database writes needed to turn `original` into `draft`.
  * Only items that changed are written, so the GM's change log stays meaningful.
  */
-export function diffFields(original: CharacterField[], draft: DraftItem[]): FieldChanges {
+export function diffFields(original: FieldLike[], draft: DraftItem[]): FieldChanges {
   const orders = sortOrders(draft)
   const draftIds = new Set(draft.filter(d => d.id).map(d => d.id))
   const changes: FieldChanges = {

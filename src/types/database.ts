@@ -1470,6 +1470,235 @@ export type Database = {
           },
         ]
       }
+      ext_record_events: {
+        Row: {
+          actor_id: string | null
+          channel_id: string
+          created_at: string
+          details: Json
+          event_type: string
+          id: string
+          record_id: string
+        }
+        Insert: {
+          actor_id?: string | null
+          channel_id: string
+          created_at?: string
+          details?: Json
+          event_type: string
+          id?: string
+          record_id: string
+        }
+        Update: {
+          actor_id?: string | null
+          channel_id?: string
+          created_at?: string
+          details?: Json
+          event_type?: string
+          id?: string
+          record_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ext_record_events_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ext_record_events_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "channels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ext_record_events_record_id_fkey"
+            columns: ["record_id"]
+            isOneToOne: false
+            referencedRelation: "ext_records"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ext_record_fields: {
+        Row: {
+          body: string
+          channel_id: string
+          created_at: string
+          field_key: string | null
+          id: string
+          item_type: string
+          label: string
+          record_id: string
+          sort_order: number
+          updated_at: string
+          visibility: string
+        }
+        Insert: {
+          body?: string
+          channel_id: string
+          created_at?: string
+          field_key?: string | null
+          id?: string
+          item_type?: string
+          label: string
+          record_id: string
+          sort_order?: number
+          updated_at?: string
+          visibility?: string
+        }
+        Update: {
+          body?: string
+          channel_id?: string
+          created_at?: string
+          field_key?: string | null
+          id?: string
+          item_type?: string
+          label?: string
+          record_id?: string
+          sort_order?: number
+          updated_at?: string
+          visibility?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ext_record_fields_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "channels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ext_record_fields_record_id_fkey"
+            columns: ["record_id"]
+            isOneToOne: false
+            referencedRelation: "ext_records"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ext_record_shares: {
+        Row: {
+          record_id: string
+          shared_at: string
+          user_id: string
+        }
+        Insert: {
+          record_id: string
+          shared_at?: string
+          user_id: string
+        }
+        Update: {
+          record_id?: string
+          shared_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ext_record_shares_record_id_fkey"
+            columns: ["record_id"]
+            isOneToOne: false
+            referencedRelation: "ext_records"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ext_record_shares_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ext_record_tags: {
+        Row: {
+          created_at: string
+          record_id: string
+          tag_id: string
+        }
+        Insert: {
+          created_at?: string
+          record_id: string
+          tag_id: string
+        }
+        Update: {
+          created_at?: string
+          record_id?: string
+          tag_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ext_record_tags_record_id_fkey"
+            columns: ["record_id"]
+            isOneToOne: false
+            referencedRelation: "ext_records"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ext_record_tags_tag_id_fkey"
+            columns: ["tag_id"]
+            isOneToOne: false
+            referencedRelation: "ext_tags"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ext_records: {
+        Row: {
+          channel_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          kind: string
+          name: string
+          picture_url: string | null
+          provenance: string
+          updated_at: string
+          visibility: string
+        }
+        Insert: {
+          channel_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          kind: string
+          name: string
+          picture_url?: string | null
+          provenance?: string
+          updated_at?: string
+          visibility?: string
+        }
+        Update: {
+          channel_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          kind?: string
+          name?: string
+          picture_url?: string | null
+          provenance?: string
+          updated_at?: string
+          visibility?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ext_records_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "channels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ext_records_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ext_tags: {
         Row: {
           channel_id: string
@@ -2576,6 +2805,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      ext_can_read_record: { Args: { p_record_id: string }; Returns: boolean }
       ext_can_write_campaign_file_object: {
         Args: { p_name: string }
         Returns: boolean
@@ -2671,6 +2901,14 @@ export type Database = {
       }
       ext_set_my_status: {
         Args: { p_character_id: string; p_status: string }
+        Returns: undefined
+      }
+      ext_set_record_visibility: {
+        Args: {
+          p_player_ids: string[]
+          p_record_id: string
+          p_visibility: string
+        }
         Returns: undefined
       }
       ext_set_role: {

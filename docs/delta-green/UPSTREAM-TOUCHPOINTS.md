@@ -99,6 +99,16 @@ its clean-up are untouched.
 | `src/features/channels/ChannelView.tsx` | Import `NpcTagProvider`; wrap the main return's root `<div>` in it (inside `InGameCalendarProvider`, not re-indented); `opensFromChat` on the sidebar *Characters* entry | Loads NPC names once per campaign; clicking a tag opens the NPC's profile |
 | `src/features/channels/ChannelView.test.tsx` | `vi.mock` of our `npcTagApi` (names, labels, alias tags) | Keeps the provider's loader off the network |
 
+## Campaign records: the Case file (Phase 2b step 1)
+
+| Upstream file | What we changed | Why |
+|---|---|---|
+| `src/features/channels/ChannelView.tsx` | Import `CaseFileEntry`; render it after `FilesEntry` in the sidebar's *Table* section | Opens the Case file. It loads nothing until opened, so upstream's ChannelView tests need no new mocks |
+| `src/features/channels/ChannelView.test.tsx` | `'Case file'` added to the expected sidebar order | The new menu item changes the list |
+
+Record pictures are uploaded through upstream's `upload-image` function into its existing GM-only
+`npc` folder (the function allows only a fixed list of folders), so the function is unchanged.
+
 ## New files (no conflict risk)
 
 `CLAUDE.md`, `docs/delta-green/*`, `src/features/ext/**`, `src/features/dg/**`,

@@ -1947,6 +1947,7 @@ describe('ChannelView search functionality', () => {
     expect(items).toEqual([
       'Characters', // FORK-EXT: characters panel entry
       'Files', // FORK-EXT: campaign files entry
+      'Case file', // FORK-EXT: campaign records entry
       'Map',
       'Rolls',
       'Search',
