@@ -77,9 +77,28 @@ Each record has an **Activity** tab next to **Profile**:
 - **Changes** (you only): created, renamed, field edits, moves between Everyone and GM only,
   sharing and aliases.
 
+## Links (step 3)
+
+Records and characters can be linked to each other with a short label, for example
+*Kowalski — deputy at → Sheriff's office* or *Bloody glove — found at → Hollow Creek morgue*.
+Each link shows in a **Links** section at the bottom of the **Profile** tab of *both* ends (a
+record in the Case file, or a character in the Characters panel).
+
+- **Adding (GM):** press **Add link**, choose the direction (*this → …* or *… → this*), what to
+  link to (PCs, NPCs and records are listed in groups), a label and who can see it. Typing in the
+  label offers *part of*, *found at*, *works for*, *member of*, *located in* and *knows*, but any
+  label up to 60 characters works.
+- **Who sees it:** a new link is **GM only**. Press **Show** to show it to players: a player then
+  sees it only if they can also see **both** ends. A link to a hidden clue stays hidden until the
+  clue is shown. **Hide** takes it back.
+- **Editing:** **Edit** changes the label; **Remove** (with a second click to confirm) deletes the
+  link. To point a link somewhere else, remove it and add a new one.
+- **Opening:** click the other end to open it. A record opens in the Case file, a character in the
+  Characters panel.
+- Deleting a record or a character removes its links. Archived campaigns are read-only.
+
 ## Coming next
 
-Links between records and characters (step 3), and clue status, *found by* and the GM checklist
-(step 4).
+Clue status, *found by* and the GM checklist (step 4).
 
 <!-- cspell:locale en-GB,en -->

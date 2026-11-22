@@ -1382,6 +1382,91 @@ export type Database = {
           },
         ]
       }
+      ext_links: {
+        Row: {
+          channel_id: string
+          created_at: string
+          created_by: string | null
+          from_character_id: string | null
+          from_record_id: string | null
+          id: string
+          label: string
+          to_character_id: string | null
+          to_record_id: string | null
+          updated_at: string
+          visibility: string
+        }
+        Insert: {
+          channel_id: string
+          created_at?: string
+          created_by?: string | null
+          from_character_id?: string | null
+          from_record_id?: string | null
+          id?: string
+          label: string
+          to_character_id?: string | null
+          to_record_id?: string | null
+          updated_at?: string
+          visibility?: string
+        }
+        Update: {
+          channel_id?: string
+          created_at?: string
+          created_by?: string | null
+          from_character_id?: string | null
+          from_record_id?: string | null
+          id?: string
+          label?: string
+          to_character_id?: string | null
+          to_record_id?: string | null
+          updated_at?: string
+          visibility?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ext_links_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "channels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ext_links_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ext_links_from_character_id_fkey"
+            columns: ["from_character_id"]
+            isOneToOne: false
+            referencedRelation: "ext_characters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ext_links_from_record_id_fkey"
+            columns: ["from_record_id"]
+            isOneToOne: false
+            referencedRelation: "ext_records"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ext_links_to_character_id_fkey"
+            columns: ["to_character_id"]
+            isOneToOne: false
+            referencedRelation: "ext_characters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ext_links_to_record_id_fkey"
+            columns: ["to_record_id"]
+            isOneToOne: false
+            referencedRelation: "ext_records"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ext_npc_alias_tags: {
         Row: {
           alias: string
@@ -2844,6 +2929,10 @@ export type Database = {
         Returns: undefined
       }
       escape_markdown: { Args: { p_text: string }; Returns: string }
+      ext__can_see_link_end: {
+        Args: { p_character_id: string; p_record_id: string }
+        Returns: boolean
+      }
       ext__check_campaign_file_object: {
         Args: { p_channel_id: string; p_path: string }
         Returns: Record<string, unknown>
@@ -2881,6 +2970,10 @@ export type Database = {
       }
       ext__event_visibility: {
         Args: { p_kind: string; p_owner_id: string; p_revealed: boolean }
+        Returns: string
+      }
+      ext__link_end_channel: {
+        Args: { p_character_id: string; p_record_id: string }
         Returns: string
       }
       ext__link_npc_identity: {
@@ -3026,6 +3119,21 @@ export type Database = {
       }
       ext_is_reserve_status: { Args: { p_status: string }; Returns: boolean }
       ext_is_temporary_status: { Args: { p_status: string }; Returns: boolean }
+      ext_links_for: {
+        Args: { p_character_id?: string; p_record_id?: string }
+        Returns: {
+          created_at: string
+          id: string
+          label: string
+          other_id: string
+          other_kind: string
+          other_name: string
+          other_picture_url: string
+          other_type: string
+          outgoing: boolean
+          visibility: string
+        }[]
+      }
       ext_list_revealed_characters: {
         Args: { p_channel_id: string }
         Returns: {

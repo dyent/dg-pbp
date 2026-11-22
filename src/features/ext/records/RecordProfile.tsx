@@ -9,6 +9,7 @@ import { RecordEditor, type RecordSave } from './RecordEditor'
 import { RecordGmControls, type RecordGmActions } from './RecordGmControls'
 import { KindBadge, RecordIcon } from './RecordIcon'
 import { RecordActivity } from './RecordActivity'
+import { LinksSection } from '../links/LinksSection'
 import { setRecordAliases } from './recordActivityApi'
 import { RECORD_COLUMNS, sharingLabel, type CampaignRecord, type RecordField } from './recordModel'
 import { useRecordProfile } from './useRecords'
@@ -171,6 +172,7 @@ export function RecordProfile({
               nameOf={nameOf}
             />
           ) : (
+          <div className="space-y-4">
           <div className={`grid gap-4 ${columns.length === 2 ? 'lg:grid-cols-2' : ''}`}>
             {columns.map(column => (
               <section key={column} aria-label={`${VISIBILITY_LABELS[column]} fields`}>
@@ -185,6 +187,15 @@ export function RecordProfile({
                 <FieldList fields={fields.filter(f => f.visibility === column)} showEmpty={isGM} />
               </section>
             ))}
+          </div>
+            <LinksSection
+              channelId={channelId}
+              subject={{ type: 'record', id: record.id }}
+              subjectName={record.name}
+              isGM={isGM}
+              isArchived={isArchived}
+              myUserId={myUserId}
+            />
           </div>
           )}
         </>

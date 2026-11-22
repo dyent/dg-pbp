@@ -2,7 +2,7 @@
 
 *Agreed with the owner on 2026-11-22. Decisions: DECISIONS.md #38–#41. Builds on characters
 (`03-step4-characters-design.md`), campaign files (#29), Activity and notes (#35) and NPC tags
-(#36, #37). Progress: **2b-1 done**, **2b-2 built** (`12-case-file.md`).*
+(#36, #37). Progress: **2b-1 and 2b-2 done**, **2b-3 built** (`12-case-file.md`).*
 
 ## What it is for
 
@@ -129,7 +129,8 @@ see the record, and a player who can't.
    record tags in posts (including GM alias tags). A record a player can't see, and every record
    alias, is plain text for players. The record history moved into the Activity tab, as for
    characters.
-3. **2b-3 Links:** links between any records and characters, the *Links* section on both.
+3. **2b-3 Links (built):** links between any records and characters, the *Links* section on
+   both (DECISIONS.md #42). Links are not written to the history yet.
 4. **2b-4 Clue extras:** status, found by / where / when, the GM checklist, the clue filters.
 
 ## Not in Phase 2b

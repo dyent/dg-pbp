@@ -125,6 +125,18 @@ Tests: `supabase/tests/*_ext_campaign_records.sql`. How to use: `12-case-file.md
 | Read notes | All | Their own, and *Everyone* notes | *Everyone* notes, if shown to everyone | No |
 | Add notes; edit own; delete own | Yes (GM only / Everyone; may delete any) | Yes (Me and the GM / Everyone) | If shown to everyone | No |
 
+## Links between records and characters
+
+Tests: `supabase/tests/*_ext_links.sql`. How to use: `12-case-file.md` (*Links*).
+
+| What | GM | Player who can see both ends | Player who can't see one end | Outsider |
+|---|---|---|---|---|
+| See a **GM only** link (the default) | Yes | No | No | No |
+| See a **Shown** link (and the other end's name) | Yes | Yes | No | No |
+| Add, relabel, show / hide, remove links | Yes (not in archived campaigns) | No | No | No |
+
+Players never read the links table itself; `ext_links_for` gives them only what the rules allow.
+
 ## In-game calendar
 
 Tests: `supabase/tests/*_ext_in_game_calendar.sql`. How to use: `08-in-game-calendar.md`.

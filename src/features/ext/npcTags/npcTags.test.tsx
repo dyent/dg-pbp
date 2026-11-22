@@ -19,6 +19,13 @@ vi.mock('../../../hooks/useImageUpload', () => ({
 vi.mock('../../../contexts/ToastContext', () => ({
   useToast: () => ({ addToast: vi.fn() }),
 }))
+vi.mock('../links/linkApi', () => ({
+  listLinks: vi.fn(async () => []),
+  listLinkTargets: vi.fn(async () => []),
+  addLink: vi.fn(),
+  updateLink: vi.fn(),
+  deleteLink: vi.fn(),
+}))
 vi.mock('../../auth/useAuth', () => ({
   useAuth: () => ({ user: { id: 'gm-1' } }),
 }))

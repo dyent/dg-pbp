@@ -7,6 +7,13 @@ import type { CharacterField, CharacterSummary } from './characterModel'
 import type { CharacterActions } from './useCharacterActions'
 
 vi.mock('./useCharacterProfile', () => ({ useCharacterProfile: vi.fn() }))
+vi.mock('../links/linkApi', () => ({
+  listLinks: vi.fn(async () => []),
+  listLinkTargets: vi.fn(async () => []),
+  addLink: vi.fn(),
+  updateLink: vi.fn(),
+  deleteLink: vi.fn(),
+}))
 vi.mock('../../dg/sheet/CharacterSheet', () => ({
   CharacterSheet: ({ kind, canEdit, onEditingChange }: { kind: string; canEdit: boolean; onEditingChange: (e: boolean) => void }) => (
     <div data-testid="sheet">

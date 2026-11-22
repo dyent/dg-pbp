@@ -4,6 +4,7 @@ import { CharacterSheet } from '../../dg/sheet/CharacterSheet'
 import { HiddenBadge, Portrait, RoleBadge, StatusBadge } from './CharacterBadges'
 import { CharacterActivity } from '../activity/CharacterActivity'
 import { GmControls, type PlayerOption } from './GmControls'
+import { LinksSection } from '../links/LinksSection'
 import { OwnStatus } from './OwnStatus'
 import { ProfileEditor, type ProfileSave } from './ProfileEditor'
 import {
@@ -216,6 +217,7 @@ export function CharacterProfile({
               <div className="h-4 w-1/2 rounded bg-surface-200 dark:bg-surface-700" />
             </div>
           ) : tab === 'profile' ? (
+            <div className="space-y-4">
             <div className={`grid gap-4 ${columns.length === 3 ? 'lg:grid-cols-3' : columns.length === 2 ? 'lg:grid-cols-2' : ''}`}>
               {columns.map(column => (
                 <section key={column} aria-label={`${VISIBILITY_LABELS[column]} fields`}>
@@ -224,6 +226,15 @@ export function CharacterProfile({
                   <FieldColumn fields={fields.filter(f => f.visibility === column)} />
                 </section>
               ))}
+            </div>
+              <LinksSection
+                channelId={channelId}
+                subject={{ type: 'character', id: character.id }}
+                subjectName={character.name}
+                isGM={isGM}
+                isArchived={isArchived}
+                myUserId={myUserId}
+              />
             </div>
           ) : (
             <CharacterActivity
