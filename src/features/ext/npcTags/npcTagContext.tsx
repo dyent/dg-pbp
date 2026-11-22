@@ -64,8 +64,11 @@ export function NpcTagProvider({ channelId, isGM, myUserId, children }: NpcTagPr
     ])
       .then(([list, records, aliases]) => {
         if (!mounted) return
-        setOptions([...list, ...records])
-        setAliasTags(aliases)
+        const loaded = [...list, ...records]
+        // Keep the same empty array when nothing loaded: no needless re-render
+        // (and no late "not wrapped in act" warning in upstream's tests).
+        setOptions(prev => (prev.length === 0 && loaded.length === 0 ? prev : loaded))
+        setAliasTags(prev => (prev.length === 0 && aliases.length === 0 ? prev : aliases))
       })
       .catch(err => console.error('Failed to load NPC tags:', err))
     return () => {
