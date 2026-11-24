@@ -241,7 +241,7 @@ function DeleteSection({ record, actions }: { record: CampaignRecord; actions: R
   return (
     <div role="alert" className="space-y-2 rounded-md bg-red-50 p-3 text-sm text-red-800 dark:bg-red-900/30 dark:text-red-200">
       <p>
-        Delete <strong>{record.name}</strong> with all its fields and history? Players lose it from their Case file. This can’t be undone.
+        Delete <strong>{record.name}</strong> with all its fields and history? Players lose it from their Case files. This can’t be undone.
       </p>
       <div className="flex gap-2">
         <button

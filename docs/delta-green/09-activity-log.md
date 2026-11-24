@@ -30,6 +30,9 @@ Newest first, each entry with its real date and, where the in-game calendar has 
 
 - Type in the note box at the top, choose **Who can see it** and an **in-game date** (it starts on
   the current campaign date; clear it for no date), then **Add note**.
+- Type `@` in a note (or use the tag button beside the box) to tag an NPC or record, as in posts.
+  The note shows the tag as a chip that opens it; while you edit the note it reads `@Name` again.
+  Players can tag only what they can see, and GM aliases work as in posts (DECISIONS.md #44).
 - **Players** choose *Me and the GM* or *Everyone*. **The GM** chooses *GM only* or *Everyone*.
   "Everyone" means everyone who can see the character.
 - A player's note belongs to the player and is labelled with the character they were posting as,

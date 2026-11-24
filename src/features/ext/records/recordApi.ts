@@ -6,6 +6,7 @@ import { toError } from '../../../lib/errors'
 import type { FieldChanges, ItemType } from '../characters/characterModel'
 import {
   isRecordKind,
+  isClueStatus,
   isRecordVisibility,
   type CampaignRecord,
   type RecordEvent,
@@ -26,6 +27,7 @@ interface RecordRow {
   provenance: string
   visibility: string
   updated_at: string
+  clue_status?: string | null
 }
 
 /**
@@ -35,7 +37,7 @@ interface RecordRow {
 export async function listRecords(channelId: string, isGM: boolean): Promise<CampaignRecord[]> {
   const { data, error } = await supabase
     .from('ext_records')
-    .select('id, kind, name, picture_url, provenance, visibility, updated_at')
+    .select('id, kind, name, picture_url, provenance, visibility, updated_at, clue_status')
     .eq('channel_id', channelId)
     .order('name')
   if (error) fail(error)
@@ -63,6 +65,7 @@ export async function listRecords(channelId: string, isGM: boolean): Promise<Cam
     updatedAt: r.updated_at,
     tagIds: tags.get(r.id) ?? [],
     sharedWith: shares.get(r.id) ?? [],
+    clueStatus: isClueStatus(r.clue_status) ? r.clue_status : null,
   }))
 }
 

@@ -13,6 +13,7 @@ vi.mock('../links/linkApi', () => ({
   addLink: vi.fn(),
   updateLink: vi.fn(),
   deleteLink: vi.fn(),
+  reverseLink: vi.fn(),
 }))
 vi.mock('../../dg/sheet/CharacterSheet', () => ({
   CharacterSheet: ({ kind, canEdit, onEditingChange }: { kind: string; canEdit: boolean; onEditingChange: (e: boolean) => void }) => (

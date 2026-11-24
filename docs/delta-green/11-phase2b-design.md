@@ -2,7 +2,7 @@
 
 *Agreed with the owner on 2026-11-22. Decisions: DECISIONS.md #38–#41. Builds on characters
 (`03-step4-characters-design.md`), campaign files (#29), Activity and notes (#35) and NPC tags
-(#36, #37). Progress: **2b-1 and 2b-2 done**, **2b-3 built** (`12-case-file.md`).*
+(#36, #37). Progress: **2b-1 to 2b-3 done**, **2b-4 built** (`12-case-file.md`).*
 
 ## What it is for
 
@@ -90,7 +90,7 @@ Records can be tagged in posts like NPCs: `@Morgue`, `@Sheriff's Office`, `@Bloo
 
 ## The Case file panel
 
-A new **Case file** entry in the sidebar's *Table* section, beside *Files*.
+A new **Case file** entry (shown as **Case files** since #44) in the sidebar's *Table* section, beside *Files*.
 
 - **Players:** records shown to them, grouped by kind (Operations, Locations, Organisations,
   Clues), with search, a filter by kind, and for clues a filter by status (step 4). Opening one shows the
@@ -130,8 +130,9 @@ see the record, and a player who can't.
    alias, is plain text for players. The record history moved into the Activity tab, as for
    characters.
 3. **2b-3 Links (built):** links between any records and characters, the *Links* section on
-   both (DECISIONS.md #42). Links are not written to the history yet.
-4. **2b-4 Clue extras:** status, found by / where / when, the GM checklist, the clue filters.
+   both (DECISIONS.md #42). After trying them, link changes go into the history of both ends and links can be reversed (#44).
+4. **2b-4 Clue extras (built):** status, found by / where / when, the GM checklist, the clue
+   status filter (DECISIONS.md #43).
 
 ## Not in Phase 2b
 

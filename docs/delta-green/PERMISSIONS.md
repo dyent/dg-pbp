@@ -34,7 +34,8 @@ the campaign, or blocked).
 | **GM only** | Yes | No | No | No | No |
 
 NPCs have no Owner level: when a PC becomes an NPC, its Owner fields become GM-only and the former
-owner loses access to them.
+owner loses access to them. A PC with no owner (not yet given to a player) counts as hidden until
+revealed (fixed 2026-11-23, `*_ext_fix_unowned_pc_visibility.sql`).
 
 ## Changing things
 
@@ -124,16 +125,22 @@ Tests: `supabase/tests/*_ext_campaign_records.sql`. How to use: `12-case-file.md
 | Activity: posts that tag or mention it | All | Posts they can read (tags and name only) | Same, if shown to everyone | No |
 | Read notes | All | Their own, and *Everyone* notes | *Everyone* notes, if shown to everyone | No |
 | Add notes; edit own; delete own | Yes (GM only / Everyone; may delete any) | Yes (Me and the GM / Everyone) | If shown to everyone | No |
+| Clue status | Sees and changes | Sees | Sees, if shown to everyone | No |
+| Clue *found by / at / when* | Sees and changes | Sees (a PC or location name only if they can see it) | Same, if shown to everyone | No |
+| Clue GM checklist (`ext_clue_points`) | Yes | No | No | No |
+
+Clue tests: `supabase/tests/*_ext_clue_extras.sql`.
 
 ## Links between records and characters
 
-Tests: `supabase/tests/*_ext_links.sql`. How to use: `12-case-file.md` (*Links*).
+Tests: `supabase/tests/*_ext_links.sql`, `*_ext_link_history.sql`. How to use: `12-case-file.md` (*Links*).
 
 | What | GM | Player who can see both ends | Player who can't see one end | Outsider |
 |---|---|---|---|---|
 | See a **GM only** link (the default) | Yes | No | No | No |
 | See a **Shown** link (and the other end's name) | Yes | Yes | No | No |
-| Add, relabel, show / hide, remove links | Yes (not in archived campaigns) | No | No | No |
+| Add, relabel, show / hide, reverse, remove links | Yes (not in archived campaigns) | No | No | No |
+| Link changes in the history of both ends | Yes | No | No | No |
 
 Players never read the links table itself; `ext_links_for` gives them only what the rules allow.
 

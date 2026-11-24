@@ -2,6 +2,8 @@
 // Pure data model for campaign records and the Case file (Phase 2b): kinds,
 // labels, list grouping and history text. No Supabase access here.
 import type { FieldLike, Visibility } from '../characters/characterModel'
+import { formatDay } from '../calendar/calendarModel'
+import { describeLinkEvent, isLinkEventType } from '../links/linkHistory'
 
 export const RECORD_KINDS = ['operation', 'location', 'organisation', 'clue'] as const
 export type RecordKind = (typeof RECORD_KINDS)[number]
@@ -31,6 +33,19 @@ export function isRecordKind(value: unknown): value is RecordKind {
   return typeof value === 'string' && (RECORD_KINDS as readonly string[]).includes(value)
 }
 
+export const CLUE_STATUSES = ['unexamined', 'investigated', 'resolved'] as const
+export type ClueStatus = (typeof CLUE_STATUSES)[number]
+
+export const CLUE_STATUS_LABELS: Record<ClueStatus, string> = {
+  unexamined: 'Unexamined',
+  investigated: 'Investigated',
+  resolved: 'Resolved',
+}
+
+export function isClueStatus(value: unknown): value is ClueStatus {
+  return typeof value === 'string' && (CLUE_STATUSES as readonly string[]).includes(value)
+}
+
 export type RecordVisibility = 'gm' | 'players' | 'selected'
 
 export const RECORD_VISIBILITY_LABELS: Record<RecordVisibility, string> = {
@@ -41,7 +56,7 @@ export const RECORD_VISIBILITY_LABELS: Record<RecordVisibility, string> = {
 
 export const RECORD_VISIBILITY_HINTS: Record<RecordVisibility, string> = {
   gm: 'Your prep and notes. Players can’t see it.',
-  players: 'Every player sees it in their Case file (fields marked GM only stay hidden).',
+  players: 'Every player sees it in their Case files (fields marked GM only stay hidden).',
   selected: 'Only the players you tick see it (fields marked GM only stay hidden).',
 }
 
@@ -65,6 +80,8 @@ export interface CampaignRecord {
   // GM-only extras (empty for players).
   tagIds: string[]
   sharedWith: string[]
+  /** Clues only (null for other kinds). */
+  clueStatus?: ClueStatus | null
 }
 
 export interface RecordField extends FieldLike {
@@ -88,6 +105,8 @@ export interface RecordFilter {
   search: string
   kind: RecordKind | 'all'
   tagId: string | null
+  /** A clue status shows only clues with it. */
+  status?: ClueStatus | 'all'
 }
 
 /** Records grouped by kind (operations first), A–Z, filtered by name, kind and tag. */
@@ -97,6 +116,7 @@ export function groupRecords(records: CampaignRecord[], filter: RecordFilter): R
     r =>
       (filter.kind === 'all' || r.kind === filter.kind) &&
       (!filter.tagId || r.tagIds.includes(filter.tagId)) &&
+      (!filter.status || filter.status === 'all' || (r.kind === 'clue' && r.clueStatus === filter.status)) &&
       (!needle || r.name.toLowerCase().includes(needle)),
   )
   return RECORD_KINDS.map(kind => ({
@@ -168,7 +188,15 @@ export function describeRecordEvent(event: RecordEvent, nameOf: (userId: string)
       if (d.old_label && d.old_label !== d.label) return `Renamed field "${str(d.old_label)}" to "${str(d.label)}".`
       return `Edited "${str(d.label)}".`
     }
+    case 'status_changed': {
+      const label = (v: unknown) => (isClueStatus(v) ? CLUE_STATUS_LABELS[v] : str(v))
+      return `Status: ${label(d.from)} → ${label(d.to)}.`
+    }
+    case 'found_changed': {
+      const parts = [str(d.by) && `by ${str(d.by)}`, str(d.at) && `at ${str(d.at)}`, typeof d.day === 'number' && `on ${formatDay(d.day)}`].filter(Boolean)
+      return parts.length ? `Found ${parts.join(' ')}.` : 'Found details cleared.'
+    }
     default:
-      return event.eventType
+      return isLinkEventType(event.eventType) ? describeLinkEvent(event.eventType, d) : event.eventType
   }
 }

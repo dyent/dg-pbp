@@ -52,7 +52,7 @@ export function CaseFileEntry({ channelId, isGM, isArchived, gmId, myUserId, mem
   return (
     <>
       <button type="button" onClick={() => setShown(s => ({ id: null, n: (s?.n ?? 0) + 1 }))} className={className}>
-        Case file
+        Case files
       </button>
       {/* Portal: the sidebar is CSS-transformed, which would trap a fixed overlay inside it. */}
       {shown &&

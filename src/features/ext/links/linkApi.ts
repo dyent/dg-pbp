@@ -111,3 +111,9 @@ export async function deleteLink(linkId: string): Promise<void> {
   const { error } = await supabase.from('ext_links').delete().eq('id', linkId)
   if (error) fail(error)
 }
+
+/** Swaps the two ends of a link, keeping its label and visibility. */
+export async function reverseLink(linkId: string): Promise<void> {
+  const { error } = await supabase.rpc('ext_reverse_link', { p_link_id: linkId })
+  if (error) fail(error)
+}

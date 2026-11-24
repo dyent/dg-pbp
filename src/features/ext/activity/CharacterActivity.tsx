@@ -1,3 +1,4 @@
+// cspell:words unlinkify
 import { useMemo, useState, type ReactNode } from 'react'
 import { useToast } from '../../../contexts/ToastContext'
 import { useAuthorLookup } from '../authorship/authorshipContext'
@@ -21,7 +22,10 @@ import {
   type NoteVisibility,
 } from './activityModel'
 import { useOpenPost } from './openPostContext'
-import { PostBody, isLongPost } from './PostBody'
+import { NoteBody, PostBody, isLongPost } from './PostBody'
+import { useNpcTags } from '../npcTags/npcTagContext'
+import { unlinkifyNpcTags } from '../npcTags/npcTagModel'
+import { TagTextarea } from '../npcTags/TagTextarea'
 import type { ActivityData } from './useActivity'
 import { useCharacterActivity } from './useCharacterActivity'
 
@@ -38,6 +42,8 @@ interface CharacterActivityProps {
 
 const dateFormat = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' })
 const ENTRY = 'border-l-2 pl-3'
+/** Notes are stored with their tags as links; the database allows 2,000 characters. */
+const NOTE_MAX = 2000
 
 /** How notes are written for one subject (a character or a record). */
 export interface NoteActions {
@@ -308,7 +314,7 @@ function NoteEntry({
         Note by {by}
         <span className={`${BADGE} ml-1 bg-surface-100 dark:bg-surface-700`}>{NOTE_VISIBILITY_LABELS[note.visibility]}</span>
       </p>
-      <p className="whitespace-pre-wrap break-words text-sm text-surface-900 dark:text-surface-100">{note.body}</p>
+      <NoteBody content={note.body} />
       <p className="mt-0.5 flex flex-wrap items-center gap-2 text-xs text-surface-500 dark:text-surface-400">
         <time dateTime={note.createdAt}>{dateFormat.format(new Date(note.createdAt))}</time>
         {note.inGameDay !== null && <span>· In game: {formatDay(note.inGameDay)}</span>}
@@ -356,7 +362,8 @@ function NoteForm({
 }) {
   const { addToast } = useToast()
   const choices = noteChoices(isGM)
-  const [body, setBody] = useState(initial?.body ?? '')
+  const tags = useNpcTags()
+  const [body, setBody] = useState(initial ? unlinkifyNpcTags(initial.body) : '')
   const [visibility, setVisibility] = useState<NoteVisibility>(initial && choices.includes(initial.visibility) ? initial.visibility : choices[0])
   const [iso, setIso] = useState(defaultDay !== null ? dayToIso(defaultDay) : '')
   const [saving, setSaving] = useState(false)
@@ -368,7 +375,12 @@ function NoteForm({
     if (!body.trim() || badDate) return
     setSaving(true)
     try {
-      await onSave(body.trim(), visibility, day)
+      const text = tags ? await tags.linkify(body.trim()) : body.trim()
+      if (text.length > NOTE_MAX) {
+        addToast('This note is too long once its tags are added. Shorten it a little.', 'error')
+        return
+      }
+      await onSave(text, visibility, day)
       if (!initial) {
         setBody('')
         addToast('Note added.', 'success')
@@ -382,10 +394,10 @@ function NoteForm({
 
   return (
     <form onSubmit={submit} className="space-y-2 rounded-md border border-surface-200 p-2 dark:border-surface-700" aria-label={initial ? 'Edit note' : 'Add a note'}>
-      <textarea
+      <TagTextarea
         value={body}
-        onChange={e => setBody(e.target.value)}
-        maxLength={2000}
+        onChange={setBody}
+        maxLength={NOTE_MAX}
         rows={2}
         placeholder={isGM ? `Add a note about this ${subjectNoun}` : 'Note what your character learned'}
         aria-label={initial ? 'Note text' : 'New note'}

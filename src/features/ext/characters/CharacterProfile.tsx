@@ -234,6 +234,7 @@ export function CharacterProfile({
                 isGM={isGM}
                 isArchived={isArchived}
                 myUserId={myUserId}
+              onChanged={reload}
               />
             </div>
           ) : (

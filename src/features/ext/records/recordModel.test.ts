@@ -1,8 +1,9 @@
-// cspell:words organisation organisations
+// cspell:words organisation organisations recognises
 import { describe, expect, it } from 'vitest'
 import {
   describeRecordEvent,
   groupRecords,
+  isClueStatus,
   isRecordKind,
   newRecordProblem,
   sharingLabel,
@@ -84,5 +85,35 @@ describe('describeRecordEvent', () => {
     expect(describeRecordEvent(e('field_edited', { action: 'edited', label: 'Y', old_label: 'X' }), nameOf)).toBe('Renamed field "X" to "Y".')
     expect(describeRecordEvent(e('field_edited', { action: 'edited', label: 'Y', old_label: 'Y' }), nameOf)).toBe('Edited "Y".')
     expect(describeRecordEvent(e('mystery'), nameOf)).toBe('mystery')
+  })
+})
+
+describe('clue extras', () => {
+  const clues = [
+    rec('c1', 'clue', 'Glove', { clueStatus: 'resolved' }),
+    rec('c2', 'clue', 'Ledger', { clueStatus: 'unexamined' }),
+    rec('l1', 'location', 'Morgue'),
+  ]
+
+  it('filters by clue status, showing only clues with it', () => {
+    const ids = (status: 'all' | 'resolved' | 'unexamined' | 'investigated') =>
+      groupRecords(clues, { search: '', kind: 'all', tagId: null, status }).flatMap(g => g.records.map(r => r.id))
+    expect(ids('all')).toEqual(['l1', 'c1', 'c2'])
+    expect(ids('resolved')).toEqual(['c1'])
+    expect(ids('investigated')).toEqual([])
+  })
+
+  it('recognises statuses', () => {
+    expect(isClueStatus('investigated')).toBe(true)
+    expect(isClueStatus('lost')).toBe(false)
+  })
+
+  it('describes status and found changes', () => {
+    const ev = (eventType: string, details: Record<string, unknown>): RecordEvent => ({ id: 'e', eventType, details, actorId: null, createdAt: 't' })
+    expect(describeRecordEvent(ev('status_changed', { from: 'unexamined', to: 'resolved' }), nameOf)).toBe('Status: Unexamined → Resolved.')
+    expect(describeRecordEvent(ev('status_changed', { from: null, to: 'odd' }), nameOf)).toBe('Status:  → odd.')
+    expect(describeRecordEvent(ev('found_changed', { by: 'Reyes', at: 'Morgue', day: 0 }), nameOf)).toBe('Found by Reyes at Morgue on Thu 1 Jan 1970.')
+    expect(describeRecordEvent(ev('found_changed', { by: null, at: 'Morgue', day: null }), nameOf)).toBe('Found at Morgue.')
+    expect(describeRecordEvent(ev('found_changed', {}), nameOf)).toBe('Found details cleared.')
   })
 })

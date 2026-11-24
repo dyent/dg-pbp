@@ -10,6 +10,7 @@ import { RecordGmControls, type RecordGmActions } from './RecordGmControls'
 import { KindBadge, RecordIcon } from './RecordIcon'
 import { RecordActivity } from './RecordActivity'
 import { LinksSection } from '../links/LinksSection'
+import { ClueSection, ClueStatusBadge } from './ClueSection'
 import { setRecordAliases } from './recordActivityApi'
 import { RECORD_COLUMNS, sharingLabel, type CampaignRecord, type RecordField } from './recordModel'
 import { useRecordProfile } from './useRecords'
@@ -115,6 +116,7 @@ export function RecordProfile({
           <h3 className="break-words text-lg font-bold text-surface-900 dark:text-surface-100">{record.name}</h3>
           <div className="mt-1 flex flex-wrap items-center gap-1.5">
             <KindBadge kind={record.kind} />
+            {record.clueStatus && <ClueStatusBadge status={record.clueStatus} />}
             {isGM && <SharingBadge record={record} nameOf={nameOf} />}
           </div>
         </div>
@@ -173,6 +175,18 @@ export function RecordProfile({
             />
           ) : (
           <div className="space-y-4">
+          {record.kind === 'clue' && (
+            <ClueSection
+              channelId={channelId}
+              record={record}
+              isGM={isGM}
+              isArchived={isArchived}
+              onChanged={() => {
+                reload()
+                onChanged()
+              }}
+            />
+          )}
           <div className={`grid gap-4 ${columns.length === 2 ? 'lg:grid-cols-2' : ''}`}>
             {columns.map(column => (
               <section key={column} aria-label={`${VISIBILITY_LABELS[column]} fields`}>
@@ -195,6 +209,7 @@ export function RecordProfile({
               isGM={isGM}
               isArchived={isArchived}
               myUserId={myUserId}
+            onChanged={reload}
             />
           </div>
           )}

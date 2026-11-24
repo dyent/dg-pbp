@@ -29,6 +29,8 @@ interface LinksSectionProps {
   isGM: boolean
   isArchived: boolean
   myUserId: string | undefined
+  /** Called after any change, e.g. so the profile's history shows it. */
+  onChanged?: () => void
 }
 
 function useLinks(subject: LinkEnd) {
@@ -68,7 +70,7 @@ function useLinks(subject: LinkEnd) {
  * The Links section of a character or record profile (Phase 2b step 3): links
  * shown on both ends; the GM adds, labels, shows / hides and removes them.
  */
-export function LinksSection({ channelId, subject, subjectName, isGM, isArchived, myUserId }: LinksSectionProps) {
+export function LinksSection({ channelId, subject, subjectName, isGM, isArchived, myUserId, onChanged }: LinksSectionProps) {
   const { links, loading, error, reload } = useLinks(subject)
   const { addToast } = useToast()
   const [adding, setAdding] = useState(false)
@@ -79,6 +81,7 @@ export function LinksSection({ channelId, subject, subjectName, isGM, isArchived
       await action()
       addToast(success, 'success')
       reload()
+      onChanged?.()
       return true
     } catch (err) {
       addToast(err instanceof Error ? err.message : 'Something went wrong.', 'error')
@@ -146,6 +149,7 @@ export function LinksSection({ channelId, subject, subjectName, isGM, isArchived
               onVisibility={visibility =>
                 run(() => api.updateLink(link.id, { visibility }), visibility === 'players' ? 'Link shown to players.' : 'Link hidden from players.')
               }
+              onReverse={() => run(() => api.reverseLink(link.id), 'Link reversed.')}
               onRemove={() => run(() => api.deleteLink(link.id), 'Link removed.')}
             />
           ))}
@@ -189,10 +193,11 @@ interface LinkItemProps {
   canManage: boolean
   onRelabel: (label: string) => Promise<boolean>
   onVisibility: (visibility: LinkVisibility) => Promise<boolean>
+  onReverse: () => Promise<boolean>
   onRemove: () => Promise<boolean>
 }
 
-function LinkItem({ link, subjectName, isGM, canManage, onRelabel, onVisibility, onRemove }: LinkItemProps) {
+function LinkItem({ link, subjectName, isGM, canManage, onRelabel, onVisibility, onReverse, onRemove }: LinkItemProps) {
   const [editing, setEditing] = useState(false)
   const [label, setLabel] = useState(link.label)
   const [confirming, setConfirming] = useState(false)
@@ -288,6 +293,16 @@ function LinkItem({ link, subjectName, isGM, canManage, onRelabel, onVisibility,
               <button type="button" className={BTN_SECONDARY} onClick={() => setEditing(true)}>
                 Edit
               </button>
+              <button
+                type="button"
+                className={BTN_SECONDARY}
+                disabled={busy}
+                onClick={() => void act(onReverse)}
+                title="Reverse (swap the two ends)"
+                aria-label={`Reverse link: ${sentence.from} ${sentence.label} ${sentence.to}`}
+              >
+                <span aria-hidden="true">⇄</span>
+              </button>
               <button type="button" className={BTN_SECONDARY} onClick={() => setConfirming(true)} aria-label={`Remove link: ${sentence.from} ${sentence.label} ${sentence.to}`}>
                 Remove
               </button>
@@ -364,6 +379,7 @@ function AddLinkForm({ channelId, subject, subjectName, onCancel, onAdd }: AddLi
 
   const target = targets?.find(t => targetKey(t) === targetValue)
   const problem = !target ? 'Choose what to link to.' : validateLinkLabel(label)
+  const otherName = target?.name ?? '…'
 
   const submit = async () => {
     setTouched(true)
@@ -395,14 +411,20 @@ function AddLinkForm({ channelId, subject, subjectName, onCancel, onAdd }: AddLi
         </p>
       ) : (
         <div className="grid gap-2 sm:grid-cols-2">
-          <div>
-            <label htmlFor={`${ids}-dir`} className={LABEL}>
-              Direction
-            </label>
-            <select id={`${ids}-dir`} className={INPUT} value={outgoing ? 'out' : 'in'} onChange={e => setOutgoing(e.target.value === 'out')}>
-              <option value="out">{subjectName} → …</option>
-              <option value="in">… → {subjectName}</option>
-            </select>
+          <div className="flex flex-wrap items-center gap-2 rounded bg-surface-50 p-2 text-sm text-surface-700 sm:col-span-2 dark:bg-surface-800 dark:text-surface-300">
+            <span aria-live="polite" data-testid="link-preview">
+              <span className="font-medium">{outgoing ? subjectName : otherName}</span> — <span className="italic">{label.trim() || 'label'}</span> →{' '}
+              <span className="font-medium">{outgoing ? otherName : subjectName}</span>
+            </span>
+            <button
+              type="button"
+              className={BTN_SECONDARY}
+              onClick={() => setOutgoing(o => !o)}
+              title="Swap direction"
+              aria-label="Swap direction"
+            >
+              <span aria-hidden="true">⇄</span>
+            </button>
           </div>
           <div>
             <label htmlFor={`${ids}-target`} className={LABEL}>
@@ -453,11 +475,6 @@ function AddLinkForm({ channelId, subject, subjectName, onCancel, onAdd }: AddLi
             </select>
           </div>
         </div>
-      )}
-      {target && !problem && (
-        <p className="text-xs text-surface-500 dark:text-surface-400">
-          {outgoing ? subjectName : target.name} — {label.trim()} → {outgoing ? target.name : subjectName}
-        </p>
       )}
       {touched && problem && <p className="text-xs text-red-600 dark:text-red-400">{problem}</p>}
       <div className="flex gap-2">

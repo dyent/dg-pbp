@@ -1,4 +1,4 @@
-// cspell:words npcalias recalias
+// cspell:words npcalias recalias unlinkify
 // Inline NPC tags (Phase 2a step 5c, DECISIONS.md #36 and #37).
 //
 // A tag is stored in the post as a Markdown link:
@@ -145,4 +145,23 @@ export function matchTagTerms(npcs: readonly NpcTagOption[], query: string, excl
 export function tagInsertion(textBeforeCursor: string, name: string): string {
   const space = textBeforeCursor && !/\s$/.test(textBeforeCursor) ? ' ' : ''
   return `${space}@${name} `
+}
+
+/**
+ * Turns stored tags back into `@Name` for editing (notes): `[Dr Hale](npc:…)` → `@Dr Hale`.
+ * Saving runs `linkifyNpcTags` again, so a tag for something renamed since picks up the new name.
+ */
+export function unlinkifyNpcTags(text: string): string {
+  return text.replace(/\[([^\]]+)\]\(((?:npcalias|npc|recalias|rec):[0-9a-f-]{36})\)/gi, (whole, name: string, href: string) =>
+    parseNpcTag(href) ? `@${name}` : whole,
+  )
+}
+
+/** What the writer has typed after an `@` just before the cursor (`@Dr H` → `Dr H`), or null. */
+export function tagQueryBefore(textBeforeCursor: string): string | null {
+  const match = /(?:^|\s)@([^\s@][^@\n]{0,40})?$/.exec(textBeforeCursor)
+  if (!match) return null
+  const query = match[1] ?? ''
+  // Two spaces in a row, or a trailing sentence mark, means the writer has moved on.
+  return /\s\s|[.,;:!?]$/.test(query) ? null : query
 }

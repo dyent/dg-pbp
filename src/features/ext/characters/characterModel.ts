@@ -1,6 +1,8 @@
 // Pure data model for the characters panel: labels, roles, editing drafts and
 // the plain-language text for warnings and history. No Supabase access here.
 
+import { describeLinkEvent, isLinkEventType } from '../links/linkHistory'
+
 export type CharacterKind = 'pc' | 'npc'
 export type Visibility = 'players' | 'owner' | 'gm'
 export type ItemType = 'field' | 'heading'
@@ -517,7 +519,7 @@ export function describeEvent(event: CharacterEvent, nameOf: (userId: string) =>
     case 'converted_to_npc':
       return 'Role changed (earlier version).'
     default:
-      return event.eventType
+      return isLinkEventType(event.eventType) ? describeLinkEvent(event.eventType, d) : event.eventType
   }
 }
 

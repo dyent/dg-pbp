@@ -98,7 +98,7 @@ VALUES
 INSERT INTO messages (id, channel_id, sender_id, type, content, created_at)
 SELECT '00000000-0000-0000-0000-000000ab4002', '00000000-0000-0000-0000-000000ab2001', '00000000-0000-0000-0000-000000ab1001', 'regular',
   'Graffiti: [The Hollow](recalias:' || id || ') was here.', now() - interval '2 minutes'
-FROM ext_record_alias_tags;
+FROM ext_record_alias_tags WHERE record_id = '00000000-0000-0000-0000-000000ab3002';
 INSERT INTO messages (id, channel_id, sender_id, type, content, whisper_to, created_at)
 VALUES ('00000000-0000-0000-0000-000000ab4005', '00000000-0000-0000-0000-000000ab2001', '00000000-0000-0000-0000-000000ab1001', 'regular',
   'Psst, the Morgue key is under the mat.', '00000000-0000-0000-0000-000000ab1003', now());

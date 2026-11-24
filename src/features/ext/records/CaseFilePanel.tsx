@@ -9,15 +9,19 @@ import { createRecord } from './recordApi'
 import { OpenRecordContext } from './recordOpener'
 import { RecordIcon } from './RecordIcon'
 import { RecordProfile, SharingBadge } from './RecordProfile'
+import { ClueStatusBadge } from './ClueSection'
 import {
   KIND_HINTS,
   KIND_LABELS,
+  CLUE_STATUSES,
+  CLUE_STATUS_LABELS,
   KIND_PLURALS,
   RECORD_KINDS,
   RECORD_LIMITS,
   groupRecords,
   newRecordProblem,
   type RecordFilter,
+  type ClueStatus,
   type RecordKind,
 } from './recordModel'
 import { useRecords } from './useRecords'
@@ -41,7 +45,7 @@ export function CaseFilePanel({ channelId, isGM, isArchived, myUserId, players, 
   const dialogRef = useRef<HTMLDivElement>(null)
   const { records, tags, loading, error, reload } = useRecords(channelId, isGM)
   const [view, setView] = useState<View>(initialRecordId ? { mode: 'record', id: initialRecordId } : { mode: 'none' })
-  const [filter, setFilter] = useState<RecordFilter>({ search: '', kind: 'all', tagId: null })
+  const [filter, setFilter] = useState<RecordFilter>({ search: '', kind: 'all', tagId: null, status: 'all' })
   const [editing, setEditing] = useState(false)
   const busy = editing || view.mode === 'new'
   const canManage = isGM && !isArchived
@@ -80,7 +84,7 @@ export function CaseFilePanel({ channelId, isGM, isArchived, myUserId, players, 
               </button>
             )}
             <h2 id="ext-case-file-title" className="text-lg font-bold text-surface-900 dark:text-surface-100">
-              Case file
+              Case files
             </h2>
           </div>
           <button
@@ -119,7 +123,7 @@ export function CaseFilePanel({ channelId, isGM, isArchived, myUserId, players, 
                   </button>
                 )}
                 {records.length > 0 && (
-                  <Filters filter={filter} onChange={setFilter} tags={isGM ? tags : []} />
+                  <Filters filter={filter} onChange={setFilter} tags={isGM ? tags : []} hasClues={records.some(r => r.kind === 'clue')} />
                 )}
                 <div className="min-h-0 flex-1 space-y-4 overflow-y-auto">
                   {records.length === 0 ? (
@@ -151,6 +155,7 @@ export function CaseFilePanel({ channelId, isGM, isArchived, myUserId, players, 
                                 >
                                   <RecordIcon kind={r.kind} pictureUrl={r.pictureUrl} size="sm" />
                                   <span className="min-w-0 flex-1 truncate font-medium">{r.name}</span>
+                                  {r.clueStatus && <ClueStatusBadge status={r.clueStatus} />}
                                   {isGM && <SharingBadge record={r} nameOf={nameOf} />}
                                 </button>
                               </li>
@@ -208,7 +213,17 @@ export function CaseFilePanel({ channelId, isGM, isArchived, myUserId, players, 
   )
 }
 
-function Filters({ filter, onChange, tags }: { filter: RecordFilter; onChange: (f: RecordFilter) => void; tags: { id: string; name: string }[] }) {
+function Filters({
+  filter,
+  onChange,
+  tags,
+  hasClues,
+}: {
+  filter: RecordFilter
+  onChange: (f: RecordFilter) => void
+  tags: { id: string; name: string }[]
+  hasClues: boolean
+}) {
   return (
     <div className="space-y-2">
       <input
@@ -249,6 +264,21 @@ function Filters({ filter, onChange, tags }: { filter: RecordFilter; onChange: (
           </select>
         )}
       </div>
+      {hasClues && (
+        <select
+          className={INPUT}
+          aria-label="Show clue status"
+          value={filter.status ?? 'all'}
+          onChange={e => onChange({ ...filter, status: e.target.value as ClueStatus | 'all' })}
+        >
+          <option value="all">Any clue status</option>
+          {CLUE_STATUSES.map(s => (
+            <option key={s} value={s}>
+              {CLUE_STATUS_LABELS[s]} clues
+            </option>
+          ))}
+        </select>
+      )}
     </div>
   )
 }

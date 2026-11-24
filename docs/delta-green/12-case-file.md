@@ -1,11 +1,11 @@
 # The Case File: How to Use It
 
-*Phase 2b steps 1 and 2, built 2026-11-22. Design: `11-phase2b-design.md`. Decisions:
-DECISIONS.md #38, #39 and #41. Access: `PERMISSIONS.md`.*
+*Phase 2b, built 2026-11-22 to 2026-11-24. Design: `11-phase2b-design.md`. Decisions:
+DECISIONS.md #38 to #44. Access: `PERMISSIONS.md`.*
 
-The **Case file** holds the campaign's records: **operations**, **locations**, **organisations** and
+The **Case files** panel holds the campaign's records: **operations**, **locations**, **organisations** and
 **clues**. You use it for prep and continuity; players see the records you show them. Open it from
-**Case file** in the campaign sidebar, next to *Files*.
+**Case files** in the campaign sidebar, next to *Files*.
 
 ## Adding a record (GM)
 
@@ -73,9 +73,10 @@ Each record has an **Activity** tab next to **Profile**:
   get posts they could read anyway; whispers to others and private rooms are left out.
 - **Notes:** you and the players can add notes, as on characters. A player's note is for them and
   you, or for everyone who can see the record. Yours are GM only or for everyone. Each note can
-  carry an in-game date.
+  carry an in-game date. Type `@` (or use the tag button) to tag an NPC or record, as in posts:
+  the note shows it as a chip that opens it. Tags turn back into `@Name` while you edit a note.
 - **Changes** (you only): created, renamed, field edits, moves between Everyone and GM only,
-  sharing and aliases.
+  sharing, aliases, and links added, removed, changed or reversed (on both ends).
 
 ## Links (step 3)
 
@@ -84,21 +85,42 @@ Records and characters can be linked to each other with a short label, for examp
 Each link shows in a **Links** section at the bottom of the **Profile** tab of *both* ends (a
 record in the Case file, or a character in the Characters panel).
 
-- **Adding (GM):** press **Add link**, choose the direction (*this → …* or *… → this*), what to
-  link to (PCs, NPCs and records are listed in groups), a label and who can see it. Typing in the
-  label offers *part of*, *found at*, *works for*, *member of*, *located in* and *knows*, but any
+- **Adding (GM):** press **Add link**, choose what to link to (PCs, NPCs and records are listed in
+  groups), a label and who can see it. The form shows the link as a sentence; if it reads the
+  wrong way round, press the **⇄** button beside it, so it doesn't matter which end you add it from.
+  Typing in the label offers *part of*, *found at*, *works for*, *member of*, *located in* and *knows*, but any
   label up to 60 characters works.
 - **Who sees it:** a new link is **GM only**. Press **Show** to show it to players: a player then
   sees it only if they can also see **both** ends. A link to a hidden clue stays hidden until the
   clue is shown. **Hide** takes it back.
-- **Editing:** **Edit** changes the label; **Remove** (with a second click to confirm) deletes the
+- **Editing:** **Edit** changes the label; the **⇄** button swaps the two ends of an existing link
+  (*The Cult — pays → Dr Hale* becomes *Dr Hale — pays → The Cult*); **Remove** (with a second click to confirm) deletes the
   link. To point a link somewhere else, remove it and add a new one.
 - **Opening:** click the other end to open it. A record opens in the Case file, a character in the
   Characters panel.
 - Deleting a record or a character removes its links. Archived campaigns are read-only.
 
+## Clues (step 4)
+
+A clue's **Profile** tab starts with a **Clue** box:
+
+- **Status:** *Unexamined* (every new clue), *Investigated* or *Resolved*. You change it with the
+  drop-down; players see it as a badge on the clue and in their list. The list has a
+  **clue status** filter (for example *Investigated clues*) as soon as there are clues.
+- **Found:** **Edit found** records which PC found it, where (one of your locations) and the
+  in-game date, all optional. A new find starts on the campaign's current date. **Clear** removes
+  all three. Players see *Found by Agent Reyes at Hollow Creek morgue on Fri 24 Oct 1997*, but a
+  name only appears if they can see that PC or location; the names open the character or record.
+- **GM checklist** (only you): what the clue really points to, one line each, for example *The
+  glove belongs to Dr Hale*. Tick a line once the agents have worked it out; the box shows how
+  many are done (*1 of 2 worked out*). The × removes a line.
+
+Status and found changes appear in the clue's history (Activity → Changes). Players write their
+theories as **notes** on the clue.
+
 ## Coming next
 
-Clue status, *found by* and the GM checklist (step 4).
+Phase 2b is complete. Possible later additions: a timeline drawn from in-game dates, and notes that
+tag a record or NPC showing up in *that* one's Activity too.
 
 <!-- cspell:locale en-GB,en -->

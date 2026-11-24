@@ -54,3 +54,17 @@ export function PostBody({ content, collapsed }: { content: string; collapsed: b
 export function isLongPost(content: string): boolean {
   return content.length > 400 || content.split('\n').length > 6
 }
+
+/** A note in the Activity tab: same formatting and tag chips as posts, never collapsed. */
+export function NoteBody({ content }: { content: string }) {
+  return (
+    <div
+      className="prose prose-sm max-w-none break-words text-surface-900 dark:prose-invert dark:text-surface-100 prose-p:my-1"
+      data-testid="activity-note-body"
+    >
+      <Markdown breaks spoilers components={components} urlTransform={urlTransform}>
+        {content}
+      </Markdown>
+    </div>
+  )
+}

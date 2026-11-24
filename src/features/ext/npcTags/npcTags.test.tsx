@@ -25,6 +25,7 @@ vi.mock('../links/linkApi', () => ({
   addLink: vi.fn(),
   updateLink: vi.fn(),
   deleteLink: vi.fn(),
+  reverseLink: vi.fn(),
 }))
 vi.mock('../../auth/useAuth', () => ({
   useAuth: () => ({ user: { id: 'gm-1' } }),

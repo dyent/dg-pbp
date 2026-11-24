@@ -20,12 +20,24 @@ vi.mock('./recordApi', () => ({
   setRecordTags: vi.fn(),
 }))
 vi.mock('../characters/characterApi', () => ({ listTags: vi.fn(), createTag: vi.fn() }))
+vi.mock('./clueApi', () => ({
+  CLUE_POINT_MAX: 300,
+  getClueDetails: vi.fn(async () => ({ status: 'unexamined', foundBy: null, foundAt: null, foundDay: null })),
+  setClueStatus: vi.fn(),
+  setClueFound: vi.fn(),
+  listFoundOptions: vi.fn(async () => ({ pcs: [], locations: [] })),
+  listCluePoints: vi.fn(async () => []),
+  addCluePoint: vi.fn(),
+  updateCluePoint: vi.fn(),
+  deleteCluePoint: vi.fn(),
+}))
 vi.mock('../links/linkApi', () => ({
   listLinks: vi.fn(async () => []),
   listLinkTargets: vi.fn(async () => []),
   addLink: vi.fn(),
   updateLink: vi.fn(),
   deleteLink: vi.fn(),
+  reverseLink: vi.fn(),
 }))
 vi.mock('../activity/activityApi', () => ({ POSTS_PAGE: 50, listRoomNames: vi.fn(async () => new Map()) }))
 vi.mock('./recordActivityApi', () => ({
@@ -93,6 +105,28 @@ describe('Case file', () => {
     expect(screen.getByRole('button', { name: 'Hollow Creek' })).toHaveAttribute('aria-pressed', 'true')
     fireEvent.click(screen.getByRole('tab', { name: 'Activity' }))
     expect(await screen.findByText('Shared: GM only → Chosen players; added Sam.')).toBeInTheDocument()
+  })
+
+  it('shows clue statuses and filters by them', async () => {
+    vi.mocked(api.listRecords).mockResolvedValue([morgue, { ...glove, clueStatus: 'investigated' }])
+    renderPanel({ isGM: false })
+    const clues = await screen.findByRole('region', { name: 'Clues' })
+    expect(within(clues).getByText('Investigated')).toBeInTheDocument()
+    fireEvent.change(screen.getByLabelText('Show clue status'), { target: { value: 'resolved' } })
+    expect(screen.getByText('No records match.')).toBeInTheDocument()
+    fireEvent.change(screen.getByLabelText('Show clue status'), { target: { value: 'investigated' } })
+    expect(screen.getByText('Bloody glove')).toBeInTheDocument()
+    expect(screen.queryByText('Morgue')).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByText('Bloody glove'))
+    expect(await screen.findByRole('region', { name: 'Clue' })).toBeInTheDocument()
+  })
+
+  it('has no status filter without clues', async () => {
+    vi.mocked(api.listRecords).mockResolvedValue([morgue])
+    renderPanel()
+    await screen.findByText('Morgue')
+    expect(screen.queryByLabelText('Show clue status')).not.toBeInTheDocument()
   })
 
   it('filters by search, kind and tag', async () => {
@@ -296,7 +330,7 @@ describe('Case file', () => {
         />
       </ToastProvider>,
     )
-    fireEvent.click(screen.getByRole('button', { name: 'Case file' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Case files' }))
     fireEvent.click(await screen.findByText('Bloody glove'))
     fireEvent.click(await screen.findByText('Chosen players'))
     expect(screen.getByLabelText('Sam')).toBeInTheDocument()

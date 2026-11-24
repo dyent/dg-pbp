@@ -1382,6 +1382,54 @@ export type Database = {
           },
         ]
       }
+      ext_clue_points: {
+        Row: {
+          body: string
+          channel_id: string
+          created_at: string
+          id: string
+          record_id: string
+          sort_order: number
+          updated_at: string
+          worked_out: boolean
+        }
+        Insert: {
+          body: string
+          channel_id: string
+          created_at?: string
+          id?: string
+          record_id: string
+          sort_order?: number
+          updated_at?: string
+          worked_out?: boolean
+        }
+        Update: {
+          body?: string
+          channel_id?: string
+          created_at?: string
+          id?: string
+          record_id?: string
+          sort_order?: number
+          updated_at?: string
+          worked_out?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ext_clue_points_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "channels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ext_clue_points_record_id_fkey"
+            columns: ["record_id"]
+            isOneToOne: false
+            referencedRelation: "ext_records"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ext_links: {
         Row: {
           channel_id: string
@@ -1888,8 +1936,12 @@ export type Database = {
       ext_records: {
         Row: {
           channel_id: string
+          clue_status: string | null
           created_at: string
           created_by: string | null
+          found_at_record_id: string | null
+          found_by_character_id: string | null
+          found_day: number | null
           id: string
           kind: string
           name: string
@@ -1900,8 +1952,12 @@ export type Database = {
         }
         Insert: {
           channel_id: string
+          clue_status?: string | null
           created_at?: string
           created_by?: string | null
+          found_at_record_id?: string | null
+          found_by_character_id?: string | null
+          found_day?: number | null
           id?: string
           kind: string
           name: string
@@ -1912,8 +1968,12 @@ export type Database = {
         }
         Update: {
           channel_id?: string
+          clue_status?: string | null
           created_at?: string
           created_by?: string | null
+          found_at_record_id?: string | null
+          found_by_character_id?: string | null
+          found_day?: number | null
           id?: string
           kind?: string
           name?: string
@@ -1935,6 +1995,20 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ext_records_found_at_record_id_fkey"
+            columns: ["found_at_record_id"]
+            isOneToOne: false
+            referencedRelation: "ext_records"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ext_records_found_by_character_id_fkey"
+            columns: ["found_by_character_id"]
+            isOneToOne: false
+            referencedRelation: "ext_characters"
             referencedColumns: ["id"]
           },
         ]
@@ -2976,6 +3050,10 @@ export type Database = {
         Args: { p_character_id: string; p_record_id: string }
         Returns: string
       }
+      ext__link_end_name: {
+        Args: { p_character_id: string; p_record_id: string }
+        Returns: string
+      }
       ext__link_npc_identity: {
         Args: { p_character_id: string }
         Returns: string
@@ -2986,6 +3064,16 @@ export type Database = {
           p_details?: Json
           p_event_type: string
           p_note?: string
+        }
+        Returns: undefined
+      }
+      ext__log_link_end: {
+        Args: {
+          p_channel_id: string
+          p_character_id: string
+          p_details: Json
+          p_event_type: string
+          p_record_id: string
         }
         Returns: undefined
       }
@@ -3101,6 +3189,17 @@ export type Database = {
         Args: { p_channel_id: string; p_sub_channel_id: string }
         Returns: string
       }
+      ext_clue_details: {
+        Args: { p_record_id: string }
+        Returns: {
+          clue_status: string
+          found_at_name: string
+          found_at_record_id: string
+          found_by_character_id: string
+          found_by_name: string
+          found_day: number
+        }[]
+      }
       ext_delete_campaign_file: {
         Args: { p_file_id: string }
         Returns: string[]
@@ -3200,6 +3299,7 @@ export type Database = {
         Args: { p_file_id: string; p_file_name: string; p_object_path: string }
         Returns: number
       }
+      ext_reverse_link: { Args: { p_link_id: string }; Returns: undefined }
       ext_set_in_game_date: {
         Args: {
           p_channel_id: string

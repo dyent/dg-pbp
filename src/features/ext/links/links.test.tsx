@@ -14,6 +14,7 @@ vi.mock('./linkApi', () => ({
   addLink: vi.fn(),
   updateLink: vi.fn(),
   deleteLink: vi.fn(),
+  reverseLink: vi.fn(),
 }))
 
 const morgue: LinkTarget = { type: 'record', id: 'r1', name: 'Morgue', kind: 'location', pictureUrl: null }
@@ -48,6 +49,7 @@ describe('LinksSection', () => {
     vi.mocked(api.addLink).mockResolvedValue()
     vi.mocked(api.updateLink).mockResolvedValue()
     vi.mocked(api.deleteLink).mockResolvedValue()
+    vi.mocked(api.reverseLink).mockResolvedValue()
   })
 
   it('shows links from both directions, with badges for the GM', async () => {
@@ -117,9 +119,10 @@ describe('LinksSection', () => {
     fireEvent.change(pick, { target: { value: 'record:r2' } })
     expect(within(form).getByText('Give the link a label, e.g. "works for".')).toBeInTheDocument()
     fireEvent.change(within(form).getByLabelText('Label'), { target: { value: 'found' } })
-    fireEvent.change(within(form).getByLabelText('Direction'), { target: { value: 'in' } })
+    expect(within(form).getByTestId('link-preview')).toHaveTextContent('Kowalski — found → Bloody glove')
+    fireEvent.click(within(form).getByRole('button', { name: 'Swap direction' }))
     fireEvent.change(within(form).getByLabelText('Who can see it'), { target: { value: 'players' } })
-    expect(within(form).getByText('Bloody glove — found → Kowalski')).toBeInTheDocument()
+    expect(within(form).getByTestId('link-preview')).toHaveTextContent('Bloody glove — found → Kowalski')
     fireEvent.click(within(form).getByRole('button', { name: 'Add link' }))
 
     await waitFor(() =>
@@ -182,6 +185,26 @@ describe('LinksSection', () => {
     fireEvent.click(within(suspectItem).getByRole('button', { name: 'Remove link: Reyes suspects Kowalski' }))
     fireEvent.click(within(suspectItem).getByRole('button', { name: 'Remove link' }))
     await waitFor(() => expect(api.deleteLink).toHaveBeenCalledWith('l2'))
+  })
+
+  it('reverses a link and tells the profile something changed', async () => {
+    const onChanged = vi.fn()
+    renderSection({ onChanged })
+    const [suspectItem] = await screen.findAllByRole('listitem')
+    fireEvent.click(within(suspectItem).getByRole('button', { name: 'Reverse link: Reyes suspects Kowalski' }))
+    await waitFor(() => expect(api.reverseLink).toHaveBeenCalledWith('l2'))
+    await waitFor(() => expect(onChanged).toHaveBeenCalledTimes(1))
+    expect(await screen.findByText('Link reversed.')).toBeInTheDocument()
+  })
+
+  it('explains a failed reverse', async () => {
+    vi.mocked(api.reverseLink).mockRejectedValue(new Error('These two are already linked with that label.'))
+    const onChanged = vi.fn()
+    renderSection({ onChanged })
+    const [suspectItem] = await screen.findAllByRole('listitem')
+    fireEvent.click(within(suspectItem).getByRole('button', { name: 'Reverse link: Reyes suspects Kowalski' }))
+    expect(await screen.findByText('These two are already linked with that label.')).toBeInTheDocument()
+    expect(onChanged).not.toHaveBeenCalled()
   })
 
   it('cancels an edit and skips saving an unchanged label', async () => {
