@@ -6,6 +6,7 @@ import * as api from './recordApi'
 import * as activityApi from './recordActivityApi'
 import { NpcTagProvider } from '../npcTags/npcTagContext'
 import { listTaggableRecords } from '../npcTags/npcTagApi'
+import { listTaggedNotes } from '../activity/activityApi'
 import { CaseFileEntry } from './CaseFileEntry'
 import { RecordActivity } from './RecordActivity'
 import { requestRecord } from './recordOpener'
@@ -40,7 +41,11 @@ vi.mock('./recordActivityApi', () => ({
   updateRecordNote: vi.fn(),
   deleteRecordNote: vi.fn(),
 }))
-vi.mock('../activity/activityApi', () => ({ POSTS_PAGE: 50, listRoomNames: vi.fn(async () => new Map([['room1', 'Morgue scene']])) }))
+vi.mock('../activity/activityApi', () => ({
+  POSTS_PAGE: 50,
+  listRoomNames: vi.fn(async () => new Map([['room1', 'Morgue scene']])),
+  listTaggedNotes: vi.fn(async () => []),
+}))
 vi.mock('../characters/characterApi', () => ({ listTags: vi.fn(async () => []), createTag: vi.fn() }))
 vi.mock('../../../hooks/useImageUpload', () => ({
   useImageUpload: () => ({ uploadEnabled: false, settingsLoading: false, uploading: false, uploadImage: vi.fn() }),
@@ -87,6 +92,34 @@ describe('RecordActivity', () => {
     expect(activityApi.listRecordPosts).toHaveBeenCalledWith('ch', 'r1', ['Morgue', 'The Slab'], null)
     const filters = within(screen.getByRole('group', { name: 'Show' })).getAllByRole('button').map(b => b.textContent)
     expect(filters).toEqual(['All', 'Mentions', 'Notes', 'Changes'])
+  })
+
+  it('shows notes from elsewhere that tag the record, under Notes and Mentions, without edit controls', async () => {
+    vi.mocked(listTaggedNotes).mockResolvedValue([
+      {
+        id: 'tn1', authorId: 'u1', authorCharacterName: 'Agent Reyes', body: 'Meet at the [Morgue](rec:00000000-0000-0000-0000-000000000001)', visibility: 'author',
+        inGameDay: null, createdAt: '2026-11-22T12:00:00Z', edited: false, about: { type: 'character', id: 'c9', name: 'Dr Hale', kind: 'npc' },
+      },
+      {
+        id: 'tn2', authorId: 'u1', authorCharacterName: null, body: 'Hidden one', visibility: 'author',
+        inGameDay: null, createdAt: '2026-11-22T11:00:00Z', edited: false, about: { type: 'character', id: 'c8', name: null, kind: 'npc' },
+      },
+    ])
+    renderActivity({ isGM: false, myUserId: 'u1', events: [] })
+    const item = (await screen.findByText(/Meet at the/)).closest('li') as HTMLElement
+    expect(listTaggedNotes).toHaveBeenCalledWith('ch', { type: 'record', id: 'r1' })
+    expect(item).toHaveTextContent(/Note on .*Dr Hale by Sam \(as Agent Reyes\)/)
+    expect(within(item).getByTitle('Open Dr Hale')).toBeInTheDocument()
+    expect(within(item).queryByRole('button', { name: 'Edit' })).not.toBeInTheDocument()
+    expect(within(item).queryByRole('button', { name: 'Delete' })).not.toBeInTheDocument()
+    expect(screen.getByText("something you can't see")).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Mentions' }))
+    expect(screen.getByText(/Meet at the/)).toBeInTheDocument()
+    expect(screen.queryByText('Back door unlocked')).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Notes' }))
+    expect(screen.getByText(/Meet at the/)).toBeInTheDocument()
+    expect(screen.getByText('Back door unlocked')).toBeInTheDocument()
   })
 
   it('never searches aliases for players', async () => {

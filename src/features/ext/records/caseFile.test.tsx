@@ -39,7 +39,7 @@ vi.mock('../links/linkApi', () => ({
   deleteLink: vi.fn(),
   reverseLink: vi.fn(),
 }))
-vi.mock('../activity/activityApi', () => ({ POSTS_PAGE: 50, listRoomNames: vi.fn(async () => new Map()) }))
+vi.mock('../activity/activityApi', () => ({ POSTS_PAGE: 50, listRoomNames: vi.fn(async () => new Map()), listTaggedNotes: vi.fn(async () => []) }))
 vi.mock('./recordActivityApi', () => ({
   listRecordAliases: vi.fn(async () => []),
   setRecordAliases: vi.fn(async () => undefined),

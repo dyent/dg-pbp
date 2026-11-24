@@ -40,6 +40,16 @@ export interface ActivityPost {
   createdAt: string
 }
 
+/** What a note from elsewhere was written on (a note that tags this subject). */
+export interface NoteAbout {
+  type: 'character' | 'record'
+  id: string
+  /** Null when the viewer can't see it (hidden since). */
+  name: string | null
+  /** 'pc' / 'npc' for characters, the record kind for records. */
+  kind: string
+}
+
 export interface ActivityNote {
   id: string
   authorId: string | null
@@ -49,6 +59,8 @@ export interface ActivityNote {
   inGameDay: number | null
   createdAt: string
   edited: boolean
+  /** Set for a note written elsewhere that tags this subject; it is changed on its own page. */
+  about?: NoteAbout
 }
 
 /** A history entry of a character (or, for records, a record): anything with an id and a time. */
@@ -80,7 +92,7 @@ function matches<E extends ActivityChange>(entry: ActivityEntry<E>, filter: Acti
     case 'posts':
       return entry.kind === 'post' && entry.post.kind !== 'mentioned'
     case 'mentions':
-      return entry.kind === 'post' && entry.post.kind === 'mentioned'
+      return (entry.kind === 'post' && entry.post.kind === 'mentioned') || (entry.kind === 'note' && !!entry.note.about)
     case 'notes':
       return entry.kind === 'note'
     case 'changes':

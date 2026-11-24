@@ -8,6 +8,8 @@ export interface ActivityLoaders {
   /** Newest posts first; `before` asks for older ones. */
   posts: (before: string | null) => Promise<ActivityPost[]>
   notes: () => Promise<ActivityNote[]>
+  /** Notes written elsewhere that tag this subject (shown with what they were written on). */
+  taggedNotes?: () => Promise<ActivityNote[]>
 }
 
 /**
@@ -32,15 +34,16 @@ export function useActivity(channelId: string, key: string, loaders: ActivityLoa
     setLoading(true)
     void (async () => {
       try {
-        const [nextPosts, nextNotes, nextRooms] = await Promise.all([
+        const [nextPosts, ownNotes, taggedNotes, nextRooms] = await Promise.all([
           latest.current.posts(null),
           latest.current.notes(),
+          latest.current.taggedNotes?.() ?? Promise.resolve([]),
           api.listRoomNames(channelId),
         ])
         if (!mounted) return
         setPosts(nextPosts)
         setMorePosts(nextPosts.length === api.POSTS_PAGE)
-        setNotes(nextNotes)
+        setNotes([...ownNotes, ...taggedNotes.filter(t => !ownNotes.some(n => n.id === t.id))])
         setRooms(nextRooms)
         setError(null)
       } catch (err) {

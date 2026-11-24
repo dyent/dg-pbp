@@ -3344,6 +3344,27 @@ export type Database = {
         }
         Returns: string
       }
+      ext_tagged_notes: {
+        Args: {
+          p_channel_id: string
+          p_character_id?: string
+          p_record_id?: string
+        }
+        Returns: {
+          about_id: string
+          about_kind: string
+          about_name: string
+          about_type: string
+          author_character_name: string
+          author_id: string
+          body: string
+          created_at: string
+          id: string
+          in_game_day: number
+          updated_at: string
+          visibility: string
+        }[]
+      }
       ext_undo_in_game_date_change: {
         Args: { p_change_id: string }
         Returns: undefined
@@ -3380,6 +3401,13 @@ export type Database = {
           p_visibility: string
         }
         Returns: undefined
+      }
+      ext_visible_end_label: {
+        Args: { p_character_id: string; p_record_id: string }
+        Returns: {
+          kind: string
+          name: string
+        }[]
       }
       get_admin_unread_count: { Args: { p_user_id: string }; Returns: number }
       get_admin_unread_totals: {

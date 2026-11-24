@@ -26,6 +26,8 @@ import { NoteBody, PostBody, isLongPost } from './PostBody'
 import { useNpcTags } from '../npcTags/npcTagContext'
 import { unlinkifyNpcTags } from '../npcTags/npcTagModel'
 import { TagTextarea } from '../npcTags/TagTextarea'
+import { OtherEnd } from '../links/LinksSection'
+import type { LinkTarget } from '../links/linkModel'
 import type { ActivityData } from './useActivity'
 import { useCharacterActivity } from './useCharacterActivity'
 
@@ -311,7 +313,21 @@ function NoteEntry({
   return (
     <>
       <p className="text-xs font-medium text-surface-600 dark:text-surface-300">
-        Note by {by}
+        {note.about ? (
+          <>
+            Note on{' '}
+            {note.about.name ? (
+              <OtherEnd
+                target={{ type: note.about.type, id: note.about.id, name: note.about.name, kind: note.about.kind as LinkTarget['kind'], pictureUrl: null }}
+              />
+            ) : (
+              <span className="italic">something you can't see</span>
+            )}{' '}
+            by {by}
+          </>
+        ) : (
+          <>Note by {by}</>
+        )}
         <span className={`${BADGE} ml-1 bg-surface-100 dark:bg-surface-700`}>{NOTE_VISIBILITY_LABELS[note.visibility]}</span>
       </p>
       <NoteBody content={note.body} />
@@ -319,12 +335,12 @@ function NoteEntry({
         <time dateTime={note.createdAt}>{dateFormat.format(new Date(note.createdAt))}</time>
         {note.inGameDay !== null && <span>· In game: {formatDay(note.inGameDay)}</span>}
         {note.edited && <span>(edited)</span>}
-        {canChange && mine && (
+        {canChange && mine && !note.about && (
           <button type="button" className="text-primary-600 hover:underline dark:text-primary-400" onClick={() => setEditing(true)}>
             Edit
           </button>
         )}
-        {canChange && (mine || isGM) && !confirming && (
+        {canChange && (mine || isGM) && !note.about && !confirming && (
           <button type="button" className="text-red-600 hover:underline dark:text-red-400" onClick={() => setConfirming(true)}>
             Delete
           </button>

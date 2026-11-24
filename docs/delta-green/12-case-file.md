@@ -74,7 +74,8 @@ Each record has an **Activity** tab next to **Profile**:
 - **Notes:** you and the players can add notes, as on characters. A player's note is for them and
   you, or for everyone who can see the record. Yours are GM only or for everyone. Each note can
   carry an in-game date. Type `@` (or use the tag button) to tag an NPC or record, as in posts:
-  the note shows it as a chip that opens it. Tags turn back into `@Name` while you edit a note.
+  the note shows it as a chip that opens it, and the note also appears in the tagged NPC's or
+  record's own Activity. Tags turn back into `@Name` while you edit a note.
 - **Changes** (you only): created, renamed, field edits, moves between Everyone and GM only,
   sharing, aliases, and links added, removed, changed or reversed (on both ends).
 
@@ -120,7 +121,6 @@ theories as **notes** on the clue.
 
 ## Coming next
 
-Phase 2b is complete. Possible later additions: a timeline drawn from in-game dates, and notes that
-tag a record or NPC showing up in *that* one's Activity too.
+Phase 2b is complete. Possible later additions: a timeline drawn from in-game dates.
 
 <!-- cspell:locale en-GB,en -->

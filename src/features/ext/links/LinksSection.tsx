@@ -170,8 +170,8 @@ function TargetIcon({ target }: { target: LinkTarget }) {
 const CHIP =
   'inline-flex items-center gap-1 rounded bg-teal-50 px-1.5 py-0.5 align-baseline font-medium text-teal-800 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 dark:bg-teal-950 dark:text-teal-200'
 
-/** The other end of a link: opens it in this panel when it can, else in its own. */
-function OtherEnd({ target }: { target: LinkTarget }) {
+/** The other end of a link (also used for notes from elsewhere): opens it in this panel when it can, else in its own. */
+export function OtherEnd({ target }: { target: LinkTarget }) {
   const openCharacterHere = useContext(OpenCharacterContext)
   const openRecordHere = useContext(OpenRecordContext)
   const open = () => {

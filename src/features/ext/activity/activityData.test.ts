@@ -129,17 +129,24 @@ describe('useCharacterActivity', () => {
   it('loads posts, notes and rooms, then older posts', async () => {
     mockTables({ ext_character_notes: { data: [noteRow] }, sub_channels: { data: [{ id: 'r1', name: 'Morgue' }] } })
     const full = Array.from({ length: api.POSTS_PAGE }, (_, i) => postRow(`m${i}`, 'mentioned', new Date(Date.UTC(2026, 10, 19, 12, 0, 0) - i * 1000).toISOString()))
-    vi.mocked(supabase.rpc).mockResolvedValueOnce({ data: full, error: null } as never).mockResolvedValueOnce({ data: [postRow('old', 'posted', '2026-01-01T00:00:00Z'), full[0]], error: null } as never)
+    const tagged = { ...noteRow, id: 'tn1', body: 'Saw her at the morgue', about_type: 'record', about_id: 'r9', about_name: 'Morgue', about_kind: 'location' }
+    const pages = [full, [postRow('old', 'posted', '2026-01-01T00:00:00Z'), full[0]]]
+    vi.mocked(supabase.rpc).mockImplementation(((fn: string) =>
+      Promise.resolve(fn === 'ext_tagged_notes' ? { data: [tagged, noteRow], error: null } : { data: pages.shift(), error: null })) as never)
     const { result } = renderHook(() => useCharacterActivity('ch1', 'c1', 'Okafor', ['Okafor']))
     await waitFor(() => expect(result.current.loading).toBe(false))
     expect(result.current.posts).toHaveLength(api.POSTS_PAGE)
     expect(result.current.morePosts).toBe(true)
     expect(result.current.notes[0].body).toBe('Has a limp')
+    // Notes from elsewhere come after the subject's own, without repeats.
+    expect(result.current.notes).toHaveLength(2)
+    expect(result.current.notes[1]).toMatchObject({ id: 'tn1', about: { type: 'record', id: 'r9', name: 'Morgue', kind: 'location' } })
+    expect(supabase.rpc).toHaveBeenCalledWith('ext_tagged_notes', { p_channel_id: 'ch1', p_character_id: 'c1' })
     expect(result.current.rooms.get('r1')).toBe('Morgue')
     await act(() => result.current.loadOlder())
     expect(result.current.posts).toHaveLength(api.POSTS_PAGE + 1)
     expect(result.current.morePosts).toBe(false)
-    expect(vi.mocked(supabase.rpc).mock.calls[1][1]).toMatchObject({ p_before: full.at(-1)?.created_at })
+    expect(vi.mocked(supabase.rpc).mock.calls.filter(c => c[0] === 'ext_character_posts')[1][1]).toMatchObject({ p_before: full.at(-1)?.created_at })
   })
 
   it('reports load errors and recovers on reload', async () => {

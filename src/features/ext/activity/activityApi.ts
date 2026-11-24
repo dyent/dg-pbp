@@ -115,3 +115,38 @@ export async function deleteNote(noteId: string): Promise<void> {
   const { error } = await supabase.rpc('ext_delete_character_note', { p_note_id: noteId })
   if (error) fail(error)
 }
+
+interface TaggedNoteRow extends NoteRow {
+  about_type: string
+  about_id: string
+  about_name: string | null
+  about_kind: string | null
+}
+
+/**
+ * Notes written elsewhere in the campaign (on other characters or records) that
+ * tag this character or record, newest first. Runs with the viewer's own rights.
+ */
+export async function listTaggedNotes(channelId: string, subject: { type: 'character' | 'record'; id: string }): Promise<ActivityNote[]> {
+  const { data, error } = await supabase.rpc('ext_tagged_notes', {
+    p_channel_id: channelId,
+    ...(subject.type === 'character' ? { p_character_id: subject.id } : { p_record_id: subject.id }),
+  })
+  if (error) fail(error)
+  return ((data ?? []) as TaggedNoteRow[]).map(row => ({
+    id: row.id,
+    authorId: row.author_id,
+    authorCharacterName: row.author_character_name,
+    body: row.body,
+    visibility: isNoteVisibility(row.visibility) ? row.visibility : 'gm',
+    inGameDay: row.in_game_day,
+    createdAt: row.created_at,
+    edited: row.updated_at !== row.created_at,
+    about: {
+      type: row.about_type === 'record' ? 'record' : 'character',
+      id: row.about_id,
+      name: row.about_name,
+      kind: row.about_kind ?? '',
+    },
+  }))
+}

@@ -74,7 +74,9 @@ Tests: `supabase/tests/*_ext_character_activity.sql`. How to use: `09-activity-l
 | Delete a note | Any note | Yes | No | No |
 | Posts and mentions in the Activity tab | Everything in the campaign, aliases included | Only posts they can read in the chat; the name only | Same | Nothing |
 
-Notes belong to the player who wrote them, even after their PC retires (DECISIONS.md #35).
+Notes belong to the player who wrote them, even after their PC retires (DECISIONS.md #35). A note that tags another
+NPC or record also shows in that one's Activity, to exactly the people who can read the note itself
+(`*_ext_tagged_notes.sql`, DECISIONS.md #45).
 
 ## NPC tags in posts
 

@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import { ActivityLog, type NoteActions } from '../activity/CharacterActivity'
 import { searchTerms, type ActivityFilter } from '../activity/activityModel'
 import { useActivity } from '../activity/useActivity'
+import { listTaggedNotes } from '../activity/activityApi'
 import * as api from './recordActivityApi'
 import { describeRecordEvent, type CampaignRecord, type RecordEvent } from './recordModel'
 
@@ -26,6 +27,7 @@ export function RecordActivity({ channelId, record, aliases, isGM, isArchived, m
   const data = useActivity(channelId, [record.id, ...terms].join('\u0000'), {
     posts: before => api.listRecordPosts(channelId, record.id, terms, before),
     notes: () => api.listRecordNotes(record.id),
+    taggedNotes: () => listTaggedNotes(channelId, { type: 'record', id: record.id }),
   })
   const notes = useMemo<NoteActions>(
     () => ({

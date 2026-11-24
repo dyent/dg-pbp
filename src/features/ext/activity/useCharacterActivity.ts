@@ -10,5 +10,6 @@ export function useCharacterActivity(channelId: string, characterId: string, npc
     posts: before =>
       before ? api.listPosts(channelId, characterId, npcName, terms, before) : api.listPosts(channelId, characterId, npcName, terms),
     notes: () => api.listNotes(characterId),
+    taggedNotes: () => api.listTaggedNotes(channelId, { type: 'character', id: characterId }),
   })
 }
