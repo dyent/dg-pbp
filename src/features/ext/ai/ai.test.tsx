@@ -4,6 +4,7 @@ import { ToastProvider } from '../../../contexts/ToastContext'
 import { supabase } from '../../../lib/supabase'
 import { AiCallError, formatUsd, getAiStatus, setAiCap, testAiConnection } from './aiApi'
 import { AiStatusCard } from './AiStatusCard'
+import { useAiStatus } from './useAiStatus'
 
 vi.mock('../../../lib/supabase', () => ({
   supabase: { rpc: vi.fn(), functions: { invoke: vi.fn() } },
@@ -60,6 +61,10 @@ describe('aiApi', () => {
   })
 })
 
+function Card() {
+  return <AiStatusCard channelId="ch" ai={useAiStatus('ch')} />
+}
+
 describe('AiStatusCard', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -69,7 +74,7 @@ describe('AiStatusCard', () => {
   const renderCard = () =>
     render(
       <ToastProvider>
-        <AiStatusCard channelId="ch" />
+        <Card />
       </ToastProvider>,
     )
 

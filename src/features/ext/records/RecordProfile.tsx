@@ -11,6 +11,7 @@ import { KindBadge, RecordIcon } from './RecordIcon'
 import { RecordActivity } from './RecordActivity'
 import { LinksSection } from '../links/LinksSection'
 import { ClueSection, ClueStatusBadge } from './ClueSection'
+import { RecordFilesSection } from './RecordFilesSection'
 import { setRecordAliases } from './recordActivityApi'
 import { RECORD_COLUMNS, sharingLabel, type CampaignRecord, type RecordField } from './recordModel'
 import { useRecordProfile } from './useRecords'
@@ -118,6 +119,11 @@ export function RecordProfile({
             <KindBadge kind={record.kind} />
             {record.clueStatus && <ClueStatusBadge status={record.clueStatus} />}
             {isGM && <SharingBadge record={record} nameOf={nameOf} />}
+            {isGM && record.provenance === 'source' && (
+              <span className={`${BADGE} bg-teal-100 text-teal-800 dark:bg-teal-900/40 dark:text-teal-200`} title="Imported from a published adventure">
+                From the book
+              </span>
+            )}
           </div>
         </div>
         {canManage && !editing && tab === 'profile' && (
@@ -211,6 +217,7 @@ export function RecordProfile({
               myUserId={myUserId}
             onChanged={reload}
             />
+            <RecordFilesSection channelId={channelId} recordId={record.id} isGM={isGM} isArchived={isArchived} myUserId={myUserId} />
           </div>
           )}
         </>

@@ -1,6 +1,6 @@
 # Phase 3 Design: Adventure Import
 
-*Agreed with the owner on 2026-11-25 (DECISIONS.md #46). Progress: **3-1 done**, **3-2 built** (`14-ai-setup.md`). Builds on campaign records (`11-phase2b-design.md`), characters
+*Agreed with the owner on 2026-11-25 (DECISIONS.md #46). Progress: **3-1 and 3-2 done** (`14-ai-setup.md`), **3-3 to 3-5 built** (DECISIONS.md #48, #49; 10 pages per run became a suggestion, up to 30). Builds on campaign records (`11-phase2b-design.md`), characters
 (`03-step4-characters-design.md`) and campaign files (#29). Owner choices so far: import NPCs,
 locations / organisations / clues, links and handouts; the AI always reads the **pages as they
 look**; one **page range** at a time; no API key yet.*

@@ -1223,6 +1223,7 @@ export type Database = {
           item_type: string
           label: string
           private: boolean
+          provenance: string
           sort_order: number
           updated_at: string
           visibility: string
@@ -1237,6 +1238,7 @@ export type Database = {
           item_type?: string
           label: string
           private?: boolean
+          provenance?: string
           sort_order?: number
           updated_at?: string
           visibility?: string
@@ -1251,6 +1253,7 @@ export type Database = {
           item_type?: string
           label?: string
           private?: boolean
+          provenance?: string
           sort_order?: number
           updated_at?: string
           visibility?: string
@@ -1393,6 +1396,7 @@ export type Database = {
           npc_id: string | null
           owner_id: string | null
           portrait_url: string | null
+          provenance: string
           revealed: boolean
           status: string
           status_visible: boolean
@@ -1411,6 +1415,7 @@ export type Database = {
           npc_id?: string | null
           owner_id?: string | null
           portrait_url?: string | null
+          provenance?: string
           revealed?: boolean
           status?: string
           status_visible?: boolean
@@ -1429,6 +1434,7 @@ export type Database = {
           npc_id?: string | null
           owner_id?: string | null
           portrait_url?: string | null
+          provenance?: string
           revealed?: boolean
           status?: string
           status_visible?: boolean
@@ -1509,6 +1515,130 @@ export type Database = {
             columns: ["record_id"]
             isOneToOne: false
             referencedRelation: "ext_records"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ext_import_runs: {
+        Row: {
+          channel_id: string
+          combined_count: number
+          cost_usd: number
+          created_at: string
+          created_by: string | null
+          error: string | null
+          finished_at: string | null
+          first_page: number
+          id: string
+          last_page: number
+          model: string | null
+          source_id: string
+          status: string
+        }
+        Insert: {
+          channel_id: string
+          combined_count?: number
+          cost_usd?: number
+          created_at?: string
+          created_by?: string | null
+          error?: string | null
+          finished_at?: string | null
+          first_page: number
+          id?: string
+          last_page: number
+          model?: string | null
+          source_id: string
+          status?: string
+        }
+        Update: {
+          channel_id?: string
+          combined_count?: number
+          cost_usd?: number
+          created_at?: string
+          created_by?: string | null
+          error?: string | null
+          finished_at?: string | null
+          first_page?: number
+          id?: string
+          last_page?: number
+          model?: string | null
+          source_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ext_import_runs_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "channels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ext_import_runs_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ext_import_runs_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "ext_sources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ext_import_suggestions: {
+        Row: {
+          channel_id: string
+          created_at: string
+          details: Json
+          id: string
+          kind: string
+          name: string
+          page: number | null
+          run_id: string
+          sort_order: number
+          status: string
+        }
+        Insert: {
+          channel_id: string
+          created_at?: string
+          details?: Json
+          id?: string
+          kind: string
+          name: string
+          page?: number | null
+          run_id: string
+          sort_order?: number
+          status?: string
+        }
+        Update: {
+          channel_id?: string
+          created_at?: string
+          details?: Json
+          id?: string
+          kind?: string
+          name?: string
+          page?: number | null
+          run_id?: string
+          sort_order?: number
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ext_import_suggestions_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "channels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ext_import_suggestions_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "ext_import_runs"
             referencedColumns: ["id"]
           },
         ]
@@ -1828,6 +1958,7 @@ export type Database = {
           id: string
           item_type: string
           label: string
+          provenance: string
           record_id: string
           sort_order: number
           updated_at: string
@@ -1841,6 +1972,7 @@ export type Database = {
           id?: string
           item_type?: string
           label: string
+          provenance?: string
           record_id: string
           sort_order?: number
           updated_at?: string
@@ -1854,6 +1986,7 @@ export type Database = {
           id?: string
           item_type?: string
           label?: string
+          provenance?: string
           record_id?: string
           sort_order?: number
           updated_at?: string
@@ -1869,6 +2002,59 @@ export type Database = {
           },
           {
             foreignKeyName: "ext_record_fields_record_id_fkey"
+            columns: ["record_id"]
+            isOneToOne: false
+            referencedRelation: "ext_records"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ext_record_files: {
+        Row: {
+          channel_id: string
+          created_at: string
+          created_by: string | null
+          file_id: string
+          record_id: string
+        }
+        Insert: {
+          channel_id: string
+          created_at?: string
+          created_by?: string | null
+          file_id: string
+          record_id: string
+        }
+        Update: {
+          channel_id?: string
+          created_at?: string
+          created_by?: string | null
+          file_id?: string
+          record_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ext_record_files_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "channels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ext_record_files_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ext_record_files_file_id_fkey"
+            columns: ["file_id"]
+            isOneToOne: false
+            referencedRelation: "ext_campaign_files"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ext_record_files_record_id_fkey"
             columns: ["record_id"]
             isOneToOne: false
             referencedRelation: "ext_records"
@@ -3170,7 +3356,21 @@ export type Database = {
         Returns: undefined
       }
       escape_markdown: { Args: { p_text: string }; Returns: string }
+      ext__add_suggested_checklist: {
+        Args: { p_points: Json; p_record_id: string }
+        Returns: number
+      }
       ext__ai_month_spent: { Args: never; Returns: number }
+      ext__apply_suggested_fields: {
+        Args: {
+          p_channel_id: string
+          p_character_id: string
+          p_fields: Json
+          p_record_id: string
+          p_reference: string
+        }
+        Returns: number
+      }
       ext__can_see_link_end: {
         Args: { p_character_id: string; p_record_id: string }
         Returns: boolean
@@ -3214,6 +3414,10 @@ export type Database = {
         Args: { p_kind: string; p_owner_id: string; p_revealed: boolean }
         Returns: string
       }
+      ext__find_end_by_name: {
+        Args: { p_channel_id: string; p_name: string }
+        Returns: Record<string, unknown>
+      }
       ext__link_end_channel: {
         Args: { p_character_id: string; p_record_id: string }
         Returns: string
@@ -3247,6 +3451,27 @@ export type Database = {
       }
       ext__npc_avatar: { Args: { p_portrait_url: string }; Returns: string }
       ext__npc_from_roster: { Args: { p_npc_id: string }; Returns: string }
+      ext__pending_suggestion: {
+        Args: { p_suggestion_id: string }
+        Returns: {
+          channel_id: string
+          created_at: string
+          details: Json
+          id: string
+          kind: string
+          name: string
+          page: number | null
+          run_id: string
+          sort_order: number
+          status: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "ext_import_suggestions"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       ext__refresh_posting: {
         Args: { p_channel_id: string; p_user_id: string }
         Returns: undefined
@@ -3275,6 +3500,12 @@ export type Database = {
           p_user_id: string
         }
         Returns: undefined
+      }
+      ext__suggestion_reference: {
+        Args: {
+          s: Database["public"]["Tables"]["ext_import_suggestions"]["Row"]
+        }
+        Returns: string
       }
       ext_add_campaign_file: {
         Args: {
@@ -3324,6 +3555,10 @@ export type Database = {
           month_spent_usd: number
           monthly_cap_usd: number
         }[]
+      }
+      ext_approve_suggestion: {
+        Args: { p_fields?: Json; p_name?: string; p_suggestion_id: string }
+        Returns: Json
       }
       ext_campaign_file_path_channel: {
         Args: { p_name: string }
@@ -3402,11 +3637,16 @@ export type Database = {
         Args: { p_note_id: string }
         Returns: undefined
       }
+      ext_delete_import_run: { Args: { p_run_id: string }; Returns: undefined }
       ext_delete_record_note: {
         Args: { p_note_id: string }
         Returns: undefined
       }
       ext_delete_source: { Args: { p_source_id: string }; Returns: string }
+      ext_finish_handout_suggestion: {
+        Args: { p_file_id: string; p_suggestion_id: string }
+        Returns: string
+      }
       ext_is_character_owner: {
         Args: { p_character_id: string }
         Returns: boolean
@@ -3442,6 +3682,15 @@ export type Database = {
           updated_at: string
         }[]
       }
+      ext_merge_suggestion: {
+        Args: {
+          p_character_id?: string
+          p_fields?: Json
+          p_record_id?: string
+          p_suggestion_id: string
+        }
+        Returns: number
+      }
       ext_npc_alias_tag: {
         Args: { p_alias: string; p_character_id: string }
         Returns: string
@@ -3469,6 +3718,17 @@ export type Database = {
       ext_record_alias_tag: {
         Args: { p_alias: string; p_record_id: string }
         Returns: string
+      }
+      ext_record_files_for: {
+        Args: { p_record_id: string }
+        Returns: {
+          attached_at: string
+          description: string
+          file_id: string
+          folder: string
+          title: string
+          visibility: string
+        }[]
       }
       ext_record_posts: {
         Args: {
@@ -3533,6 +3793,10 @@ export type Database = {
           p_owner_id: string
           p_status?: string
         }
+        Returns: undefined
+      }
+      ext_set_suggestion_rejected: {
+        Args: { p_rejected: boolean; p_suggestion_id: string }
         Returns: undefined
       }
       ext_shift_in_game_date: {

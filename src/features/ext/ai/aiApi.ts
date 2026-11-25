@@ -46,7 +46,7 @@ export async function setAiCap(capUsd: number): Promise<void> {
 }
 
 /** Reads `{ code, message }` from a failed function call, whatever shape the error has. */
-async function functionError(error: unknown): Promise<AiCallError> {
+export async function functionError(error: unknown): Promise<AiCallError> {
   const context = (error as { context?: unknown } | null)?.context
   if (context instanceof Response) {
     try {

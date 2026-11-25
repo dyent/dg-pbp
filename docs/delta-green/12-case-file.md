@@ -101,6 +101,13 @@ record in the Case file, or a character in the Characters panel).
   Characters panel.
 - Deleting a record or a character removes its links. Archived campaigns are read-only.
 
+## Files on records
+
+Each record's **Profile** tab has a **Files** box: **Attach a file** picks one of the campaign's
+files (a handout, a map, a photo). Pictures show a small preview; **Open** opens the file;
+**Remove** takes it off the record (it stays in Files). Players see an attached file only if you
+have shared both the record and the file with them. A file can be attached to several records.
+
 ## Clues (step 4)
 
 A clue's **Profile** tab starts with a **Clue** box:
@@ -130,12 +137,51 @@ adventures:
 - **Rename** and **Delete** (with a second click to confirm; this removes the PDF too).
 
 Sources are never shown to players and can't be shared: they live in their own storage, apart
-from campaign files. Importing NPCs, places and clues from them comes in the next steps
-(`13-phase3-design.md`).
+from campaign files.
+
+### Importing pages with AI (server admin)
+
+- Under a source, **Import pages with AI**: enter **From page** and **To page** (PDF page numbers, as
+  your PDF viewer shows them). About 10 pages works best, but a chapter of 12 is fine; the limit is
+  30, and bigger runs take longer and cost more. The estimated cost shows before you start.
+- Your browser cuts those pages out and sends them; Claude reads them as they look. A run takes a
+  minute or two; **Reading…** shows meanwhile and the list updates by itself. One import at a time.
+- When it's done, **Review** lists the suggestions by kind (NPCs, locations, organisations, clues,
+  links, handouts) with the pages each came from (click *p. 14* to open the PDF there), a one-line
+  summary, the suggested profile fields, and *Maybe …* when it looks like something you already
+  have.
+- **Split chapters:** if you import pages 1–10 and then 11–12, the second run is told what the first
+  suggested. Repeats are **combined** into the first suggestion (new fields added, new details
+  appended with their page), and the run says how many were combined.
+
+### Reviewing suggestions
+
+- **Approve** adds it: an NPC arrives **hidden**, a location, organisation, clue or operation
+  **GM only**, both labelled *From the book*. The suggested text fills the standard profile fields;
+  anything else (such as game statistics) becomes a GM-only extra field, and a GM-only *From the
+  book* field says where it came from (title and pages). Edit it freely afterwards: once you change
+  a field it is yours (*canon*), and the book never overwrites it.
+- **Edit first** lets you change the name and the text before approving.
+- **Merge into…** adds the suggestion to something you already have (it picks the *Maybe …* match
+  for you). Only empty or missing fields are filled; nothing you wrote changes.
+- **Reject** greys it out; **Undo** brings it back.
+- **Links** (*Dr Hale — works at → Morgue*) can be approved once both ends exist, so approve the NPC
+  and the place first. They arrive GM only.
+- **Clues** come with a suggested **GM checklist** (what the clue really points to); approving the
+  clue creates those lines, and merging adds any new ones.
+- **Handouts** become a GM-only **picture** in **Files**, folder *Handouts*: the AI says where the
+  handout sits on the page and the app cuts that part out (if no picture can be made, you get the
+  pages as a PDF). The picture is attached to the clue or place it belongs to, when that exists.
+  Share it with the players when they find it, or replace it with your own scan in Files.
+- **Approve all waiting** adds everything still waiting except possible duplicates (those are left
+  for you), in a safe order (links after NPCs and records), and says what it couldn't do.
+- **Open** jumps to what was added.
+- **Remove** deletes a run and its suggestions. A run that never finishes shows *Stopped* after 15
+  minutes. A failed run says why (for example *There was too much on these pages*) and what it cost.
 
 ## Coming next
 
-Phase 2b is complete (a timeline drawn from in-game dates may come later). Phase 3 continues with
-the AI import from sources.
+Phase 2b is complete (a timeline drawn from in-game dates may come later). Phase 3 (adventure
+import) is built; Phase 4 adds AI checks on posts.
 
 <!-- cspell:locale en-GB,en -->

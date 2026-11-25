@@ -3,6 +3,8 @@ import { useToast } from '../../../contexts/ToastContext'
 import { BTN_DANGER, BTN_PRIMARY, BTN_SECONDARY, INPUT, LABEL, SECTION_TITLE } from '../characters/ui'
 import { formatSize } from '../files/filesModel'
 import { AiStatusCard } from '../ai/AiStatusCard'
+import { useAiStatus } from '../ai/useAiStatus'
+import { ImportSection } from '../import/ImportSection'
 import * as api from './sourcesApi'
 import {
   SOURCE_TITLE_MAX,
@@ -59,6 +61,8 @@ function useSources(channelId: string) {
  */
 export function SourcesView({ channelId, isArchived }: SourcesViewProps) {
   const { sources, loading, error, reload } = useSources(channelId)
+  const ai = useAiStatus(channelId)
+  const canImport = !isArchived && ai.status?.allowed === true
   const [adding, setAdding] = useState(false)
 
   return (
@@ -66,7 +70,7 @@ export function SourcesView({ channelId, isArchived }: SourcesViewProps) {
       <p className="text-sm text-surface-600 dark:text-surface-300">
         The published adventures this campaign uses. Only you can see them, and they are never shared with players.
       </p>
-      <AiStatusCard channelId={channelId} />
+      <AiStatusCard channelId={channelId} ai={ai} />
       {!isArchived && !adding && (
         <div>
           <button type="button" className={BTN_PRIMARY} onClick={() => setAdding(true)}>
@@ -106,7 +110,13 @@ export function SourcesView({ channelId, isArchived }: SourcesViewProps) {
           <h3 className={SECTION_TITLE}>Sources</h3>
           <ul className="space-y-2">
             {sources.map(source => (
-              <SourceItem key={source.id} source={source} canManage={!isArchived} onChanged={reload} />
+              <SourceItem
+                key={source.id}
+                source={source}
+                canManage={!isArchived}
+                onChanged={reload}
+                importSlot={<ImportSection channelId={channelId} source={source} canImport={canImport} canReview={!isArchived} onRunEnded={ai.reload} />}
+              />
             ))}
           </ul>
         </section>
@@ -191,7 +201,17 @@ function AddSourceForm({ channelId, onCancel, onAdded }: { channelId: string; on
   )
 }
 
-function SourceItem({ source, canManage, onChanged }: { source: CampaignSource; canManage: boolean; onChanged: () => void }) {
+function SourceItem({
+  source,
+  canManage,
+  onChanged,
+  importSlot,
+}: {
+  source: CampaignSource
+  canManage: boolean
+  onChanged: () => void
+  importSlot?: React.ReactNode
+}) {
   const { addToast } = useToast()
   const ids = useId()
   const [page, setPage] = useState('')
@@ -309,6 +329,7 @@ function SourceItem({ source, canManage, onChanged }: { source: CampaignSource; 
         )}
       </div>
       {badPage && <p className="text-xs text-red-600 dark:text-red-400">Enter a page number, or leave it empty for page 1.</p>}
+      {importSlot}
     </li>
   )
 }

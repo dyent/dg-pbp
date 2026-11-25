@@ -15,6 +15,7 @@ import {
 import { SourcesView } from './SourcesView'
 
 vi.mock('../ai/AiStatusCard', () => ({ AiStatusCard: () => <div>AI status</div> }))
+vi.mock('../import/ImportSection', () => ({ ImportSection: () => null }))
 
 const storage = { upload: vi.fn(), remove: vi.fn(), createSignedUrl: vi.fn() }
 

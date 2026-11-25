@@ -130,6 +130,7 @@ Tests: `supabase/tests/*_ext_campaign_records.sql`. How to use: `12-case-file.md
 | Clue status | Sees and changes | Sees | Sees, if shown to everyone | No |
 | Clue *found by / at / when* | Sees and changes | Sees (a PC or location name only if they can see it) | Same, if shown to everyone | No |
 | Clue GM checklist (`ext_clue_points`) | Yes | No | No | No |
+| Files attached to a record (`ext_record_files`) | All; attach and remove (not in archived campaigns) | Those they may open, on a record shown to them | Same, on a record shown to everyone | No |
 
 Clue tests: `supabase/tests/*_ext_clue_extras.sql`.
 
@@ -160,11 +161,14 @@ There is no way to share a source: they live in their own storage, apart from ca
 
 ## AI (adventure import and later features)
 
-Tests: `supabase/tests/*_ext_ai_usage.sql`. How to set up: `14-ai-setup.md`.
+Tests: `supabase/tests/*_ext_ai_usage.sql`, `*_ext_import_runs.sql`, `*_ext_import_review.sql`. How to set up: `14-ai-setup.md`.
 
 | What | Server admin who GMs the campaign | Other GM | Player | Outsider |
 |---|---|---|---|---|
-| Use AI (test the connection; later, import) | Yes, until the monthly cap is reached | No | No | No |
+| Use AI (test the connection, import pages) | Yes, until the monthly cap is reached | No | No | No |
+| See import runs and their suggestions | Yes | Yes, in campaigns they GM (no new imports) | No | No |
+| Remove an import run | Yes | Yes, in campaigns they GM | No | No |
+| Approve, edit, merge or reject suggestions (adds hidden NPCs, GM-only records, links and handout files) | Yes (not in archived campaigns) | Yes, in campaigns they GM | No | No |
 | See this month's spending and the cap | Yes | No (told only that AI is not available) | No | No |
 | Change the monthly cap | Yes | No | No | No |
 | Read the usage log (`ext_ai_usage`) | Yes | No | No | No |

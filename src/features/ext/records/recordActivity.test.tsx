@@ -46,6 +46,7 @@ vi.mock('../activity/activityApi', () => ({
   listRoomNames: vi.fn(async () => new Map([['room1', 'Morgue scene']])),
   listTaggedNotes: vi.fn(async () => []),
 }))
+vi.mock('./recordFilesApi', () => ({ listRecordFiles: vi.fn(async () => []), listAttachableFiles: vi.fn(async () => []), attachFile: vi.fn(), detachFile: vi.fn(), recordFileLink: vi.fn() }))
 vi.mock('../characters/characterApi', () => ({ listTags: vi.fn(async () => []), createTag: vi.fn() }))
 vi.mock('../../../hooks/useImageUpload', () => ({
   useImageUpload: () => ({ uploadEnabled: false, settingsLoading: false, uploading: false, uploadImage: vi.fn() }),

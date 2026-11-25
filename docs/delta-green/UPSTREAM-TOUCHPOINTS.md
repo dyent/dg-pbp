@@ -107,16 +107,25 @@ Record tags (Phase 2b step 2: `rec:` and `recalias:` links) go through the same 
 | Upstream file | What we changed | Why |
 |---|---|---|
 | `src/features/channels/ChannelView.tsx` | Import `CaseFileEntry`; render it after `FilesEntry` in the sidebar's *Table* section | Opens the Case file. It loads nothing until opened, so upstream's ChannelView tests need no new mocks |
-| `src/features/channels/ChannelView.test.tsx` | `'Case file'` added to the expected sidebar order | The new menu item changes the list |
+| `src/features/channels/ChannelView.test.tsx` | `'Case files'` in the expected sidebar order (renamed 2026-11-24) | The new menu item changes the list |
 
 Record pictures are uploaded through upstream's `upload-image` function into its existing GM-only
 `npc` folder (the function allows only a fixed list of folders), so the function is unchanged.
+
+## Adventure import (Phase 3)
+
+| Upstream file | What we changed | Why |
+|---|---|---|
+| `package.json`, `package-lock.json` | Added the dependencies `pdf-lib` 1.17.1 (step 3-3) and `pdfjs-dist` 6.5.438 (handout pictures, DECISIONS.md #50) | Cuts page ranges out of source PDFs in the browser. On a merge conflict keep upstream's lines and re-add ours |
+
+Our server functions live in new folders (`supabase/functions/ext-ai-*`, shared code in
+`supabase/functions/_ext-ai/`); `supabase/config.toml` is unchanged (the defaults, JWT checked, apply).
 
 ## New files (no conflict risk)
 
 `CLAUDE.md`, `docs/delta-green/*`, `src/features/ext/**`, `src/features/dg/**`,
 `src/test/stubs/pwaRegister.ts`, `supabase/migrations/*_ext_*.sql` and `*_dg_*.sql`,
-`supabase/tests/*_ext_*.sql` and `*_dg_*.sql`.
+`supabase/tests/*_ext_*.sql` and `*_dg_*.sql`, `supabase/functions/ext-*/**`, `supabase/functions/_ext-ai/**`.
 
 <!-- cspell:locale en-GB,en -->
 <!-- cspell:words Touchpoints TOUCHPOINTS npcalias recalias -->

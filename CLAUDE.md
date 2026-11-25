@@ -112,7 +112,7 @@ Upstream's suite originally had 12 Windows-only failures. We fixed them with sma
 test edits (listed in `docs/delta-green/UPSTREAM-TOUCHPOINTS.md`). The baseline is now **fully
 green**:
 
-- `npm run test:coverage`: 3,968 passed, 11 skipped after Phase 3 step 2
+- `npm run test:coverage`: 4,026 passed, 11 skipped after the Phase 3 follow-ups
   (`scripts/usage-report/run.test.ts`, skipped on Windows only), ~96% line coverage. Thresholds:
   80% lines/functions/statements, 81% branches.
 - `npx supabase test db`: 958 database tests pass.
@@ -131,10 +131,19 @@ is right; never `npx supabase@latest`. Generate from Git Bash (PowerShell redire
 encoding/line endings). A correct regeneration only adds
 lines for our new objects.
 
+**Local Supabase versions must match the database.** Since upstream pinned the CLI to 2.117.0
+(2026-11-25), `npm run supabase:up` runs older service images than the 3.x CLI did. A local
+database first started by a newer CLI breaks file uploads (storage `42P10` errors); the fix is
+`npm run supabase:reset` (wipes local data). There is no seed: recreate test accounts with the
+local auth admin API.
+
 **Database tests need a clean database.** The Playwright E2E run (pre-push) leaves listed test
 campaigns behind, which makes upstream's public-directory pgTAP tests fail. Run
-`npm run supabase:reset` before `npx supabase test db`. Baseline after Phase 3 step 2:
-1,484 database tests. Who-can-see-what is documented in `docs/delta-green/PERMISSIONS.md`; keep it
+`npm run supabase:reset` before `npx supabase test db`. Baseline after the Phase 3 follow-ups:
+1,551 database tests (all green on a clean database). The server can have only one server admin:
+upstream's admin tests fail while a local account is server admin (the local test GM is, for AI),
+so switch it off for the full run (`update profiles set server_admin = false where server_admin;`)
+and back on afterwards. Who-can-see-what is documented in `docs/delta-green/PERMISSIONS.md`; keep it
 in step with any access change.
 
 **Our migrations were rewritten in place once** (2026-11-17, `dg_` → `ext_` and generic terms)

@@ -20,6 +20,7 @@ vi.mock('./recordApi', () => ({
   saveRecordFields: vi.fn(),
   setRecordTags: vi.fn(),
 }))
+vi.mock('./recordFilesApi', () => ({ listRecordFiles: vi.fn(async () => []), listAttachableFiles: vi.fn(async () => []), attachFile: vi.fn(), detachFile: vi.fn(), recordFileLink: vi.fn() }))
 vi.mock('../characters/characterApi', () => ({ listTags: vi.fn(), createTag: vi.fn() }))
 vi.mock('./clueApi', () => ({
   CLUE_POINT_MAX: 300,
@@ -45,6 +46,7 @@ vi.mock('../ai/aiApi', async importOriginal => ({
   ...(await importOriginal<typeof import('../ai/aiApi')>()),
   getAiStatus: vi.fn(async () => ({ allowed: false, isServerAdmin: false, monthSpentUsd: 0, monthlyCapUsd: 0 })),
 }))
+vi.mock('../import/importApi', () => ({ listRuns: vi.fn(async () => []), listSuggestions: vi.fn(async () => []), startImport: vi.fn(), deleteRun: vi.fn() }))
 vi.mock('../sources/sourcesApi', () => ({
   listSources: vi.fn(async () => [{ id: 's1', title: 'Last Things Last', objectPath: 'ch/a.pdf', fileName: 'ltl.pdf', sizeBytes: 1000, createdAt: '2026-11-25T10:00:00Z' }]),
   addSource: vi.fn(),
@@ -177,6 +179,8 @@ describe('Case file', () => {
     expect(screen.getByRole('button', { name: 'Sources (GM only)' })).toHaveAttribute('aria-pressed', 'true')
     fireEvent.click(screen.getByRole('button', { name: 'Records' }))
     expect(await screen.findByText('Morgue')).toBeInTheDocument()
+    // Coming back reloads the records (imports may have added some).
+    await waitFor(() => expect(api.listRecords).toHaveBeenCalledTimes(2))
   })
 
   it('tells players when nothing has been shared and the GM how to start', async () => {

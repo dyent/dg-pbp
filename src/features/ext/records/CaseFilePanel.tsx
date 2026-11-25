@@ -115,7 +115,11 @@ export function CaseFilePanel({ channelId, isGM, isArchived, myUserId, players, 
                   type="button"
                   aria-pressed={tab === t}
                   disabled={busy}
-                  onClick={() => setTab(t)}
+                  onClick={() => {
+                    setTab(t)
+                    // Approving imports in Sources adds records: show them on the way back.
+                    if (t === 'records' && tab !== 'records') reload()
+                  }}
                   className={`rounded-full px-3 py-1 text-sm font-medium disabled:opacity-50 ${
                     tab === t
                       ? 'bg-primary-600 text-white'

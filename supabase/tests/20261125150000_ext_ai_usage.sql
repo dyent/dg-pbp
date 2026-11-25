@@ -11,6 +11,8 @@ VALUES
   ('00000000-0000-0000-0000-0000000b1002', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'aigm@test.com', '', now(), '{}', '{}', now(), now()),
   ('00000000-0000-0000-0000-0000000b1003', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'aisam@test.com', '', now(), '{}', '{}', now(), now());
 
+-- There can be only one server admin: step a local one aside (rolled back at the end).
+UPDATE profiles SET server_admin = false WHERE server_admin;
 UPDATE profiles SET server_admin = true WHERE id = '00000000-0000-0000-0000-0000000b1001';
 
 INSERT INTO channels (id, name, gm_id, invite_code)

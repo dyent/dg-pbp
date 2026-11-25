@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useId, useState } from 'react'
+import { useEffect, useId, useState } from 'react'
 import { useToast } from '../../../contexts/ToastContext'
 import { BTN_PRIMARY, BTN_SECONDARY, INPUT, LABEL } from '../characters/ui'
-import { AiCallError, formatUsd, getAiStatus, setAiCap, testAiConnection, type AiStatus, type AiTestResult } from './aiApi'
+import { AiCallError, formatUsd, setAiCap, testAiConnection, type AiTestResult } from './aiApi'
+import type { AiStatusState } from './useAiStatus'
 
 /** What to tell the GM for each server answer. */
 const HINTS: Record<string, string> = {
@@ -15,37 +16,21 @@ const HINTS: Record<string, string> = {
  * AI status for the GM (Phase 3 step 2): this month's spending against the cap,
  * the cap itself (server admin) and a "test the connection" button.
  */
-export function AiStatusCard({ channelId }: { channelId: string }) {
+export function AiStatusCard({ channelId, ai }: { channelId: string; ai: AiStatusState }) {
   const { addToast } = useToast()
   const ids = useId()
-  const [status, setStatus] = useState<AiStatus | null>(null)
-  const [loadError, setLoadError] = useState(false)
-  const [token, setToken] = useState(0)
+  const { status, error: loadError, reload } = ai
   const [testing, setTesting] = useState(false)
   const [result, setResult] = useState<AiTestResult | null>(null)
   const [problem, setProblem] = useState<AiCallError | null>(null)
   const [cap, setCap] = useState('')
   const [savingCap, setSavingCap] = useState(false)
+  const loadedCap = status?.monthlyCapUsd
 
+  // Show the saved cap whenever it (re)loads.
   useEffect(() => {
-    let mounted = true
-    getAiStatus(channelId)
-      .then(s => {
-        if (!mounted) return
-        setStatus(s)
-        setCap(s.monthlyCapUsd.toFixed(2))
-        setLoadError(false)
-      })
-      .catch(err => {
-        console.error('Failed to load AI status:', err)
-        if (mounted) setLoadError(true)
-      })
-    return () => {
-      mounted = false
-    }
-  }, [channelId, token])
-
-  const reload = useCallback(() => setToken(t => t + 1), [])
+    if (loadedCap !== undefined) setCap(loadedCap.toFixed(2))
+  }, [loadedCap])
 
   const runTest = async () => {
     setTesting(true)
