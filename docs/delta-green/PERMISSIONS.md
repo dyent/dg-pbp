@@ -146,6 +146,18 @@ Tests: `supabase/tests/*_ext_links.sql`, `*_ext_link_history.sql`. How to use: `
 
 Players never read the links table itself; `ext_links_for` gives them only what the rules allow.
 
+## Sources (adventure PDFs)
+
+Tests: `supabase/tests/*_ext_sources.sql`. How to use: `12-case-file.md` (*Sources*).
+
+| What | GM | Player | Outsider |
+|---|---|---|---|
+| See the list of sources (titles included) | Yes | No | No |
+| Open a source PDF | Yes (also in archived campaigns) | No | No |
+| Add, rename, delete | Yes (not in archived campaigns) | No | No |
+
+There is no way to share a source: they live in their own storage, apart from campaign files.
+
 ## In-game calendar
 
 Tests: `supabase/tests/*_ext_in_game_calendar.sql`. How to use: `08-in-game-calendar.md`.

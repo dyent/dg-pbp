@@ -119,8 +119,23 @@ A clue's **Profile** tab starts with a **Clue** box:
 Status and found changes appear in the clue's history (Activity → Changes). Players write their
 theories as **notes** on the clue.
 
+## Sources (Phase 3, GM only)
+
+The **Sources** switch at the top of Case files (only you see it) opens your library of published
+adventures:
+
+- **+ Add a source:** choose the PDF (up to 50 MB); the title starts from the file name. Uploading a
+  big PDF takes a little while.
+- **Open:** opens the PDF in a new browser tab, at the page you type (or page 1).
+- **Rename** and **Delete** (with a second click to confirm; this removes the PDF too).
+
+Sources are never shown to players and can't be shared: they live in their own storage, apart
+from campaign files. Importing NPCs, places and clues from them comes in the next steps
+(`13-phase3-design.md`).
+
 ## Coming next
 
-Phase 2b is complete. Possible later additions: a timeline drawn from in-game dates.
+Phase 2b is complete (a timeline drawn from in-game dates may come later). Phase 3 continues with
+the AI import from sources.
 
 <!-- cspell:locale en-GB,en -->

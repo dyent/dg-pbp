@@ -7,6 +7,7 @@ import * as api from './recordApi'
 import { CaseFileEntry } from './CaseFileEntry'
 import { CaseFilePanel } from './CaseFilePanel'
 import type { CampaignRecord, RecordField } from './recordModel'
+import * as sourcesApi from '../sources/sourcesApi'
 
 vi.mock('./recordApi', () => ({
   listRecords: vi.fn(),
@@ -40,6 +41,13 @@ vi.mock('../links/linkApi', () => ({
   reverseLink: vi.fn(),
 }))
 vi.mock('../activity/activityApi', () => ({ POSTS_PAGE: 50, listRoomNames: vi.fn(async () => new Map()), listTaggedNotes: vi.fn(async () => []) }))
+vi.mock('../sources/sourcesApi', () => ({
+  listSources: vi.fn(async () => [{ id: 's1', title: 'Last Things Last', objectPath: 'ch/a.pdf', fileName: 'ltl.pdf', sizeBytes: 1000, createdAt: '2026-11-25T10:00:00Z' }]),
+  addSource: vi.fn(),
+  renameSource: vi.fn(),
+  deleteSource: vi.fn(),
+  sourceLink: vi.fn(),
+}))
 vi.mock('./recordActivityApi', () => ({
   listRecordAliases: vi.fn(async () => []),
   setRecordAliases: vi.fn(async () => undefined),
@@ -153,6 +161,18 @@ describe('Case file', () => {
     expect(screen.queryByLabelText('Show tag')).not.toBeInTheDocument()
     expect(api.listRecordEvents).not.toHaveBeenCalled()
     expect(characterApi.listTags).not.toHaveBeenCalled()
+    expect(screen.queryByRole('button', { name: 'Sources (GM only)' })).not.toBeInTheDocument()
+    expect(sourcesApi.listSources).not.toHaveBeenCalled()
+  })
+
+  it('lets the GM switch to the source library and back', async () => {
+    renderPanel()
+    fireEvent.click(await screen.findByRole('button', { name: 'Sources (GM only)' }))
+    expect(await screen.findByText('Last Things Last')).toBeInTheDocument()
+    expect(sourcesApi.listSources).toHaveBeenCalledWith('ch')
+    expect(screen.getByRole('button', { name: 'Sources (GM only)' })).toHaveAttribute('aria-pressed', 'true')
+    fireEvent.click(screen.getByRole('button', { name: 'Records' }))
+    expect(await screen.findByText('Morgue')).toBeInTheDocument()
   })
 
   it('tells players when nothing has been shared and the GM how to start', async () => {

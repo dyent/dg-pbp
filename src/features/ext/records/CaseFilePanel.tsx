@@ -25,6 +25,7 @@ import {
   type RecordKind,
 } from './recordModel'
 import { useRecords } from './useRecords'
+import { SourcesView } from '../sources/SourcesView'
 
 export interface CaseFilePanelProps {
   channelId: string
@@ -47,6 +48,8 @@ export function CaseFilePanel({ channelId, isGM, isArchived, myUserId, players, 
   const [view, setView] = useState<View>(initialRecordId ? { mode: 'record', id: initialRecordId } : { mode: 'none' })
   const [filter, setFilter] = useState<RecordFilter>({ search: '', kind: 'all', tagId: null, status: 'all' })
   const [editing, setEditing] = useState(false)
+  // GM only: the records list, or the source library (Phase 3).
+  const [tab, setTab] = useState<'records' | 'sources'>('records')
   const busy = editing || view.mode === 'new'
   const canManage = isGM && !isArchived
 
@@ -62,7 +65,9 @@ export function CaseFilePanel({ channelId, isGM, isArchived, myUserId, players, 
   const showingDetail = view.mode !== 'none'
   // A record tag inside this panel (e.g. in Activity) switches to that record.
   const openRecord = useCallback((id: string) => {
-    if (!busy) setView({ mode: 'record', id })
+    if (busy) return
+    setTab('records')
+    setView({ mode: 'record', id })
   }, [busy])
 
   return (
@@ -102,7 +107,29 @@ export function CaseFilePanel({ channelId, isGM, isArchived, myUserId, players, 
         </div>
 
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden px-4 pt-3">
-          {error ? (
+          {isGM && (
+            <div role="group" aria-label="Case files section" className="mb-3 flex gap-1">
+              {(['records', 'sources'] as const).map(t => (
+                <button
+                  key={t}
+                  type="button"
+                  aria-pressed={tab === t}
+                  disabled={busy}
+                  onClick={() => setTab(t)}
+                  className={`rounded-full px-3 py-1 text-sm font-medium disabled:opacity-50 ${
+                    tab === t
+                      ? 'bg-primary-600 text-white'
+                      : 'bg-surface-100 text-surface-700 hover:bg-surface-200 dark:bg-surface-700 dark:text-surface-200 dark:hover:bg-surface-600'
+                  }`}
+                >
+                  {t === 'records' ? 'Records' : 'Sources (GM only)'}
+                </button>
+              ))}
+            </div>
+          )}
+          {isGM && tab === 'sources' ? (
+            <SourcesView channelId={channelId} isArchived={isArchived} />
+          ) : error ? (
             <div role="alert" className="flex items-center justify-between rounded bg-red-50 p-3 text-sm text-red-700 dark:bg-red-900/30 dark:text-red-300">
               <span>Couldn't load the case file.</span>
               <button type="button" onClick={reload} className={BTN_SECONDARY}>

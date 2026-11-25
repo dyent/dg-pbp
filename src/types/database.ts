@@ -2013,6 +2013,57 @@ export type Database = {
           },
         ]
       }
+      ext_sources: {
+        Row: {
+          channel_id: string
+          created_at: string
+          created_by: string | null
+          file_name: string
+          id: string
+          object_path: string
+          size_bytes: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          channel_id: string
+          created_at?: string
+          created_by?: string | null
+          file_name: string
+          id?: string
+          object_path: string
+          size_bytes: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          channel_id?: string
+          created_at?: string
+          created_by?: string | null
+          file_name?: string
+          id?: string
+          object_path?: string
+          size_bytes?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ext_sources_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "channels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ext_sources_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ext_tags: {
         Row: {
           channel_id: string
@@ -3124,6 +3175,10 @@ export type Database = {
         Args: { p_channel_id: string }
         Returns: undefined
       }
+      ext__require_sources_gm: {
+        Args: { p_channel_id: string }
+        Returns: undefined
+      }
       ext__room_has_own_date: {
         Args: { p_channel_id: string; p_sub_channel_id: string }
         Returns: boolean
@@ -3168,6 +3223,15 @@ export type Database = {
         }
         Returns: string
       }
+      ext_add_source: {
+        Args: {
+          p_channel_id: string
+          p_file_name: string
+          p_object_path: string
+          p_title: string
+        }
+        Returns: string
+      }
       ext_campaign_file_path_channel: {
         Args: { p_name: string }
         Returns: string
@@ -3194,6 +3258,10 @@ export type Database = {
       }
       ext_can_read_record: { Args: { p_record_id: string }; Returns: boolean }
       ext_can_write_campaign_file_object: {
+        Args: { p_name: string }
+        Returns: boolean
+      }
+      ext_can_write_source_object: {
         Args: { p_name: string }
         Returns: boolean
       }
@@ -3245,6 +3313,7 @@ export type Database = {
         Args: { p_note_id: string }
         Returns: undefined
       }
+      ext_delete_source: { Args: { p_source_id: string }; Returns: string }
       ext_is_character_owner: {
         Args: { p_character_id: string }
         Returns: boolean
@@ -3327,6 +3396,10 @@ export type Database = {
           type: string
           whisper_to: string
         }[]
+      }
+      ext_rename_source: {
+        Args: { p_source_id: string; p_title: string }
+        Returns: undefined
       }
       ext_replace_campaign_file: {
         Args: { p_file_id: string; p_file_name: string; p_object_path: string }
