@@ -18,11 +18,14 @@ VALUES
   ('00000000-0000-0000-0000-000000ae2001', '00000000-0000-0000-0000-000000ae1002', 'Sam', now(), false);
 
 -- A hidden PC nobody owns yet, a hidden retired one, and a revealed one.
+-- (Creating one already out of play needs the role-change switch, as ext_set_role uses.)
+SELECT set_config('ext.allow_role_change', 'on', true);
 INSERT INTO ext_characters (id, channel_id, kind, name, revealed, in_play, created_by)
 VALUES
   ('00000000-0000-0000-0000-000000ae3001', '00000000-0000-0000-0000-000000ae2001', 'pc', 'Unassigned', false, true, '00000000-0000-0000-0000-000000ae1001'),
   ('00000000-0000-0000-0000-000000ae3002', '00000000-0000-0000-0000-000000ae2001', 'pc', 'Old agent', false, false, '00000000-0000-0000-0000-000000ae1001'),
   ('00000000-0000-0000-0000-000000ae3003', '00000000-0000-0000-0000-000000ae2001', 'pc', 'Known agent', true, true, '00000000-0000-0000-0000-000000ae1001');
+SELECT set_config('ext.allow_role_change', '', true);
 
 GRANT ALL ON ALL TABLES IN SCHEMA public TO authenticated;
 GRANT ALL ON ALL ROUTINES IN SCHEMA public TO authenticated;

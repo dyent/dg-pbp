@@ -2,6 +2,48 @@
 
 All notable changes to this project are documented in this file.
 
+## 2026-11-24
+
+### Changed
+
+- **The room manager is easier to scan** *(for GMs)* — each room now shows its name, who can see it, and which features are turned on in one summary line, so you can see every room at a glance without scrolling a wall of checkboxes. Tap a room to open its controls in place: **Open** jumps straight into it, and **Rename**, **Archive**, **Delete**, the audience and the feature toggles are all there. Only one room opens at a time, and on a phone every button is big enough to tap without aiming.
+
+### Fixed
+
+- **The Lobby updates the moment a room opens up or closes for you** — when a GM invites you to a private room, or takes a room away from you, your Lobby now shows that game's newest visible message, moves it to its new place in the list, and updates its unread count right away, without waiting for a new message or reopening the app.
+- **Your own rolls and messages always land in view** — rolling dice from an older message, or sending while scrolled up in the history, now takes you to your new post at the bottom of the chat. If it fails, its message and **Retry** and **Remove** buttons are right in front of you instead of hidden below the fold.
+- **Lobby search no longer gets stuck** — clearing the search box right after typing now removes the search for good, instead of the old words jumping back into the box and staying in the address bar.
+
+## 2026-11-23
+
+### Fixed
+
+- **Switching rooms no longer reloads the game** — moving between a game's Main timeline and one of its rooms keeps the whole screen in place: the header, the room tabs and the composer stay put, and only the conversation you switched to loads. With a keyboard, the room tab you pick keeps its focus, so arrow-key navigation carries on from where it was.
+
+## 2026-11-19
+
+### Changed
+
+- **The Myth-Weavers comparison is honest now** — the page comparing Role by Post with Myth-Weavers has been checked against Myth-Weavers' own documentation. It credits what they do best (the free character sheets, the 1,350+ games, the map canvas), and it now shows real screenshots of a Role by Post campaign. The page also has its own preview card when someone shares the link.
+
+### Fixed
+
+- **The dice roller starts fresh every time** — opening the panel now gives you an empty form: no dice picked, the modifier back to 0, Sum mode, and advantage off. A bonus or die left over from an earlier roll can no longer sneak into the next one. To repeat a roll you made before, tap its notation chip above the form: most chips load their values for you to confirm, while a few unusual ones (like drop-lowest) roll the moment you tap them.
+- **NPC portraits keep loading when you search for icons more than once** — a second (or tenth) search now shows its portraits instead of a grid of broken images. Once you have opened the picker before, its default portraits are saved on your device, so they appear straight away even on a slow connection.
+
+## 2026-11-17
+
+### Added
+
+- **See the RPOL comparison at a glance** — the page comparing Role by Post with RPOL now shows real screenshots of a campaign on a phone: the story timeline, the rooms inside a game, and the dice roller. Tap one to enlarge it.
+- **A way to start from every guide** — the long-form pages now end with a **Start now** button, and on a phone a slim bar stays at the bottom of the screen so you can begin whenever you are convinced. The RPOL comparison also offers the button right after its opening section.
+- **One page for all the alternatives** — a new page at **Alternatives** lists every comparison in one place, so you can pick the platform you are coming from. It is linked from the footer.
+- **The directory shows how busy the place is** — above the listings on the public games page you can now see how many games exist, how many messages have been sent, and how many people are in a game, plus a line with how many games are active, recruiting now, and new this week. A game counts as active when at least two people posted at least fifteen messages in it during the past two weeks. Signed-in players see the same three figures below the Discover list. The numbers refresh hourly and large ones round down, so they never overstate.
+
+### Changed
+
+- **Active games are counted by recent activity** — the Server Admin console's **Active Channels** card now counts games with two or more posters and fifteen or more posts in the last two weeks, so a game that went quiet last month no longer reads as active. <!-- admin-only -->
+
 ## 2026-11-14
 
 ### Added

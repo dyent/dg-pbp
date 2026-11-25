@@ -14,7 +14,7 @@ import { usePushNotifications } from '../notifications/usePushNotifications'
 import { notifyChannelRead, refreshAppBadge } from '../../lib/channelRead'
 import { supabase } from '../../lib/supabase'
 import { trackEvent } from '../../lib/analytics'
-import { MemoryRouter, Route, Routes, useNavigate } from 'react-router-dom'
+import { MemoryRouter, Route, Routes, useNavigate, useLocation, Link } from 'react-router-dom'
 import { ToastProvider } from '../../contexts/ToastContext'
 
 vi.mock('./useChannel', () => ({
@@ -136,6 +136,11 @@ beforeEach(() => {
     refetch: vi.fn(),
     decide: vi.fn(),
   } as any)
+  // ChannelView reads this on every render. Set it here rather than relying on
+  // a value left behind by an earlier describe: `vi.restoreAllMocks` in one
+  // block wipes it for every block after it, and a filtered run never sets it
+  // at all.
+  vi.mocked(useMarkMessageUnread).mockReturnValue({ markUnreadMessage: vi.fn().mockResolvedValue(null) } as any)
 })
 
 describe('ChannelView search functionality', () => {
@@ -3636,6 +3641,30 @@ describe('ChannelView rooms (#621)', () => {
     expect(screen.queryByRole('dialog', { name: 'Create room' })).not.toBeInTheDocument()
   })
 
+  it('opens a room straight from the manager (#775)', () => {
+    vi.mocked(useSubChannels).mockReturnValue({
+      subChannels: [room({ id: 'r1' })], archivedRooms: [], loading: false, error: null,
+      create: vi.fn(), rename: vi.fn(), setArchived: vi.fn(), remove: vi.fn(), refetch: vi.fn(),
+    } as any)
+    vi.mocked(useChannel).mockReturnValue({
+      channel: { id: 'c1', name: 'Goblin Cave', gm_id: 'gm1', is_archived: false },
+      members: [{ user_id: 'gm1', character_name: 'GM', is_blocked: false }],
+      loading: false, error: null, isGM: true,
+      myMemberInfo: { id: 'm1', user_id: 'gm1' }, gmOnlyResourcesUrl: null, refetch: vi.fn(),
+    } as any)
+
+    renderAt('/channel/c1')
+
+    fireEvent.click(screen.getByRole('button', { name: 'Manage rooms' }))
+    fireEvent.click(screen.getByRole('button', { name: /^OOC/ }))
+    fireEvent.click(screen.getByRole('button', { name: 'Open OOC' }))
+
+    // The manager closes and the channel switches room behind it (#765 means
+    // the subtree does not remount, so a lingering dialog would sit on top).
+    expect(screen.queryByRole('dialog', { name: 'Manage rooms' })).not.toBeInTheDocument()
+    expect(vi.mocked(useMessages)).toHaveBeenLastCalledWith('c1', 'r1', expect.any(Function))
+  })
+
   it('creates a private room in one RPC and lands in it', async () => {
     const create = vi.fn().mockResolvedValue('r2')
     // The rooms list resolves from the hook on every render, so the created
@@ -3682,6 +3711,30 @@ describe('ChannelView rooms (#621)', () => {
     expect(screen.queryByRole('dialog', { name: 'Create room' })).not.toBeInTheDocument()
     // The GM lands in the new room, not on Main.
     expect(screen.getByRole('tab', { name: 'Secret' })).toHaveAttribute('aria-selected', 'true')
+  })
+
+  it('stays in a just-created room before the realtime echo lands (#765)', async () => {
+    const create = vi.fn().mockResolvedValue('r2')
+    vi.mocked(useSubChannels).mockReturnValue({
+      subChannels: [], archivedRooms: [], loading: false, error: null, confirmed: true,
+      create, rename: vi.fn(), setArchived: vi.fn(), remove: vi.fn(), refetch: vi.fn(),
+    } as any)
+    vi.mocked(useChannel).mockReturnValue({
+      channel: { id: 'c1', name: 'Goblin Cave', gm_id: 'gm1', is_archived: false },
+      members: [], loading: false, error: null, isGM: true,
+      myMemberInfo: { id: 'm1', user_id: 'gm1' }, gmOnlyResourcesUrl: null, refetch: vi.fn(),
+    } as any)
+
+    renderAt('/channel/c1')
+
+    fireEvent.click(screen.getByRole('button', { name: 'Add room' }))
+    fireEvent.change(screen.getByLabelText('Room name'), { target: { value: 'OOC' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Create room' }))
+
+    await waitFor(() => expect(vi.mocked(useMessages)).toHaveBeenLastCalledWith('c1', 'r2', expect.any(Function)))
+    // The list only learns about the room from the realtime echo; a missing id
+    // must not read as "deleted" and bounce the GM back to Main.
+    expect(screen.queryByText("That room no longer exists. You're back in Main.")).not.toBeInTheDocument()
   })
 
   it('passes the route room through to useMessages', () => {
@@ -3908,6 +3961,197 @@ describe('ChannelView rooms (#621)', () => {
     expect(screen.queryByText('Save Status')).not.toBeInTheDocument()
     expect(screen.getByText('Room two')).toBeInTheDocument()
   })
+
+  it('keeps the channel chrome mounted and the room tab focused while the new room loads (#765)', () => {
+    vi.mocked(useSubChannels).mockReturnValue({
+      subChannels: [room()], archivedRooms: [], loading: false, error: null,
+      create: vi.fn(), rename: vi.fn(), setArchived: vi.fn(), remove: vi.fn(), refetch: vi.fn(),
+    } as any)
+    vi.mocked(useMessages).mockImplementation(((_id: unknown, subChannelId: string | null) => ({
+      messages: [], reactions: {}, loading: subChannelId !== null, error: null, hasMore: false,
+      loadingOlder: false, retrying: false,
+      sendMessage: vi.fn(), editMessage: vi.fn(), deleteMessage: vi.fn(), sendDiceRoll: vi.fn(),
+      addReaction: vi.fn(), removeReaction: vi.fn(), retryMessage: vi.fn(), removePendingMessage: vi.fn(),
+      refresh: vi.fn().mockResolvedValue(undefined), loadOlder: vi.fn(), jumpToMessage: vi.fn().mockResolvedValue('found'),
+    })) as any)
+
+    renderAt('/channel/c1')
+
+    const roomTab = screen.getByRole('tab', { name: 'OOC' })
+    roomTab.focus()
+    fireEvent.click(roomTab)
+
+    // The header and the tablist are the same DOM nodes: only the timeline
+    // swaps to skeletons while the room's history loads.
+    expect(screen.getByRole('tab', { name: 'OOC' })).toHaveFocus()
+    expect(screen.getByText('Goblin Cave')).toBeInTheDocument()
+    expect(screen.queryByTestId('channel-name-skeleton')).not.toBeInTheDocument()
+    expect(screen.getByTestId('message-skeletons')).toBeInTheDocument()
+  })
+
+  it('does not clear the Main dot until Main history loads after a room switch (#765)', async () => {
+    Object.defineProperty(document, 'visibilityState', { value: 'visible', configurable: true })
+    vi.mocked(useSubChannels).mockReturnValue({
+      subChannels: [room({ id: 'r1' })], archivedRooms: [], loading: false, error: null,
+      create: vi.fn(), rename: vi.fn(), setArchived: vi.fn(), remove: vi.fn(), refetch: vi.fn(),
+    } as any)
+    const markMainRead = vi.fn()
+    vi.mocked(useSubChannelUnread).mockReturnValue({
+      counts: { main: 2 }, markRoomRead: vi.fn().mockResolvedValue(undefined), markMainRead, refetch: vi.fn(),
+    } as any)
+    vi.mocked(useChannel).mockReturnValue({
+      channel: { id: 'c1', name: 'Goblin Cave' }, members: [], loading: false, error: null, isGM: false,
+      myMemberInfo: { id: 'm1', user_id: 'user1' }, markRead: vi.fn(), refetch: vi.fn(),
+    } as any)
+
+    renderAt('/channel/c1/sub/r1')
+
+    // The room's history loads.
+    await act(async () => { vi.mocked(useMessages).mock.calls.at(-1)?.[2]?.() })
+    expect(markMainRead).not.toHaveBeenCalled()
+
+    // The tab carries an unread dot, so match by prefix.
+    fireEvent.click(screen.getByRole('tab', { name: /^Main/ }))
+
+    // On the first render after the switch `messagesLoaded` is still the room's
+    // value; clearing Main's dot here would hide posts never fetched.
+    expect(markMainRead).not.toHaveBeenCalled()
+
+    await act(async () => { vi.mocked(useMessages).mock.calls.at(-1)?.[2]?.() })
+    await waitFor(() => expect(markMainRead).toHaveBeenCalled())
+  })
+
+  it('handles the same dead room link again after returning to Main (#765)', async () => {
+    vi.mocked(useSubChannels).mockReturnValue({
+      subChannels: [room({ id: 'r1' })], archivedRooms: [], loading: false, error: null, confirmed: true, confirmations: 1,
+      create: vi.fn(), rename: vi.fn(), setArchived: vi.fn(), remove: vi.fn(), refetch: vi.fn(),
+    } as any)
+
+    function PathProbe() {
+      const location = useLocation()
+      return <span data-testid="loc">{location.pathname}</span>
+    }
+
+    // ChannelView stays mounted on both routes: that is the case the ref reset
+    // exists for. A fresh instance would pass this test without the fix.
+    render(
+      <ToastProvider>
+        <MemoryRouter initialEntries={['/channel/c1/sub/bogus']}>
+          <PathProbe />
+          <Link to="/channel/c1/sub/bogus">dead room</Link>
+          <Routes>
+            <Route path="/channel/:id" element={<ChannelView />} />
+            <Route path="/channel/:id/sub/:subId" element={<ChannelView />} />
+          </Routes>
+        </MemoryRouter>
+      </ToastProvider>,
+    )
+
+    // First visit: the dead link falls back to Main.
+    expect(await screen.findByText("That room no longer exists. You're back in Main.")).toBeInTheDocument()
+    expect(screen.getByTestId('loc')).toHaveTextContent('/channel/c1')
+
+    fireEvent.click(screen.getByText('dead room'))
+
+    // The same link must redirect again instead of leaving an empty room.
+    await waitFor(() => expect(screen.getByTestId('loc')).toHaveTextContent('/channel/c1'))
+    expect(await screen.findAllByText("That room no longer exists. You're back in Main.")).toHaveLength(2)
+  })
+
+  it('never paints the previous room history under the new room (#765)', () => {
+    vi.mocked(useSubChannels).mockReturnValue({
+      subChannels: [room({ id: 'r1', name: 'OOC' })], archivedRooms: [], loading: false, error: null, confirmed: true, confirmations: 1,
+      create: vi.fn(), rename: vi.fn(), setArchived: vi.fn(), remove: vi.fn(), refetch: vi.fn(),
+    } as any)
+    // The hook still reports Main's window with rows while the route is OOC.
+    vi.mocked(useMessages).mockReturnValue({
+      messages: [{ id: 'main-msg', content: 'main-only text', type: 'regular', sender_id: 'user1' }],
+      reactions: {}, loading: false, error: null, hasMore: false, loadingOlder: false, retrying: false,
+      loadedScope: 'c1:main',
+      sendMessage: vi.fn(), editMessage: vi.fn(), deleteMessage: vi.fn(), sendDiceRoll: vi.fn(),
+      addReaction: vi.fn(), removeReaction: vi.fn(), retryMessage: vi.fn(), removePendingMessage: vi.fn(),
+      refresh: vi.fn().mockResolvedValue(undefined), loadOlder: vi.fn(), jumpToMessage: vi.fn().mockResolvedValue('found'),
+    } as any)
+
+    renderAt('/channel/c1/sub/r1')
+
+    expect(screen.queryByText('main-only text')).not.toBeInTheDocument()
+    expect(screen.getByTestId('message-skeletons')).toBeInTheDocument()
+  })
+
+  it('drops the creation exemption once a post-create refresh confirms (#765)', async () => {
+    const create = vi.fn().mockResolvedValue('r2')
+    let roomList: ReturnType<typeof room>[] = []
+    // The room list is revalidated by the post-create refetch: the first
+    // confirmation (at creation) predates the new room, the next one is
+    // authoritative.
+    let confirmations = 3
+    const refetch = vi.fn(() => {
+      confirmations += 1
+      roomList = [room({ id: 'r2', name: 'OOC' })]
+    })
+    vi.mocked(useSubChannels).mockImplementation(() => ({
+      subChannels: roomList, archivedRooms: [], loading: false, error: null, confirmed: true,
+      confirmations, create, rename: vi.fn(), setArchived: vi.fn(), remove: vi.fn(), refetch,
+    } as any))
+    vi.mocked(useChannel).mockReturnValue({
+      channel: { id: 'c1', name: 'Goblin Cave', gm_id: 'gm1', is_archived: false },
+      members: [], loading: false, error: null, isGM: true,
+      myMemberInfo: { id: 'm1', user_id: 'gm1' }, gmOnlyResourcesUrl: null, refetch: vi.fn(),
+    } as any)
+
+    render(
+      <ToastProvider>
+        <MemoryRouter initialEntries={['/channel/c1']}>
+          <Link to="/channel/c1">main</Link>
+          <Link to="/channel/c1/sub/r2">stale room link</Link>
+          <Routes>
+            <Route path="/channel/:id" element={<ChannelView />} />
+            <Route path="/channel/:id/sub/:subId" element={<ChannelView />} />
+          </Routes>
+        </MemoryRouter>
+      </ToastProvider>,
+    )
+
+    // Create the room: the route moves to it before its row is in the list.
+    fireEvent.click(screen.getByRole('button', { name: 'Add room' }))
+    fireEvent.change(screen.getByLabelText('Room name'), { target: { value: 'OOC' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Create room' }))
+    await waitFor(() => expect(vi.mocked(useMessages)).toHaveBeenLastCalledWith('c1', 'r2', expect.any(Function)))
+    expect(refetch).toHaveBeenCalled()
+
+    // A refresh that started after creation confirmed the list. The room is
+    // then deleted elsewhere, so its stale link is a dead link again.
+    fireEvent.click(screen.getByText('main'))
+    roomList = []
+    fireEvent.click(screen.getByText('stale room link'))
+
+    expect(await screen.findByText("That room no longer exists. You're back in Main.")).toBeInTheDocument()
+  })
+
+  it('drops the reply target when the room changes (#765)', () => {
+    vi.mocked(useSubChannels).mockReturnValue({
+      subChannels: [room()], archivedRooms: [], loading: false, error: null,
+      create: vi.fn(), rename: vi.fn(), setArchived: vi.fn(), remove: vi.fn(), refetch: vi.fn(),
+    } as any)
+    vi.mocked(useMessages).mockReturnValue({
+      messages: [{ id: 'msg1', content: 'test', type: 'regular', sender_id: 'user2', created_at: '2026-10-05T10:00:00Z' }],
+      reactions: {}, loading: false, error: null, hasMore: false, loadingOlder: false, retrying: false,
+      sendMessage: vi.fn(), editMessage: vi.fn(), deleteMessage: vi.fn(), sendDiceRoll: vi.fn(),
+      addReaction: vi.fn(), removeReaction: vi.fn(), retryMessage: vi.fn(), removePendingMessage: vi.fn(),
+      refresh: vi.fn().mockResolvedValue(undefined), loadOlder: vi.fn(), jumpToMessage: vi.fn().mockResolvedValue('found'),
+    } as any)
+
+    renderAt('/channel/c1')
+
+    fireEvent.click(screen.getByLabelText('Reply'))
+    expect(screen.getByText(/Replying to/)).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('tab', { name: 'OOC' }))
+
+    // A reply picked in Main must never be sent into the room.
+    expect(screen.queryByText(/Replying to/)).not.toBeInTheDocument()
+  })
 })
 
 describe('ChannelView offline reading (#825)', () => {
@@ -4017,5 +4261,157 @@ describe('ChannelView offline reading (#825)', () => {
 
     expect(screen.queryByTestId('message-skeletons')).not.toBeInTheDocument()
     expect(screen.getByText('Saved Channel')).toBeInTheDocument()
+  })
+})
+
+describe('ChannelView own send while scrolled up (#809)', () => {
+  let scrollTop = 0
+  let scrollHeight = 1000
+
+  beforeEach(() => {
+    scrollTop = 0
+    scrollHeight = 1000
+    window.HTMLElement.prototype.scrollIntoView = vi.fn()
+    // The timeline's own scroll metrics: MessageList reads these on the
+    // role="log" container to decide whether the viewer is at the bottom.
+    Object.defineProperty(window.HTMLElement.prototype, 'scrollHeight', {
+      configurable: true,
+      get: () => scrollHeight,
+    })
+    Object.defineProperty(window.HTMLElement.prototype, 'scrollTop', {
+      configurable: true,
+      get: () => scrollTop,
+      set: (v: number) => { scrollTop = v },
+    })
+    vi.mocked(usePushNotifications).mockReturnValue({ preferences: { badge_enabled: true } } as any)
+    vi.mocked(useSafetyCardEvents).mockReturnValue({
+      alertActive: false, alertCount: 0, catchUpError: false, retryCatchUp: vi.fn(), dismissAlert: vi.fn(), triggerXCard: vi.fn(),
+    } as any)
+    vi.mocked(useChannel).mockReturnValue({
+      channel: { id: 'c1', name: 'Goblin Cave' },
+      members: [{ id: 'm1', user_id: 'user1', is_active_player: true, character_name: 'Hero' }],
+      loading: false, error: null, isGM: false,
+      myMemberInfo: { id: 'm1', user_id: 'user1' },
+      lastReadAt: null, gmOnlyResourcesUrl: null, refetch: vi.fn(),
+      waitForReads: vi.fn().mockResolvedValue(undefined),
+    } as any)
+    vi.mocked(useMessageFavorites).mockReturnValue({
+      favoriteIds: new Set<string>(), favoriteMessages: [], isFavorite: () => false,
+      toggleFavorite: vi.fn(), patchFavoriteMessage: vi.fn(), loading: false, error: null, refetch: vi.fn(),
+    } as any)
+    vi.mocked(useMarkMessageUnread).mockReturnValue({ markUnreadMessage: vi.fn().mockResolvedValue(null) } as any)
+  })
+
+  afterEach(() => {
+    delete (window.HTMLElement.prototype as any).scrollHeight
+    delete (window.HTMLElement.prototype as any).scrollTop
+  })
+
+  const failedOwnRoll = {
+    id: 'cr-9',
+    content: 'Rolling `1d20`',
+    type: 'dice_roll',
+    sender_id: 'user1',
+    whisper_to: null,
+    pending: true,
+    error: 'Roll was not confirmed. Tap retry to reroll.',
+    roll_dc: null,
+    roll_success: null,
+    created_at: '2026-10-05T10:05:00Z',
+  }
+
+  const messagesWith = (rows: any[], retryMessage = vi.fn()) => ({
+    messages: rows, reactions: {}, loading: false, error: null, hasMore: false, loadingOlder: false, retrying: false,
+    sendMessage: vi.fn(), editMessage: vi.fn(), deleteMessage: vi.fn(), sendDiceRoll: vi.fn(),
+    addReaction: vi.fn(), removeReaction: vi.fn(), toggleReaction: vi.fn(),
+    retryMessage, removePendingMessage: vi.fn(),
+    refresh: vi.fn().mockResolvedValue(undefined), loadOlder: vi.fn(), jumpToMessage: vi.fn().mockResolvedValue('found'),
+  } as any)
+
+  const view = () => (
+    <ToastProvider>
+      <MemoryRouter initialEntries={['/channel/c1']}>
+        <Routes>
+          <Route path="/channel/:id" element={<ChannelView />} />
+        </Routes>
+      </MemoryRouter>
+    </ToastProvider>
+  )
+
+  const scrollUp = () => {
+    const list = screen.getByRole('log')
+    list.scrollTop = 200
+    fireEvent.scroll(list)
+    return list
+  }
+
+  it('brings a failed send into view in the unfiltered timeline', () => {
+    const retryMessage = vi.fn()
+    const pub = { id: 'pub', content: 'public post', type: 'regular', sender_id: 'user2', whisper_to: null, created_at: '2026-10-05T10:00:00Z' }
+    vi.mocked(useMessages).mockReturnValue(messagesWith([pub], retryMessage))
+
+    const { rerender } = render(view())
+    const list = scrollUp()
+
+    vi.mocked(useMessages).mockReturnValue(messagesWith([pub, failedOwnRoll], retryMessage))
+    scrollHeight = 1150
+    rerender(view())
+
+    // The append lands below the fold; #809 brings it — and its failure — into
+    // view instead of leaving the player looking at the source message.
+    expect(list.scrollTop).toBe(1150)
+    expect(screen.getByText(/Failed to send:/)).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Retry' }))
+    expect(retryMessage).toHaveBeenCalledWith('cr-9')
+  })
+
+  it('brings a failed send into view in the Favorites view', () => {
+    const retryMessage = vi.fn()
+    const pub = { id: 'pub', content: 'public post', type: 'regular', sender_id: 'user2', whisper_to: null, created_at: '2026-10-05T10:00:00Z' }
+    const fav = { id: 'fav', content: 'saved post', type: 'regular', sender_id: 'user1', whisper_to: null, created_at: '2026-10-05T10:01:00Z' }
+    vi.mocked(useMessageFavorites).mockReturnValue({
+      favoriteIds: new Set(['fav']), favoriteMessages: [], isFavorite: () => true,
+      toggleFavorite: vi.fn(), patchFavoriteMessage: vi.fn(), loading: false, error: null, refetch: vi.fn(),
+    } as any)
+    vi.mocked(useMessages).mockReturnValue(messagesWith([pub, fav], retryMessage))
+
+    const { rerender } = render(view())
+    fireEvent.click(screen.getByRole('button', { name: 'Show favorites only' }))
+    const list = scrollUp()
+
+    vi.mocked(useMessages).mockReturnValue(messagesWith([pub, fav, failedOwnRoll], retryMessage))
+    scrollHeight = 1150
+    rerender(view())
+
+    // The append lands below the fold; #809 brings it — and its failure — into
+    // view instead of leaving the player looking at the source message.
+    expect(list.scrollTop).toBe(1150)
+    expect(screen.getByText(/Failed to send:/)).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Retry' }))
+    expect(retryMessage).toHaveBeenCalledWith('cr-9')
+    expect(screen.queryByText('public post')).not.toBeInTheDocument()
+  })
+
+  it('brings a failed send into view in the Whispers view', () => {
+    const retryMessage = vi.fn()
+    const pub = { id: 'pub', content: 'public post', type: 'regular', sender_id: 'user2', whisper_to: null, created_at: '2026-10-05T10:00:00Z' }
+    const whisper = { id: 'wh', content: 'my whisper', type: 'regular', sender_id: 'user1', whisper_to: 'user2', created_at: '2026-10-05T10:01:00Z' }
+    vi.mocked(useMessages).mockReturnValue(messagesWith([pub, whisper], retryMessage))
+
+    const { rerender } = render(view())
+    fireEvent.click(screen.getByRole('button', { name: 'Show whispers only' }))
+    const list = scrollUp()
+
+    vi.mocked(useMessages).mockReturnValue(messagesWith([pub, whisper, failedOwnRoll], retryMessage))
+    scrollHeight = 1150
+    rerender(view())
+
+    // The append lands below the fold; #809 brings it — and its failure — into
+    // view instead of leaving the player looking at the source message.
+    expect(list.scrollTop).toBe(1150)
+    expect(screen.getByText(/Failed to send:/)).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Retry' }))
+    expect(retryMessage).toHaveBeenCalledWith('cr-9')
+    expect(screen.queryByText('public post')).not.toBeInTheDocument()
   })
 })

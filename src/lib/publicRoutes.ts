@@ -14,6 +14,7 @@ export const ROUTES = {
   howToDnd: '/how-to/play-by-post-dnd',
   howToRun: '/how-to/run-play-by-post',
   vsDiscord: '/vs/discord',
+  alternatives: '/alternatives',
   altRpol: '/alternatives/rpol',
   altMythWeavers: '/alternatives/myth-weavers',
   privacy: '/privacy',
@@ -221,7 +222,7 @@ export const PUBLIC_ROUTES: PublicRoute[] = [
     path: ROUTES.playByPost,
     title: 'Play-by-Post Tabletop RPGs — Role by Post',
     description:
-      'What play-by-post is, why asynchronous tabletop RPGs fit busy groups, and how Role by Post keeps the story moving from any phone or browser.',
+      'What play-by-post (play by post) is, why asynchronous tabletop RPGs fit busy groups, and how Role by Post keeps the story moving from any phone or browser.',
     waitSelector: 'h1',
     changeFrequency: 'monthly',
     priority: 0.9,
@@ -263,19 +264,28 @@ export const PUBLIC_ROUTES: PublicRoute[] = [
     priority: 0.7,
   },
   {
-    path: ROUTES.altRpol,
-    title: 'Role by Post vs RPOL — Role by Post',
+    path: ROUTES.alternatives,
+    title: 'Play-by-Post Alternatives — Role by Post',
     description:
-      'Comparing Role by Post with RPOL for play-by-post RPGs: rooms, per-campaign characters, mobile-first chat, dice, and safety tools.',
+      'Honest comparisons of the play-by-post platforms: RPOL, Myth-Weavers, and Discord, and how each one differs from a chat-first, mobile-first campaign app.',
+    waitSelector: 'h1',
+    changeFrequency: 'monthly',
+    priority: 0.7,
+  },
+  {
+    path: ROUTES.altRpol,
+    title: 'RPOL Alternative — Role by Post vs RolePlay onLine',
+    description:
+      'A modern RPOL alternative: chat-first timelines, rooms, a character per campaign, per-channel push alerts, and a free mobile-first app that installs like a native one.',
     waitSelector: 'h1',
     changeFrequency: 'monthly',
     priority: 0.7,
   },
   {
     path: ROUTES.altMythWeavers,
-    title: 'Role by Post vs Myth-Weavers — Role by Post',
+    title: 'Myth-Weavers Alternative — Role by Post',
     description:
-      'Comparing Role by Post with Myth-Weavers for play-by-post RPGs: rooms, per-campaign characters, campaign notes, and a chat-first timeline.',
+      'A Myth-Weavers alternative compared honestly: its free character sheets and 1,350+ games credited against a chat-first timeline, rooms, and campaign notes.',
     waitSelector: 'h1',
     changeFrequency: 'monthly',
     priority: 0.7,
@@ -340,6 +350,7 @@ const MARKETING_KEYS: RouteKey[] = [
   'howToDnd',
   'howToRun',
   'vsDiscord',
+  'alternatives',
   'altRpol',
   'altMythWeavers',
   'help',

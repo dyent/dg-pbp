@@ -19,6 +19,8 @@ export interface NpcTagsValue {
   open: (id: string) => void
   /** `@Name` / `@Alias` → tag links (asks the database for alias tag ids). */
   linkify: (content: string) => Promise<string>
+  /** The same, straight away, or null when an alias still needs a tag id from the database. */
+  linkifyNow: (content: string) => string | null
   /** Reloads names and portraits (after the Characters panel or Case file closes). */
   reload: () => void
 }
@@ -109,6 +111,15 @@ export function NpcTagProvider({ channelId, isGM, myUserId, children }: NpcTagPr
     [byId, flush],
   )
 
+  const linkifyNow = useCallback(
+    (content: string): string | null => {
+      const ids = new Map(aliasTags.map(a => [aliasKey(a.targetId, a.alias), a.id]))
+      const missing = findAliasUses(content, options).some(u => !ids.has(aliasKey(u.target.id, u.alias)))
+      return missing ? null : linkifyNpcTags(content, options, ids)
+    },
+    [aliasTags, options],
+  )
+
   const linkify = useCallback(
     async (content: string) => {
       const ids = new Map(aliasTags.map(a => [aliasKey(a.targetId, a.alias), a.id]))
@@ -149,9 +160,10 @@ export function NpcTagProvider({ channelId, isGM, myUserId, children }: NpcTagPr
       canOpen: id => byId.has(id),
       open: id => (byId.get(id)?.recordKind ? requestRecord(id) : requestCharacter(id)),
       linkify,
+      linkifyNow,
       reload,
     }),
-    [isGM, options, byId, extra, aliasById, need, linkify, reload],
+    [isGM, options, byId, extra, aliasById, need, linkify, linkifyNow, reload],
   )
 
   return <NpcTagsContext.Provider value={value}>{children}</NpcTagsContext.Provider>

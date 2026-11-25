@@ -104,7 +104,7 @@ Do **not** follow from AGENTS.md:
 | New migration | `npx supabase migration new dg_<name>` |
 | Apply new migrations locally | `npx supabase migration up` |
 | DB tests (clean) | `npm run supabase:reset` then `npx supabase test db` |
-| Regenerate DB types | In **Git Bash**: `npx --yes supabase@2.117.0 gen types typescript --local > src/types/database.ts` |
+| Regenerate DB types | In **Git Bash**: `npx supabase gen types typescript --local > src/types/database.ts` |
 
 ### Test baseline and git hooks (2026-11-17, Windows)
 
@@ -112,7 +112,7 @@ Upstream's suite originally had 12 Windows-only failures. We fixed them with sma
 test edits (listed in `docs/delta-green/UPSTREAM-TOUCHPOINTS.md`). The baseline is now **fully
 green**:
 
-- `npm run test:coverage`: 3,803 passed, 11 skipped after the Phase 2b follow-ups
+- `npm run test:coverage`: 3,939 passed, 11 skipped after the 2026-11-25 upstream merge
   (`scripts/usage-report/run.test.ts`, skipped on Windows only), ~96% line coverage. Thresholds:
   80% lines/functions/statements, 81% branches.
 - `npx supabase test db`: 958 database tests pass.
@@ -124,16 +124,17 @@ Git hooks (Husky) run automatically and must pass. **Never bypass them with `--n
 - **pre-push:** `npm run build`, full coverage test run, Playwright E2E (~3–5 min). Keep the local
   stack up (`npm run supabase:up`) before pushing.
 
-**Type generation must use CLI v2.117.0.** Upstream's CI pins `supabase/setup-cli` to v2.117.0
-and diffs `src/types/database.ts` against its output, but `package.json` installs CLI 3.1.0, which
-formats the file completely differently. Always generate with `npx --yes supabase@2.117.0 …` from
-Git Bash (PowerShell redirection changes encoding/line endings). A correct regeneration only adds
+**Type generation must use CLI v2.117.0.** Upstream's CI diffs `src/types/database.ts` against
+that version's output, and newer CLIs format the file completely differently. Since the 2026-11-25
+upstream merge, `package.json` pins `supabase` to 2.117.0 too, so plain `npx supabase gen types …`
+is right; never `npx supabase@latest`. Generate from Git Bash (PowerShell redirection changes
+encoding/line endings). A correct regeneration only adds
 lines for our new objects.
 
 **Database tests need a clean database.** The Playwright E2E run (pre-push) leaves listed test
 campaigns behind, which makes upstream's public-directory pgTAP tests fail. Run
-`npm run supabase:reset` before `npx supabase test db`. Baseline after the Phase 2b follow-ups: 1,396
-database tests pass. Who-can-see-what is documented in `docs/delta-green/PERMISSIONS.md`; keep it
+`npm run supabase:reset` before `npx supabase test db`. Baseline after the 2026-11-25 upstream merge:
+1,446 database tests. Who-can-see-what is documented in `docs/delta-green/PERMISSIONS.md`; keep it
 in step with any access change.
 
 **Our migrations were rewritten in place once** (2026-11-17, `dg_` → `ext_` and generic terms)

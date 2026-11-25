@@ -17,8 +17,12 @@ export function useComposerNpcTags() {
     /** NPC names (and the GM's aliases) matching the text typed after `@`, minus names already listed for players. */
     match: (query: string | null, memberNames: readonly string[]): TagTerm[] =>
       query === null ? [] : matchTagTerms(options, query, memberNames),
-    /** `@Dr Hale` → `[Dr Hale](npc:<id>)`, `@Alias` → `[Alias](npcalias:<id>)`. */
-    linkify: (content: string): Promise<string> => (tags ? tags.linkify(content) : Promise.resolve(content)),
+    /**
+     * `@Dr Hale` → `[Dr Hale](npc:<id>)`, `@Alias` → `[Alias](npcalias:<id>)`. Returns the text
+     * straight away unless a GM alias first needs a tag id from the database, so a send only
+     * waits when it has to (upstream starts the send in the same moment as the click).
+     */
+    linkify: (content: string): string | Promise<string> => (tags ? (tags.linkifyNow(content) ?? tags.linkify(content)) : content),
   }
 }
 

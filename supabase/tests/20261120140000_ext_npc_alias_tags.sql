@@ -38,7 +38,7 @@ SELECT is(
   ext_npc_alias_tag('00000000-0000-0000-0000-0000000f3001', ' The Stranger '),
   ext_npc_alias_tag('00000000-0000-0000-0000-0000000f3001', 'THE STRANGER'),
   'the same alias always gets the same id');
-SELECT is((SELECT count(*)::int FROM ext_npc_alias_tags), 1, 'one row per alias');
+SELECT is((SELECT count(*)::int FROM ext_npc_alias_tags WHERE character_id = '00000000-0000-0000-0000-0000000f3001'), 1, 'one row per alias');
 SELECT throws_ok($$SELECT ext_npc_alias_tag('00000000-0000-0000-0000-0000000f3001', 'Doc')$$,
   '22023', 'That is not one of this NPC''s aliases', 'only the NPC''s own aliases can be tagged');
 SELECT throws_ok($$SELECT ext_npc_alias_tag('00000000-0000-0000-0000-0000000f3002', 'Rey')$$,
@@ -49,7 +49,7 @@ RESET ROLE;
 INSERT INTO messages (id, channel_id, sender_id, type, content, created_at)
 SELECT '00000000-0000-0000-0000-0000000f4001', '00000000-0000-0000-0000-0000000f2001', '00000000-0000-0000-0000-0000000f1001', 'regular',
   'A figure: [The Stranger](npcalias:' || id || ') nods.', now()
-FROM ext_npc_alias_tags;
+FROM ext_npc_alias_tags WHERE character_id = '00000000-0000-0000-0000-0000000f3001';
 SET LOCAL ROLE authenticated;
 
 SELECT is(
