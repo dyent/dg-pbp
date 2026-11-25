@@ -158,6 +158,20 @@ Tests: `supabase/tests/*_ext_sources.sql`. How to use: `12-case-file.md` (*Sourc
 
 There is no way to share a source: they live in their own storage, apart from campaign files.
 
+## AI (adventure import and later features)
+
+Tests: `supabase/tests/*_ext_ai_usage.sql`. How to set up: `14-ai-setup.md`.
+
+| What | Server admin who GMs the campaign | Other GM | Player | Outsider |
+|---|---|---|---|---|
+| Use AI (test the connection; later, import) | Yes, until the monthly cap is reached | No | No | No |
+| See this month's spending and the cap | Yes | No (told only that AI is not available) | No | No |
+| Change the monthly cap | Yes | No | No | No |
+| Read the usage log (`ext_ai_usage`) | Yes | No | No | No |
+| Write the usage log | Only the server function (service role) | No | No | No |
+
+The Anthropic API key is a server secret: nobody can read it from the app or the database.
+
 ## In-game calendar
 
 Tests: `supabase/tests/*_ext_in_game_calendar.sql`. How to use: `08-in-game-calendar.md`.

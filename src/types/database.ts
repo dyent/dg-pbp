@@ -833,6 +833,89 @@ export type Database = {
           },
         ]
       }
+      ext_ai_settings: {
+        Row: {
+          id: boolean
+          monthly_cap_usd: number
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          id?: boolean
+          monthly_cap_usd?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          id?: boolean
+          monthly_cap_usd?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ext_ai_settings_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ext_ai_usage: {
+        Row: {
+          channel_id: string | null
+          cost_usd: number
+          created_at: string
+          feature: string
+          id: string
+          input_tokens: number
+          model: string
+          outcome: string
+          output_tokens: number
+          user_id: string | null
+        }
+        Insert: {
+          channel_id?: string | null
+          cost_usd?: number
+          created_at?: string
+          feature: string
+          id?: string
+          input_tokens?: number
+          model: string
+          outcome: string
+          output_tokens?: number
+          user_id?: string | null
+        }
+        Update: {
+          channel_id?: string | null
+          cost_usd?: number
+          created_at?: string
+          feature?: string
+          id?: string
+          input_tokens?: number
+          model?: string
+          outcome?: string
+          output_tokens?: number
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ext_ai_usage_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "channels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ext_ai_usage_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ext_calendar_changes: {
         Row: {
           calendar: string
@@ -3087,6 +3170,7 @@ export type Database = {
         Returns: undefined
       }
       escape_markdown: { Args: { p_text: string }; Returns: string }
+      ext__ai_month_spent: { Args: never; Returns: number }
       ext__can_see_link_end: {
         Args: { p_character_id: string; p_record_id: string }
         Returns: boolean
@@ -3231,6 +3315,15 @@ export type Database = {
           p_title: string
         }
         Returns: string
+      }
+      ext_ai_status: {
+        Args: { p_channel_id: string }
+        Returns: {
+          allowed: boolean
+          is_server_admin: boolean
+          month_spent_usd: number
+          monthly_cap_usd: number
+        }[]
       }
       ext_campaign_file_path_channel: {
         Args: { p_name: string }
@@ -3406,6 +3499,7 @@ export type Database = {
         Returns: number
       }
       ext_reverse_link: { Args: { p_link_id: string }; Returns: undefined }
+      ext_set_ai_cap: { Args: { p_cap_usd: number }; Returns: undefined }
       ext_set_in_game_date: {
         Args: {
           p_channel_id: string

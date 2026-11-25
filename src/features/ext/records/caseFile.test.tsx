@@ -41,6 +41,10 @@ vi.mock('../links/linkApi', () => ({
   reverseLink: vi.fn(),
 }))
 vi.mock('../activity/activityApi', () => ({ POSTS_PAGE: 50, listRoomNames: vi.fn(async () => new Map()), listTaggedNotes: vi.fn(async () => []) }))
+vi.mock('../ai/aiApi', async importOriginal => ({
+  ...(await importOriginal<typeof import('../ai/aiApi')>()),
+  getAiStatus: vi.fn(async () => ({ allowed: false, isServerAdmin: false, monthSpentUsd: 0, monthlyCapUsd: 0 })),
+}))
 vi.mock('../sources/sourcesApi', () => ({
   listSources: vi.fn(async () => [{ id: 's1', title: 'Last Things Last', objectPath: 'ch/a.pdf', fileName: 'ltl.pdf', sizeBytes: 1000, createdAt: '2026-11-25T10:00:00Z' }]),
   addSource: vi.fn(),

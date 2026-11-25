@@ -2,6 +2,7 @@ import { useCallback, useEffect, useId, useState } from 'react'
 import { useToast } from '../../../contexts/ToastContext'
 import { BTN_DANGER, BTN_PRIMARY, BTN_SECONDARY, INPUT, LABEL, SECTION_TITLE } from '../characters/ui'
 import { formatSize } from '../files/filesModel'
+import { AiStatusCard } from '../ai/AiStatusCard'
 import * as api from './sourcesApi'
 import {
   SOURCE_TITLE_MAX,
@@ -65,6 +66,7 @@ export function SourcesView({ channelId, isArchived }: SourcesViewProps) {
       <p className="text-sm text-surface-600 dark:text-surface-300">
         The published adventures this campaign uses. Only you can see them, and they are never shared with players.
       </p>
+      <AiStatusCard channelId={channelId} />
       {!isArchived && !adding && (
         <div>
           <button type="button" className={BTN_PRIMARY} onClick={() => setAdding(true)}>

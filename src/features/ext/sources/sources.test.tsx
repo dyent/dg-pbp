@@ -14,6 +14,8 @@ import {
 } from './sourcesModel'
 import { SourcesView } from './SourcesView'
 
+vi.mock('../ai/AiStatusCard', () => ({ AiStatusCard: () => <div>AI status</div> }))
+
 const storage = { upload: vi.fn(), remove: vi.fn(), createSignedUrl: vi.fn() }
 
 vi.mock('../../../lib/supabase', () => ({
