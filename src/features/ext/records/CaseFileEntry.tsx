@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
+import { ChatPostProvider } from '../chatPost/chatPostContext'
 import { useNpcTags } from '../npcTags/npcTagContext'
 import { onRecordRequest } from './recordOpener'
 import { memberName, type MemberLike } from '../characters/CharactersEntry'
@@ -15,13 +16,15 @@ interface CaseFileEntryProps {
   members: MemberLike[]
   /** Upstream's sidebar menu item classes, so the entry looks native. */
   className: string
+  /** Puts pictures into the chat's message box; absent when the viewer can't post them. */
+  onInsertImages?: (paths: string[]) => void
 }
 
 /**
  * Fork hook point: the "Case file" item in the campaign sidebar plus the panel
  * it opens. ChannelView renders this one component (FORK-EXT).
  */
-export function CaseFileEntry({ channelId, isGM, isArchived, gmId, myUserId, members, className }: CaseFileEntryProps) {
+export function CaseFileEntry({ channelId, isGM, isArchived, gmId, myUserId, members, className, onInsertImages }: CaseFileEntryProps) {
   // `n` remounts the panel when a record tag in the chat asks for another record.
   const [shown, setShown] = useState<{ id: string | null; n: number } | null>(null)
   const tags = useNpcTags()
@@ -49,6 +52,16 @@ export function CaseFileEntry({ channelId, isGM, isArchived, gmId, myUserId, mem
     [names, myUserId],
   )
 
+  // Post in chat (DECISIONS.md #51): close the panel so the GM sees the draft.
+  const chatPost = onInsertImages
+    ? {
+        insertImages: (paths: string[]) => {
+          close()
+          onInsertImages(paths)
+        },
+      }
+    : null
+
   return (
     <>
       <button type="button" onClick={() => setShown(s => ({ id: null, n: (s?.n ?? 0) + 1 }))} className={className}>
@@ -57,17 +70,19 @@ export function CaseFileEntry({ channelId, isGM, isArchived, gmId, myUserId, mem
       {/* Portal: the sidebar is CSS-transformed, which would trap a fixed overlay inside it. */}
       {shown &&
         createPortal(
-          <CaseFilePanel
-            key={shown.n}
-            initialRecordId={shown.id}
-            channelId={channelId}
-            isGM={isGM}
-            isArchived={isArchived}
-            myUserId={myUserId}
-            players={players}
-            nameOf={nameOf}
-            onClose={close}
-          />,
+          <ChatPostProvider value={chatPost}>
+            <CaseFilePanel
+              key={shown.n}
+              initialRecordId={shown.id}
+              channelId={channelId}
+              isGM={isGM}
+              isArchived={isArchived}
+              myUserId={myUserId}
+              players={players}
+              nameOf={nameOf}
+              onClose={close}
+            />
+          </ChatPostProvider>,
           document.body,
         )}
     </>

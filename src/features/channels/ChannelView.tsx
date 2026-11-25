@@ -239,6 +239,8 @@ export function ChannelView() {
   // Channel Media panel inserts into the composer (GM only); the ref is the
   // single shared panel instance talking to whichever composer is mounted.
   const composerRef = useRef<MessageComposerHandle>(null)
+  // FORK-EXT: "Post in chat" from Files / Case files puts a picture in the message box (GM, live campaign).
+  const insertFromFork = isGM && !channel?.is_archived ? (paths: string[]) => { setShowMobileSidebar(false); composerRef.current?.insertImages(paths) } : undefined
 
   // A reply target and a search highlight belong to the room they were picked
   // in. Clearing them in an effect would leave one render with the previous
@@ -1020,9 +1022,9 @@ export function ChannelView() {
             {/* FORK-EXT: characters panel (profiles, roles, posting as) */}
             <CharactersEntry channelId={channel.id} isGM={isGM} isArchived={channel.is_archived} gmId={channel.gm_id} myUserId={user?.id} members={members} className={SIDEBAR_MENU_ITEM} onClosed={refetchNpcs} onOpenPost={openPost} opensFromChat />
             {/* FORK-EXT: campaign files (handouts, case files, maps) */}
-            <FilesEntry channelId={channel.id} isGM={isGM} isArchived={channel.is_archived} gmId={channel.gm_id} myUserId={user?.id} members={members} className={SIDEBAR_MENU_ITEM} />
+            <FilesEntry channelId={channel.id} isGM={isGM} isArchived={channel.is_archived} gmId={channel.gm_id} myUserId={user?.id} members={members} className={SIDEBAR_MENU_ITEM} onInsertImages={insertFromFork} />
             {/* FORK-EXT: campaign records (operations, locations, groups, clues) */}
-            <CaseFileEntry channelId={channel.id} isGM={isGM} isArchived={channel.is_archived} gmId={channel.gm_id} myUserId={user?.id} members={members} className={SIDEBAR_MENU_ITEM} />
+            <CaseFileEntry channelId={channel.id} isGM={isGM} isArchived={channel.is_archived} gmId={channel.gm_id} myUserId={user?.id} members={members} className={SIDEBAR_MENU_ITEM} onInsertImages={insertFromFork} />
             {channel.map_url && (
               <a
                 href={channel.map_url}

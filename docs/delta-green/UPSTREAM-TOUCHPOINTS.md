@@ -107,6 +107,7 @@ Record tags (Phase 2b step 2: `rec:` and `recalias:` links) go through the same 
 | Upstream file | What we changed | Why |
 |---|---|---|
 | `src/features/channels/ChannelView.tsx` | Import `CaseFileEntry`; render it after `FilesEntry` in the sidebar's *Table* section | Opens the Case file. It loads nothing until opened, so upstream's ChannelView tests need no new mocks |
+| `src/features/channels/ChannelView.tsx` | One `insertFromFork` line after `composerRef` (GM, live campaign: closes the mobile sidebar and calls the composer's existing `insertImages`); passed as `onInsertImages` to `FilesEntry` and `CaseFileEntry` | *Post in chat* (DECISIONS.md #51), using the same composer entry point as upstream's Channel Media panel |
 | `src/features/channels/ChannelView.test.tsx` | `'Case files'` in the expected sidebar order (renamed 2026-11-24) | The new menu item changes the list |
 
 Record pictures are uploaded through upstream's `upload-image` function into its existing GM-only

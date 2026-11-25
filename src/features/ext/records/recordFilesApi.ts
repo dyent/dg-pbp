@@ -48,7 +48,7 @@ export async function detachFile(recordId: string, fileId: string): Promise<void
 }
 
 /** A link to the file's current version, and whether it is a picture. */
-export async function recordFileLink(fileId: string): Promise<{ url: string; isImage: boolean }> {
+export async function recordFileLink(fileId: string): Promise<{ url: string; isImage: boolean; mimeType: string }> {
   const { data, error } = await supabase
     .from('ext_campaign_file_versions')
     .select('object_path, mime_type')
@@ -58,5 +58,5 @@ export async function recordFileLink(fileId: string): Promise<{ url: string; isI
   if (error) throw toError(error)
   const row = data?.[0]
   if (!row) throw new Error('That file has no content.')
-  return { url: await fileLink(row.object_path), isImage: isImage(row.mime_type) }
+  return { url: await fileLink(row.object_path), isImage: isImage(row.mime_type), mimeType: row.mime_type }
 }

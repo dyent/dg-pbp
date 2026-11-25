@@ -2,6 +2,8 @@ import { useCallback, useEffect, useId, useState } from 'react'
 import { useToast } from '../../../contexts/ToastContext'
 import { BADGE, BTN_PRIMARY, BTN_SECONDARY, INPUT, SECTION_TITLE } from '../characters/ui'
 import * as api from './recordFilesApi'
+import { canPostToChat } from '../chatPost/chatPostApi'
+import { PostToChatButton } from '../chatPost/PostToChatButton'
 
 interface RecordFilesSectionProps {
   channelId: string
@@ -153,7 +155,7 @@ export function RecordFilesSection({ channelId, recordId, isGM, isArchived, myUs
       ) : (
         <ul className="space-y-2">
           {files.map(f => (
-            <FileItem key={f.fileId} file={f} isGM={isGM} canManage={canManage} onDetach={() => void detach(f.fileId)} />
+            <FileItem key={f.fileId} channelId={channelId} file={f} isGM={isGM} canManage={canManage} onDetach={() => void detach(f.fileId)} onShared={reload} />
           ))}
         </ul>
       )}
@@ -161,9 +163,24 @@ export function RecordFilesSection({ channelId, recordId, isGM, isArchived, myUs
   )
 }
 
-function FileItem({ file, isGM, canManage, onDetach }: { file: api.RecordFile; isGM: boolean; canManage: boolean; onDetach: () => void }) {
+function FileItem({
+  channelId,
+  file,
+  isGM,
+  canManage,
+  onDetach,
+  onShared,
+}: {
+  channelId: string
+  file: api.RecordFile
+  isGM: boolean
+  canManage: boolean
+  onDetach: () => void
+  onShared: () => void
+}) {
   const { addToast } = useToast()
   const [preview, setPreview] = useState<string | null>(null)
+  const [mimeType, setMimeType] = useState<string | null>(null)
   const [confirming, setConfirming] = useState(false)
 
   // Pictures get a small preview.
@@ -171,7 +188,11 @@ function FileItem({ file, isGM, canManage, onDetach }: { file: api.RecordFile; i
     let mounted = true
     api
       .recordFileLink(file.fileId)
-      .then(link => mounted && link.isImage && setPreview(link.url))
+      .then(link => {
+        if (!mounted) return
+        setMimeType(link.mimeType)
+        if (link.isImage) setPreview(link.url)
+      })
       .catch(() => undefined)
     return () => {
       mounted = false
@@ -204,6 +225,15 @@ function FileItem({ file, isGM, canManage, onDetach }: { file: api.RecordFile; i
           <button type="button" className="text-xs text-primary-600 hover:underline dark:text-primary-400" onClick={() => void open()}>
             Open
           </button>
+          {canManage && mimeType && canPostToChat(mimeType) && (
+            <PostToChatButton
+              channelId={channelId}
+              file={{ id: file.fileId, title: file.title, description: file.description, folder: file.folder, visibility: file.visibility }}
+              isPdf={mimeType === 'application/pdf'}
+              onShared={onShared}
+              compact
+            />
+          )}
           {canManage && !confirming && (
             <button type="button" className="text-xs text-red-600 hover:underline dark:text-red-400" onClick={() => setConfirming(true)} aria-label={`Remove ${file.title} from this record`}>
               Remove

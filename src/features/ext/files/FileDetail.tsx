@@ -2,6 +2,8 @@ import { useEffect, useId, useState } from 'react'
 import { ConfirmDialog } from '../../../components/ConfirmDialog'
 import { BADGE, BTN_DANGER, BTN_PRIMARY, BTN_SECONDARY, SECTION_TITLE } from '../characters/ui'
 import { fileLink, listEvents } from './filesApi'
+import { canPostToChat } from '../chatPost/chatPostApi'
+import { PostToChatButton } from '../chatPost/PostToChatButton'
 import {
   ACCEPT_ATTR,
   VISIBILITY_LABELS,
@@ -17,6 +19,7 @@ import {
 const dateFormat = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' })
 
 interface FileDetailProps {
+  channelId: string
   file: CampaignFile
   isGM: boolean
   canManage: boolean
@@ -27,6 +30,8 @@ interface FileDetailProps {
   onReplace: (picked: File) => Promise<boolean>
   onDelete: () => Promise<void>
   onProblem: (message: string) => void
+  /** After Post in chat changed the file's sharing. */
+  onShared?: () => void
 }
 
 interface Links {
@@ -34,7 +39,7 @@ interface Links {
   download: string | null
 }
 
-export function FileDetail({ file, isGM, canManage, sharedWith, nameOf, onEdit, onReplace, onDelete, onProblem }: FileDetailProps) {
+export function FileDetail({ channelId, file, isGM, canManage, sharedWith, nameOf, onEdit, onReplace, onDelete, onProblem, onShared }: FileDetailProps) {
   const id = useId()
   const current = currentVersion(file)
   const [links, setLinks] = useState<Links | null>(null)
@@ -137,6 +142,9 @@ export function FileDetail({ file, isGM, canManage, sharedWith, nameOf, onEdit, 
                   <a href={links.download} className={BTN_SECONDARY}>
                     Download
                   </a>
+                )}
+                {canManage && canPostToChat(current.mimeType) && (
+                  <PostToChatButton channelId={channelId} file={file} isPdf={current.mimeType === 'application/pdf'} onShared={onShared} />
                 )}
               </div>
             </>

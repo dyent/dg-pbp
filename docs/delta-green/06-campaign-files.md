@@ -41,6 +41,10 @@ with a copied link to the stored file.
   whoever can see the file can open them too.
 - **Delete**: removes the file, all its versions and its history for good (after a confirmation).
 - **History (GM only)**: every upload, replacement and edit, including who gained or lost access.
+- **Post in chat** (pictures and PDFs): puts the picture into your message box in the room you have
+  open, so you can add words and send it; a PDF's first page becomes the picture. *Also share this
+  file with all players in Files* is ticked unless you untick it. Needs picture uploads switched on
+  in the server settings. The chat keeps its own copy, so later changes here don't change the post.
 
 Players can't upload files (their only uploads are character portraits). Archived campaigns are
 read-only.

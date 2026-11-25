@@ -108,6 +108,11 @@ files (a handout, a map, a photo). Pictures show a small preview; **Open** opens
 **Remove** takes it off the record (it stays in Files). Players see an attached file only if you
 have shared both the record and the file with them. A file can be attached to several records.
 
+**Post in chat** (GM, on pictures and PDFs) puts the picture into your message box in the room you
+have open; add any words and send it. A PDF's first page becomes the picture. The tick box *Also
+share this file with all players in Files* is on by default. This needs picture uploads switched on
+in the server settings.
+
 ## Clues (step 4)
 
 A clue's **Profile** tab starts with a **Clue** box:

@@ -112,7 +112,7 @@ Upstream's suite originally had 12 Windows-only failures. We fixed them with sma
 test edits (listed in `docs/delta-green/UPSTREAM-TOUCHPOINTS.md`). The baseline is now **fully
 green**:
 
-- `npm run test:coverage`: 4,026 passed, 11 skipped after the Phase 3 follow-ups
+- `npm run test:coverage`: 4,037 passed, 11 skipped after Post in chat (#51)
   (`scripts/usage-report/run.test.ts`, skipped on Windows only), ~96% line coverage. Thresholds:
   80% lines/functions/statements, 81% branches.
 - `npx supabase test db`: 958 database tests pass.

@@ -230,6 +230,7 @@ export function FilesPanel({ channelId, isGM, isArchived, players, nameOf, onClo
                 ) : selected ? (
                   <FileDetail
                     key={selected.id}
+                    channelId={channelId}
                     file={selected}
                     isGM={isGM}
                     canManage={canManage}
@@ -239,6 +240,7 @@ export function FilesPanel({ channelId, isGM, isArchived, players, nameOf, onClo
                     onReplace={handleReplace}
                     onDelete={handleDelete}
                     onProblem={message => addToast(message, 'error')}
+                    onShared={reload}
                   />
                 ) : (
                   <p className="py-8 text-center text-sm text-surface-500 dark:text-surface-400">Choose a file to open it.</p>

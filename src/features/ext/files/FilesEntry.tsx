@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
+import { ChatPostProvider } from '../chatPost/chatPostContext'
 import { memberName, type MemberLike } from '../characters/CharactersEntry'
 import type { PlayerOption } from '../characters/GmControls'
 import { FilesPanel } from './FilesPanel'
@@ -13,13 +14,15 @@ interface FilesEntryProps {
   members: MemberLike[]
   /** Upstream's sidebar menu item classes, so the entry looks native. */
   className: string
+  /** Puts pictures into the chat's message box; absent when the viewer can't post them. */
+  onInsertImages?: (paths: string[]) => void
 }
 
 /**
  * Fork hook point: the "Files" item in the campaign sidebar plus the panel it
  * opens. ChannelView renders this one component (FORK-EXT).
  */
-export function FilesEntry({ channelId, isGM, isArchived, gmId, myUserId, members, className }: FilesEntryProps) {
+export function FilesEntry({ channelId, isGM, isArchived, gmId, myUserId, members, className, onInsertImages }: FilesEntryProps) {
   const [open, setOpen] = useState(false)
 
   const players: PlayerOption[] = useMemo(
@@ -37,6 +40,16 @@ export function FilesEntry({ channelId, isGM, isArchived, gmId, myUserId, member
     [names, myUserId],
   )
 
+  // Post in chat (DECISIONS.md #51): close the panel so the GM sees the draft.
+  const chatPost = onInsertImages
+    ? {
+        insertImages: (paths: string[]) => {
+          setOpen(false)
+          onInsertImages(paths)
+        },
+      }
+    : null
+
   return (
     <>
       <button type="button" onClick={() => setOpen(true)} className={className}>
@@ -46,14 +59,16 @@ export function FilesEntry({ channelId, isGM, isArchived, gmId, myUserId, member
           overlay inside it. */}
       {open &&
         createPortal(
-          <FilesPanel
-            channelId={channelId}
-            isGM={isGM}
-            isArchived={isArchived}
-            players={players}
-            nameOf={nameOf}
-            onClose={() => setOpen(false)}
-          />,
+          <ChatPostProvider value={chatPost}>
+            <FilesPanel
+              channelId={channelId}
+              isGM={isGM}
+              isArchived={isArchived}
+              players={players}
+              nameOf={nameOf}
+              onClose={() => setOpen(false)}
+            />
+          </ChatPostProvider>,
           document.body,
         )}
     </>

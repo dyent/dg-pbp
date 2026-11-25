@@ -6,9 +6,11 @@ import { fileLink, listFiles } from '../files/filesApi'
 import { paddedArea } from '../import/pdfImage'
 import * as api from './recordFilesApi'
 import { RecordFilesSection } from './RecordFilesSection'
+import { ChatPostProvider } from '../chatPost/chatPostContext'
 
 vi.mock('../../../lib/supabase', () => ({ supabase: { from: vi.fn(), rpc: vi.fn() } }))
 vi.mock('../files/filesApi', () => ({ listFiles: vi.fn(), fileLink: vi.fn() }))
+vi.mock('../../../hooks/useImageUpload', () => ({ useImageUpload: () => ({ uploadEnabled: true, settingsLoading: false, uploading: false, uploadImage: vi.fn() }) }))
 
 function mockFrom(result: { data?: unknown; error?: unknown }) {
   const builder: Record<string, unknown> = {}
@@ -66,7 +68,7 @@ describe('recordFilesApi', () => {
   it('links to the current version and says whether it is a picture', async () => {
     mockFrom({ data: [{ object_path: 'ch/x.png', mime_type: 'image/png' }] })
     vi.mocked(fileLink).mockResolvedValue('https://x.test/x.png')
-    expect(await api.recordFileLink('f1')).toEqual({ url: 'https://x.test/x.png', isImage: true })
+    expect(await api.recordFileLink('f1')).toEqual({ url: 'https://x.test/x.png', isImage: true, mimeType: 'image/png' })
     mockFrom({ data: [] })
     await expect(api.recordFileLink('f1')).rejects.toThrow('That file has no content.')
   })
@@ -82,7 +84,7 @@ describe('RecordFilesSection', () => {
     ])
     vi.spyOn(api, 'attachFile').mockResolvedValue()
     vi.spyOn(api, 'detachFile').mockResolvedValue()
-    vi.spyOn(api, 'recordFileLink').mockImplementation(async id => ({ url: `https://x.test/${id}`, isImage: id === 'f1' }))
+    vi.spyOn(api, 'recordFileLink').mockImplementation(async id => ({ url: `https://x.test/${id}`, isImage: id === 'f1', mimeType: id === 'f1' ? 'image/png' : 'text/plain' }))
   })
   afterEach(() => vi.restoreAllMocks())
 
@@ -99,6 +101,18 @@ describe('RecordFilesSection', () => {
     expect(screen.getByText('All players')).toBeInTheDocument()
     expect(screen.getByText('GM only')).toBeInTheDocument()
     expect(screen.getByText('A worried note.')).toBeInTheDocument()
+  })
+
+  it('offers Post in chat on pictures when the GM can post', async () => {
+    render(
+      <ToastProvider>
+        <ChatPostProvider value={{ insertImages: vi.fn() }}>
+          <RecordFilesSection channelId="ch" recordId="r1" isGM isArchived={false} myUserId="gm" />
+        </ChatPostProvider>
+      </ToastProvider>,
+    )
+    expect(await screen.findByRole('button', { name: 'Post Ortiz letter in chat' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Post Quarry map in chat' })).not.toBeInTheDocument()
   })
 
   it('opens a file in a new tab', async () => {
