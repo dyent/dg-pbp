@@ -1,0 +1,28 @@
+# cspell:words keepalive apikey VITE
+# Keeps the free Supabase project awake (DECISIONS.md #52): free projects are
+# paused after about a week without use, and a play-by-post game can go quiet
+# for longer. One tiny read every three days counts as use.
+# Note: GitHub turns scheduled workflows off after 60 days without any commits;
+# it emails a warning, and "Enable workflow" on the Actions tab turns it back on.
+name: Keep database awake (fork)
+
+on:
+  schedule:
+    - cron: '17 20 */3 * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Read one public setting
+        env:
+          URL: ${{ secrets.VITE_SUPABASE_URL }}
+          KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+        run: |
+          status=$(curl -s -o /dev/null -w '%{http_code}' "$URL/rest/v1/app_settings?select=key&limit=1" -H "apikey: $KEY" -H "Authorization: Bearer $KEY")
+          echo "Supabase answered $status"
+          test "$status" -lt 500

@@ -182,7 +182,10 @@ baseline above, commit. Merge upstream regularly (e.g. monthly) so conflicts sta
 ## GitHub
 
 Upstream's GitHub Actions workflows are **disabled** on the fork (they deploy to upstream's
-infrastructure). We'll add our own deploy workflow when we set up hosting.
+infrastructure). Ours are `.github/workflows/ext-deploy.yml` (every push to `main`: migrations,
+server functions, then the app to Cloudflare Pages) and `ext-keepalive.yml` (pings the free
+Supabase project). Setup and secrets: `docs/delta-green/15-hosting.md`. Once deployed, a push to
+`main` changes the live game, and applied migrations are immutable.
 
 ## Spelling
 
@@ -191,4 +194,4 @@ Our docs use British English. Each of our Markdown files ends with a
 pre-commit spellcheck passes without editing upstream's `.cspell.json`.
 
 <!-- cspell:locale en-GB,en -->
-<!-- cspell:words dyent TOUCHPOINTS fnm pgTAP Mailpit -->
+<!-- cspell:words dyent TOUCHPOINTS fnm pgTAP Mailpit keepalive -->

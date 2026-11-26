@@ -126,7 +126,8 @@ Our server functions live in new folders (`supabase/functions/ext-ai-*`, shared 
 
 `CLAUDE.md`, `docs/delta-green/*`, `src/features/ext/**`, `src/features/dg/**`,
 `src/test/stubs/pwaRegister.ts`, `supabase/migrations/*_ext_*.sql` and `*_dg_*.sql`,
-`supabase/tests/*_ext_*.sql` and `*_dg_*.sql`, `supabase/functions/ext-*/**`, `supabase/functions/_ext-ai/**`.
+`supabase/tests/*_ext_*.sql` and `*_dg_*.sql`, `supabase/functions/ext-*/**`, `supabase/functions/_ext-ai/**`,
+`.github/workflows/ext-*.yml`.
 
 <!-- cspell:locale en-GB,en -->
 <!-- cspell:words Touchpoints TOUCHPOINTS npcalias recalias -->

@@ -1,0 +1,90 @@
+# cspell:words VITE
+# Fork deploy (docs/delta-green/15-hosting.md, DECISIONS.md #52).
+# Upstream's deploy.yml / migrate.yml stay disabled on the fork: they target
+# upstream's Cloudflare project and only know upstream's server functions.
+#
+# On every push to main (and on demand):
+#   1. database: apply new migrations to the online Supabase project;
+#   2. server functions: deploy every function in supabase/functions;
+#   3. app: build (with the prerendered app shell) and upload to Cloudflare Pages.
+# The database goes first so the new app never runs against an old schema.
+name: Deploy (fork)
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  deployments: write
+
+concurrency:
+  group: ext-deploy
+  cancel-in-progress: false
+
+jobs:
+  backend:
+    name: Database and server functions
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+      SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v3
+        with:
+          version: 2.117.0
+
+      - name: Link the project
+        run: supabase link --project-ref "$SUPABASE_PROJECT_ID" -p "$SUPABASE_DB_PASSWORD"
+
+      - name: Apply migrations
+        # --include-all: after an upstream merge, upstream migrations can be
+        # older than ours (allowed on our own database, see CLAUDE.md).
+        run: supabase db push --include-all --yes
+
+      - name: Deploy server functions
+        run: supabase functions deploy --project-ref "$SUPABASE_PROJECT_ID"
+
+  app:
+    name: Build and upload the app
+    needs: backend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: '26'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+
+      - name: Install Playwright browser (for the prerendered app shell)
+        run: npx playwright install --with-deps chromium
+
+      - name: Build
+        run: npm run build:seo
+        env:
+          VITE_SITE_URL: ${{ vars.VITE_SITE_URL }}
+          VITE_APP_NAME: ${{ vars.VITE_APP_NAME }}
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          VITE_CONTROLLER_NAME: ${{ secrets.VITE_CONTROLLER_NAME }}
+          VITE_CONTROLLER_EMAIL: ${{ secrets.VITE_CONTROLLER_EMAIL }}
+
+      - name: Upload to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
+          # Creates the Pages project on the first run, then uploads.
+          preCommands: npx wrangler pages project create "${{ vars.CLOUDFLARE_PROJECT_NAME }}" --production-branch=main || true
+          command: pages deploy dist --project-name=${{ vars.CLOUDFLARE_PROJECT_NAME }} --branch=main
